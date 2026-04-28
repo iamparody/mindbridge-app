@@ -416,116 +416,116 @@
 ## Phase 7 — Emergency & Safety Plan
 
 ### 7.1 POST /emergency/trigger
-- [ ] Require auth middleware
-- [ ] INSERT emergency_logs (trigger_type='user_initiated', status='open')
-- [ ] INSERT emergency_alert notification to admin (push + in-app, immediate priority)
-- [ ] Return 201: { log_id }
+- [x] Require auth middleware
+- [x] INSERT emergency_logs (trigger_type='user_initiated', status='open')
+- [x] INSERT emergency_alert notification to admin (push + in-app, immediate priority)
+- [x] Return 201: { log_id }
 
 ### 7.2 PATCH /admin/emergency/:id/acknowledge
-- [ ] Require adminAuth middleware
-- [ ] UPDATE emergency_logs SET status='acknowledged', acknowledged_at=NOW(), handled_by=req.user.id
-- [ ] Return 200
+- [x] Require adminAuth middleware
+- [x] UPDATE emergency_logs SET status='acknowledged', acknowledged_at=NOW(), handled_by=req.user.id
+- [x] Return 200
 
 ### 7.3 PATCH /admin/emergency/:id/resolve
-- [ ] Require adminAuth middleware
-- [ ] UPDATE emergency_logs SET status='resolved', resolved_at=NOW()
-- [ ] Return 200
+- [x] Require adminAuth middleware
+- [x] UPDATE emergency_logs SET status='resolved', resolved_at=NOW()
+- [x] Return 200
 
 ### 7.4 GET /safety-plan
-- [ ] Require auth middleware
-- [ ] SELECT from safety_plans WHERE user_id=req.user.id — decrypt contacts JSONB before return
-- [ ] Return 200: { plan } or { plan: null }
+- [x] Require auth middleware
+- [x] SELECT from safety_plans WHERE user_id=req.user.id — decrypt contacts JSONB before return
+- [x] Return 200: { plan } or { plan: null }
 
 ### 7.5 PUT /safety-plan
-- [ ] Require auth middleware
-- [ ] Validate all 6 fields (all optional)
-- [ ] Encrypt contacts JSONB (each contact_detail field) before storage
-- [ ] UPSERT safety_plans (INSERT or UPDATE on conflict user_id)
-- [ ] Return 200: { updated_at }
+- [x] Require auth middleware
+- [x] Validate all 6 fields (all optional)
+- [x] Encrypt contacts JSONB (each contact_detail field) before storage
+- [x] UPSERT safety_plans (INSERT or UPDATE on conflict user_id)
+- [x] Return 200: { updated_at }
 
 ---
 
 ## Phase 8 — Notifications
 
 ### 8.1 Create src/backend/utils/fcm.js
-- [ ] Initialize firebase-admin SDK with FCM_SERVICE_ACCOUNT_JSON env var
-- [ ] sendPushNotification(fcm_token, title, body, data) — handles send errors gracefully
+- [x] Initialize firebase-admin SDK with FCM_SERVICE_ACCOUNT_JSON env var
+- [x] sendPushNotification(fcm_token, title, body, data) — handles send errors gracefully
 
 ### 8.2 Create src/backend/utils/notificationWriter.js
-- [ ] writeNotification(user_id, type, payload, channel): INSERT notifications record, call sendPushNotification if channel includes push
-- [ ] Lookup user FCM token(s) from users table (add fcm_token column via migration 023)
-- [ ] Handle missing FCM token gracefully (in-app only if no token)
+- [x] writeNotification(user_id, type, payload, channel): INSERT notifications record, call sendPushNotification if channel includes push
+- [x] Lookup user FCM token(s) from users table (add fcm_token column via migration 023)
+- [x] Handle missing FCM token gracefully (in-app only if no token)
 
 ### 8.3 GET /notifications
-- [ ] Require auth middleware
-- [ ] Paginated, ordered desc by created_at
-- [ ] Return 200: { notifications, total, page }
+- [x] Require auth middleware
+- [x] Paginated, ordered desc by created_at
+- [x] Return 200: { notifications, total, page }
 
 ### 8.4 PATCH /notifications/:id/read
-- [ ] Require auth middleware, verify ownership
-- [ ] UPDATE notifications SET status='read', read_at=NOW()
-- [ ] Return 200
+- [x] Require auth middleware, verify ownership
+- [x] UPDATE notifications SET status='read', read_at=NOW()
+- [x] Return 200
 
 ### 8.5 PATCH /notifications/read-all
-- [ ] Require auth middleware
-- [ ] UPDATE all notifications WHERE user_id=req.user.id AND status!='read'
-- [ ] Return 200: { updated_count }
+- [x] Require auth middleware
+- [x] UPDATE all notifications WHERE user_id=req.user.id AND status!='read'
+- [x] Return 200: { updated_count }
 
 ### 8.6 PATCH /notifications/preferences
-- [ ] Require auth middleware
-- [ ] Accept: notif_peer_broadcast, notif_checkin_reminder, notif_group_messages, notif_credit_low (all boolean)
-- [ ] UPDATE users SET the 4 boolean columns
-- [ ] Return 200
+- [x] Require auth middleware
+- [x] Accept: notif_peer_broadcast, notif_checkin_reminder, notif_group_messages, notif_credit_low (all boolean)
+- [x] UPDATE users SET the 4 boolean columns
+- [x] Return 200
 
 ### 8.7 Verify all 12 notification triggers fire
-- [ ] peer_request_broadcast — POST /peer/request ✓
-- [ ] peer_escalation — peerEscalation.js job ✓
-- [ ] session_confirmation — PATCH /peer/request/:id/accept ✓
-- [ ] therapist_referral_update — PATCH /admin/referrals/:id ✓
-- [ ] emergency_alert — POST /emergency/trigger + AI critical escalation ✓
-- [ ] group_message — POST /groups/:id/messages ✓
-- [ ] group_warning — PATCH /admin/reports/:id/action (warn) ✓
-- [ ] data_deletion_confirmed — deletion background job ✓
-- [ ] credit_low — creditDeductor.js ✓
-- [ ] credit_purchase_confirmed — POST /credits/webhook ✓
-- [ ] check_in_reminder — daily 8pm job ✓
-- [ ] milestone — POST /moods at streak 3/7/30 ✓
+- [x] peer_request_broadcast — POST /peer/request ✓
+- [x] peer_escalation — peerEscalation.js job ✓
+- [x] session_confirmation — PATCH /peer/request/:id/accept ✓
+- [x] therapist_referral_update — PATCH /admin/referrals/:id ✓ (Phase 9)
+- [x] emergency_alert — POST /emergency/trigger + AI critical escalation ✓
+- [x] group_message — POST /groups/:id/messages ✓
+- [x] group_warning — PATCH /admin/reports/:id/action (warn) ✓
+- [x] data_deletion_confirmed — deletion background job ✓ (Phase 10)
+- [x] credit_low — creditDeductor.js ✓
+- [x] credit_purchase_confirmed — POST /credits/webhook ✓
+- [x] check_in_reminder — daily 8pm job ✓ (Phase 10)
+- [x] milestone — POST /moods at streak 3/7/30 ✓
 
 ---
 
 ## Phase 9 — Admin Dashboard APIs
 
-- [ ] GET /admin/emergency-queue — Emergency_Logs WHERE status IN ('open','acknowledged'), alias joined, ordered triggered_at ASC
-- [ ] GET /admin/escalations — PeerRequests WHERE status='escalated', alias joined, ordered escalated_at
-- [ ] GET /admin/referrals — TherapistReferrals, optional ?status filter, ordered created_at
-- [ ] PATCH /admin/referrals/:id — UPDATE status + admin_notes, INSERT therapist_referral_update notification to user
-- [ ] GET /admin/risk-flags — Users WHERE risk_level IN ('high','critical'), return alias only
-- [ ] POST /admin/users/:alias/message — lookup user by alias, INSERT in-app notification with admin message
-- [ ] GET /admin/resources — All PsychoeducationArticles all statuses, ordered updated_at desc
-- [ ] POST /admin/resources — INSERT article (status='draft'), created_by=req.user.id
-- [ ] PATCH /admin/resources/:id — UPDATE article fields
-- [ ] PATCH /admin/resources/:id/publish — SET status='published', published_at=NOW()
-- [ ] PATCH /admin/resources/:id/archive — SET status='archived'
-- [ ] GET /admin/feedback — aggregate AVG rating by type + last 20 comments (no user_id)
-- [ ] GET /admin/stats — DAU count, check-ins today, peer sessions today, AI sessions today, credits purchased today (all via SQL aggregates)
+- [x] GET /admin/emergency-queue — Emergency_Logs WHERE status IN ('open','acknowledged'), alias joined, ordered triggered_at ASC
+- [x] GET /admin/escalations — PeerRequests WHERE status='escalated', alias joined, ordered escalated_at
+- [x] GET /admin/referrals — TherapistReferrals, optional ?status filter, ordered created_at
+- [x] PATCH /admin/referrals/:id — UPDATE status + admin_notes, INSERT therapist_referral_update notification to user
+- [x] GET /admin/risk-flags — Users WHERE risk_level IN ('high','critical'), return alias only
+- [x] POST /admin/users/:alias/message — lookup user by alias, INSERT in-app notification with admin message
+- [x] GET /admin/resources — All PsychoeducationArticles all statuses, ordered updated_at desc
+- [x] POST /admin/resources — INSERT article (status='draft'), created_by=req.user.id
+- [x] PATCH /admin/resources/:id — UPDATE article fields
+- [x] PATCH /admin/resources/:id/publish — SET status='published', published_at=NOW()
+- [x] PATCH /admin/resources/:id/archive — SET status='archived'
+- [x] GET /admin/feedback — aggregate AVG rating by type + last 20 comments (no user_id)
+- [x] GET /admin/stats — DAU count, check-ins today, peer sessions today, AI sessions today, credits purchased today (all via SQL aggregates)
 
 ---
 
 ## Phase 10 — Supplementary Modules
 
-- [ ] GET /resources — published articles, ?category and ?search filters, return list without content body
-- [ ] GET /resources/:id — full article including content
-- [ ] POST /feedback — NO auth required, INSERT feedback (no user_id), validate rating 1–5
-- [ ] POST /referrals — require auth, INSERT therapist_referrals, INSERT notification to admin
-- [ ] GET /referrals/my — require auth, return user's own referral(s) and status
-- [ ] GET /profile — require auth, return alias, masked email (first 3 chars + ***@domain), consent_version, persona summary, streak_count, credits balance
-- [ ] POST /profile/delete-data — require auth, UPDATE users SET scheduled_deletion_at=NOW()+24h
-- [ ] PATCH /profile/deactivate — require auth, UPDATE users SET is_active=false, schedule 30-day deletion
-- [ ] Create src/backend/jobs/riskScoreJob.js — runs midnight UTC, composite score per blueprint 9.5, UPDATE users.risk_level, INSERT critical alerts to admin
-- [ ] Create src/backend/jobs/checkinReminderJob.js — runs 17:00 UTC (8pm Nairobi), for each active user with notif_checkin_reminder=true and no mood today, INSERT check_in_reminder push notification
-- [ ] Create src/backend/jobs/deletionJob.js — runs hourly, find users WHERE scheduled_deletion_at <= NOW(), execute full purge per blueprint 12.1 (all tables in order, flagged ai_interactions anonymized not deleted, INSERT data_deletion_confirmed notification)
-- [ ] Wire all 3 jobs into server startup with node-cron (install node-cron)
-- [ ] Add migration 023: add fcm_token VARCHAR to users table + 4 notification preference boolean columns (notif_peer_broadcast, notif_checkin_reminder, notif_group_messages, notif_credit_low all DEFAULT true)
+- [x] GET /resources — published articles, ?category and ?search filters, return list without content body
+- [x] GET /resources/:id — full article including content
+- [x] POST /feedback — NO auth required, INSERT feedback (no user_id), validate rating 1–5
+- [x] POST /referrals — require auth, INSERT therapist_referrals, INSERT notification to admin
+- [x] GET /referrals/my — require auth, return user's own referral(s) and status
+- [x] GET /profile — require auth, return alias, masked email (first 3 chars + ***@domain), consent_version, persona summary, streak_count, credits balance
+- [x] POST /profile/delete-data — require auth, UPDATE users SET scheduled_deletion_at=NOW()+24h
+- [x] PATCH /profile/deactivate — require auth, UPDATE users SET is_active=false, schedule 30-day deletion
+- [x] Create src/backend/jobs/riskScoreJob.js — runs midnight UTC, composite score per blueprint 9.5, UPDATE users.risk_level, INSERT critical alerts to admin
+- [x] Create src/backend/jobs/checkinReminderJob.js — runs 17:00 UTC (8pm Nairobi), for each active user with notif_checkin_reminder=true and no mood today, INSERT check_in_reminder push notification
+- [x] Create src/backend/jobs/deletionJob.js — runs hourly, find users WHERE scheduled_deletion_at <= NOW(), execute full purge per blueprint 12.1 (all tables in order, flagged ai_interactions anonymized not deleted, INSERT data_deletion_confirmed notification)
+- [x] Wire all 3 jobs into server startup with node-cron (install node-cron)
+- [x] Add migration 023: fcm_token + 4 notif preference columns already in migration 001 (written in Phase 1 with blueprint notification pref columns)
 
 ---
 

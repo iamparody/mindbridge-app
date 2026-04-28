@@ -3,10 +3,10 @@
 ---
 
 ## Current Phase
-**Phase 7 — Emergency & Safety Plan** (next)
+**Phase 11 — Frontend (React PWA)** (next)
 
 ## Current Task
-Active — Phase 6 complete. Resume at Phase 7: POST /emergency/trigger, PATCH /admin/emergency/:id/acknowledge, PATCH /admin/emergency/:id/resolve, GET /safety-plan, PUT /safety-plan.
+Active — Phase 10 complete. All backend routes done. Resume at Phase 11: Vite PWA setup, auth context, routing, 15 frontend modules.
 
 ---
 
@@ -60,3 +60,7 @@ None
 | 2026-04-28 | 4 | Phase 4 complete: paystack.js utility (PACKAGES, initializeTransaction, verifyWebhookSignature), credits route (balance, transactions, purchase, webhook), creditDeductor.js (atomic deduct, grace buffer, credit_low notification); /api/credits mounted in app.js |
 | 2026-04-28 | 5 | Phase 5 complete: peer.js route (POST request, GET open, PATCH accept with atomic lock + race guard, PATCH close, GET session); peerEscalation.js job (90s timeout, status guard, admin push+in_app); signaling.js (WebSocket server, session_id rooms, STUN+TURN config, relay offer/answer/ICE); /api/peer mounted, signaling server attached to http.Server |
 | 2026-04-28 | 6 | Phase 6 complete: groups.js (GET list, GET :id, POST join with ban check + UPSERT, POST leave, GET messages with pinned/paginated split, POST message + member notifications, POST report); admin.js (GET /admin/reports, PATCH /admin/reports/:id/action with warn/ban/dismiss flows); /api/groups + /api/admin mounted |
+| 2026-04-28 | 7 | Phase 7 complete: emergency.js (POST /trigger, admin push+in_app alerts); admin.js extended (PATCH /admin/emergency/:id/acknowledge, PATCH /admin/emergency/:id/resolve); safetyPlan.js (GET decrypt contacts, PUT UPSERT with dynamic SET + encrypt contacts); /api/emergency + /api/safety-plan mounted |
+| 2026-04-28 | 8 | Phase 8 complete: fcm.js (firebase-admin lazy init, sendPushNotification with graceful error handling); notificationWriter.js (writeNotification with FCM token lookup); notifications.js route (GET paginated, PATCH read, PATCH read-all, PATCH preferences with 4 boolean columns); /api/notifications mounted |
+| 2026-04-28 | 9 | Phase 9 complete: admin.js extended with all 13 Phase 9 endpoints (emergency-queue, escalations, referrals + PATCH, risk-flags, user message, resources CRUD + publish/archive, feedback aggregate, stats); all wired to existing /api/admin mount |
+| 2026-04-28 | 10 | Phase 10 complete: resources.js (GET list with tsvector search, GET :id); feedback.js (POST anonymous, type/rating/comment validation); referrals.js (POST with encrypted phone, GET /my); profile.js (GET masked email, POST delete-data +24h, PATCH deactivate +30d); riskScoreJob.js (composite score, admin critical alerts); checkinReminderJob.js (17:00 UTC push); deletionJob.js (FK-ordered purge, flagged AI anonymize, admin audit notification); all 3 jobs wired via node-cron in server.js; all routes mounted in app.js |
