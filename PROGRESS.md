@@ -3,10 +3,10 @@
 ---
 
 ## Current Phase
-**Phase 2 — Backend Foundation & Auth APIs**
+**Phase 4 — Credits & Payments** (next)
 
 ## Current Task
-Starting Phase 2: Express app skeleton, JWT utilities, auth middleware, POST /auth/register
+STOPPED — session ended after Phase 3 commit. Resume at Phase 4: Paystack integration, credit purchase flow, webhook receiver.
 
 ---
 
@@ -28,7 +28,7 @@ Starting Phase 2: Express app skeleton, JWT utilities, auth middleware, POST /au
 ---
 
 ## Active
-- Phase 2: Backend Foundation & Auth APIs
+- None — session stopped
 
 ---
 
@@ -56,3 +56,4 @@ None
 |---|---|---|
 | 2026-04-28 | 1 | Blueprint read; CHECKLIST + PROGRESS rewritten; full project structure + all 22 migration files written |
 | 2026-04-28 | 2 | Migrations run against Supabase (22/22 applied); .gitignore created; Phase 1 committed + pushed; Phase 2 starting |
+| 2026-04-28 | 3 | Phase 2 complete (auth + onboarding APIs, all utilities, middleware); Phase 3 complete (moods, journals, AI chat); committed + pushed (80a618b); session stopped by user |
