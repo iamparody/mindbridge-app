@@ -531,121 +531,159 @@
 
 ## Phase 11 — Frontend (React PWA)
 
-### 11.0 Project Setup
-- [ ] Initialize React PWA in src/frontend/ with Vite
-- [ ] Configure PWA manifest: app name MindBridge, icons, theme colour, display standalone
-- [ ] Install: react-router-dom, axios, recharts, vite-plugin-pwa
-- [ ] Create src/frontend/api/client.js — axios instance with base URL, Bearer token from localStorage, 401 handler
-- [ ] Create auth context (src/frontend/context/AuthContext.jsx) + ProtectedRoute component
-- [ ] Configure react-router-dom routes for all screens
+### 11.0 App Shell & Infrastructure
+- [ ] Initialize Vite React project in src/frontend/ — `npm create vite@latest frontend -- --template react`
+- [ ] Install dependencies: react-router-dom, axios, recharts, vite-plugin-pwa
+- [ ] Configure vite.config.js — vite-plugin-pwa with manifest (MindBridge, standalone, theme #4A90D9), workbox precache for breathing+safety plan, registerType: 'autoUpdate'
+- [ ] Write public/manifest.json — name, short_name, start_url, display: standalone, icons (192/512), background_color, theme_color
+- [ ] Create src/api/client.js — axios instance, baseURL from VITE_API_URL, request interceptor reads Bearer token from localStorage, response interceptor clears token + redirects on 401
+- [ ] Create src/context/AuthContext.jsx — provides { user, token, login(token,user), logout(), loading } via localStorage hydration; wraps entire app
+- [ ] Create src/components/ProtectedRoute.jsx — reads AuthContext; if no token → /login; calls GET /onboarding/status and redirects to correct onboarding step if incomplete
+- [ ] Create src/App.jsx — BrowserRouter, all routes defined, AuthContext provider wrapping
+- [ ] Register all routes: /login, /register, /recover, /onboarding/consent, /onboarding/persona, /onboarding/first-mood, /dashboard, /mood, /ai-chat, /peer, /journal, /groups, /groups/:id, /emergency, /safety-plan, /referral, /resources, /breathing, /analytics, /profile, /admin
+- [ ] Create src/components/BottomNav.jsx — 4 tabs: Home (dashboard), Resources (library), Breathing, Profile; active tab highlighted; always visible on logged-in screens; hidden on onboarding + auth screens
+- [ ] Create src/components/EmergencyButton.jsx — fixed red FAB bottom-right, visible on all authenticated non-emergency screens, navigates to /emergency on tap
+- [ ] Create src/index.css — CSS reset, mobile-first base styles, CSS variables for colour palette (#4A90D9 primary, #E74C3C emergency red, #27AE60 success green, mood level colours)
+- [ ] Register FCM: request notification permission on first authenticated load, POST fcm_token to /auth/login (token stored in localStorage) — skip gracefully if permission denied
+- [ ] Service worker offline support: cache /breathing and /safety-plan routes for offline access via workbox CacheFirst strategy
 
-### 11.1 Onboarding Flow
-- [ ] Registration screen: email + password form, POST /auth/register, store token
-- [ ] Consent screen: plain-language text, "I Agree" button, POST /onboarding/consent
-- [ ] Persona creation: persona_name, tone select, style select, formality select, uses_alias toggle, preview snippet, POST /onboarding/persona
-- [ ] First mood check-in screen (onboarding step 6), POST /moods
-- [ ] Signup bonus toast displayed on bonus_credited=true response
+### 11.1 Auth Screens
+- [ ] Create src/screens/RegisterScreen.jsx — email input, password input (min 8 chars), submit calls POST /auth/register, stores token+user in AuthContext, navigates to /onboarding/consent; show loading state during request; show error message on 409 (email taken) and 400 (validation)
+- [ ] Create src/screens/LoginScreen.jsx — email + password form, POST /auth/login, store token+user, GET /onboarding/status to determine redirect target (incomplete onboarding → resume step; complete → /dashboard); show 401 error message
+- [ ] Create src/screens/RecoverScreen.jsx — email input, POST /auth/recover, always show "If this email is registered, a recovery link has been sent" regardless of response; no error enumeration
 
-### 11.2 Dashboard
-- [ ] Top bar: alias display, credit balance (red if < 2), notification bell
-- [ ] Daily streak counter display
-- [ ] Six action tiles: Peer Help / AI Chat / Therapist / Journal / Groups / Emergency
-- [ ] Mood check-in banner if no entry today (dismissible, not blocking)
-- [ ] Emergency tile always full-colour
+### 11.2 Onboarding Flow
+- [ ] Create src/screens/onboarding/ConsentScreen.jsx — title "Your Privacy Matters", full plain-language consent text (data usage, AI limitations, safety escalation, flagged AI interactions anonymized not deleted), "I Agree" button calls POST /onboarding/consent, navigates to /onboarding/persona on success
+- [ ] Create src/screens/onboarding/PersonaScreen.jsx — 5 fields: persona_name (text, max 20 chars with char counter), tone (4-option radio: Warm/Motivational/Clinical/Casual), response_style (2-option: Brief/Elaborate), formality (3-option: Formal/Neutral/Informal), uses_alias (toggle); preview snippet updates live as fields change; POST /onboarding/persona on submit; 403 guard (already created); navigate to /onboarding/first-mood
+- [ ] Create src/screens/onboarding/FirstMoodScreen.jsx — reuses MoodSelector + TagSelector components; note field; POST /moods on submit; on bonus_credited=true: show BonusToast overlay ("You've received 2 free credits!") for 3s; on mood=very_low: skip to dashboard (not the very-low prompt — first mood is onboarding); navigate to /dashboard
+- [ ] Create src/components/BonusToast.jsx — overlay with confetti/emoji, "🎉 2 free credits added to your account!", auto-dismisses after 3s
 
-### 11.3 Mood Check-In
-- [ ] 5-level mood selector with face icons + colour coding
-- [ ] Optional note field (200 char limit display)
-- [ ] Multi-select tag chooser (8 tags)
-- [ ] POST /moods on submit
-- [ ] If mood=very_low: show post-submit prompt with 4 buttons (AI Chat / Peer Help / Emergency / Not Now)
+### 11.3 Dashboard Screen
+- [ ] Create src/screens/DashboardScreen.jsx — fetch GET /moods/today, GET /credits/balance, GET /notifications on mount (parallel)
+- [ ] Top bar layout: alias from AuthContext (left), credit balance badge (centre/right — red text if < 2), notification bell icon with unread count badge (right)
+- [ ] Daily streak counter: bold number + "day streak" label, sourced from mood analytics or last check-in data
+- [ ] Mood check-in banner: if GET /moods/today returns null → show dismissible soft banner "How are you feeling today?" with tap-to-check-in; if dismissed, hides for current session only (sessionStorage flag)
+- [ ] 6 action tiles grid (2×3): Peer Help, AI Chat, Therapist, Journal, Groups, Emergency — each with icon, label, tap navigates to correct screen
+- [ ] Emergency tile: always full red/accent colour regardless of anything else
+- [ ] Handle loading state with skeleton placeholders
+- [ ] Handle API errors gracefully (show cached data if available, error toast if not)
 
-### 11.4 Peer Support
-- [ ] Balance + cost estimate display before request
-- [ ] Channel selector: text / voice
-- [ ] POST /peer/request → start 90s countdown timer UI
-- [ ] Polling for status change (every 3s)
-- [ ] Text chat UI: alias-less ("You" / "Peer")
-- [ ] Voice call UI: WebRTC audio, mute button, credit timer countdown
-- [ ] Credit warning banner at 1 credit remaining
-- [ ] PATCH /peer/request/:id/close + post-session feedback prompt (1–5 stars)
+### 11.4 Mood Check-In Screen
+- [ ] Create src/components/MoodSelector.jsx — 5 mood levels as tappable face icons: 😞 Very Low (#E74C3C), 😕 Low (#E67E22), 😐 Neutral (#F1C40F), 🙂 Good (#2ECC71), 😄 Great (#27AE60); selected level highlighted; accepts value + onChange props
+- [ ] Create src/components/TagSelector.jsx — 8 tags as pill buttons (multi-select): Anxious, Hopeful, Overwhelmed, Calm, Lonely, Grateful, Angry, Numb; accepts selected[] + onToggle props
+- [ ] Create src/screens/MoodCheckinScreen.jsx — MoodSelector (required), TagSelector (optional), note textarea (200 char limit with counter), submit calls POST /moods; show streak increment toast on success ("🔥 X day streak!"); on mood=very_low: show overlay with 4 buttons (AI Chat → /ai-chat, Peer Help → /peer, Emergency → /emergency, Not Now → /dashboard); on non-very_low: navigate to /dashboard after 1s success toast
+- [ ] Milestone toast: if response indicates milestone (check streak_count in [3,7,30]) show milestone message per blueprint 7.14
 
-### 11.5 AI Chat
-- [ ] Chat UI with persona name in header
-- [ ] POST /ai/session/start on open
-- [ ] Message send → POST /ai/session/:id/message with loading indicator
-- [ ] On action='emergency' response: push emergency screen
-- [ ] POST /ai/session/:id/end on close + feedback prompt
+### 11.5 AI Chat Screen
+- [ ] Create src/screens/AIChatScreen.jsx — on mount: POST /ai/session/start; if 403 (persona not set): show "Complete persona setup in Profile first" with link; store session_id in component state
+- [ ] Chat UI: scrollable message list (newest at bottom, auto-scroll on new message); persona name in header ("Talking with [PersonaName]"); "End Chat" button top-right
+- [ ] Message input: text field + send button; disabled while loading response; POST /ai/session/:id/message on send; add optimistic user bubble immediately
+- [ ] AI response: render as assistant bubble; show loading dots while awaiting response
+- [ ] On flagged=true response (severity high): no UI change — session continues normally (elevated care is invisible to user per blueprint)
+- [ ] On action='emergency' response: immediately navigate to /emergency (no user action required — pushed automatically per blueprint 9.2)
+- [ ] Emergency button (red, top bar or FAB): always visible during AI chat session
+- [ ] On "End Chat": POST /ai/session/:id/end, then show FeedbackModal (1–5 stars + optional comment, type='ai_chat'), then navigate to /dashboard
+- [ ] Handle 429 (session limit / daily limit): show "You've reached today's chat limit. Come back tomorrow." with close button
+- [ ] Handle 503 (AI unavailable): show "AI companion is temporarily unavailable. Try again in a moment." with retry option
 
-### 11.6 Therapist Referral
-- [ ] Explanation screen with "We'll connect you" copy
-- [ ] Form: struggles textarea, preferred_time select, contact_method select, specific_needs textarea
-- [ ] POST /referrals → confirmation screen
+### 11.6 Peer Support Screens
+- [ ] Create src/screens/peer/PeerRequestScreen.jsx — fetch GET /credits/balance on mount; show balance + cost estimate ("Text: 1 credit per 15 min / Voice: 1 credit per 5 min"); if balance < 1: show "Top up credits to request peer support" with "Buy Credits" button; channel selector (Text / Voice); "Request Help" button calls POST /peer/request → navigate to PeerWaitingScreen
+- [ ] Create src/screens/peer/PeerWaitingScreen.jsx — 90s countdown timer (large display, counts down); "Looking for someone..." message; poll GET /peer/requests/open every 3s (or check own request status via stored request_id); on status=active: navigate to text/voice session screen; on timer expiry (90s): show "We're finding someone — an admin has been notified" state (do not leave screen, poll continues)
+- [ ] Create src/screens/peer/PeerTextChatScreen.jsx — WebSocket-free simple polling chat (REST for now — actual WebRTC is Phase 5.7 only for voice signaling); messages labeled "You" / "Peer"; credit countdown display (updates every 15min per text rate); POST creditDeductor handled server-side during session — frontend just shows session timer; "End Session" button → PATCH /peer/request/:id/close → FeedbackModal → /dashboard
+- [ ] Create src/screens/peer/PeerVoiceCallScreen.jsx — WebRTC audio setup: connect to ws://[host]/ws/signal with session_id join message; create RTCPeerConnection with ICE servers from GET /peer/session/:id; offer/answer/ICE candidate exchange via WebSocket relay; getUserMedia({ audio: true }); mute toggle button; credit countdown (per 5 min for voice); at 0 credits remaining: show "Grace period — 2 minutes remaining"; "End Call" button → same flow as text
+- [ ] Create src/components/peer/OpenRequestsList.jsx — list of open peer requests from GET /peer/requests/open; each shows channel_preference, time elapsed; "I'm Here" button calls PATCH /peer/request/:id/accept → navigate to correct session screen
+- [ ] Credit warning banner: when session timer indicates 1 credit remaining → show persistent "1 credit remaining (15 min left)" banner at top of peer sessions
 
-### 11.7 Journaling
-- [ ] New entry form: mood selector, tags, content textarea (no char limit)
-- [ ] Timeline list: date, mood face, tags, 100-char preview, newest first
-- [ ] Search bar + filter (mood level, date range, tag)
-- [ ] Full entry expand on tap
-- [ ] Edit (PATCH /journals/:id) and delete (DELETE /journals/:id) actions
+### 11.7 Journal Screen
+- [ ] Create src/screens/JournalScreen.jsx — main view: "New Entry" button (top), search bar, filter controls (mood_level dropdown, tag dropdown, date range pickers), entry list
+- [ ] Entry list: each card shows date, mood face emoji, tags as pills, first 100 chars of content; tap to expand full entry in modal or sub-screen; GET /journals with pagination + filters
+- [ ] New entry form (modal or sub-screen): MoodSelector (optional), TagSelector (optional), content textarea (no char limit, placeholder "Write freely..."); POST /journals on submit; no risk alert shown to user (silent per blueprint)
+- [ ] Edit mode: PATCH /journals/:id; prefill form with existing data; "Save" + "Cancel"
+- [ ] Delete: DELETE /journals/:id with confirmation dialog "Delete this entry?"
+- [ ] Search: calls GET /journals?search=... on input debounce (300ms)
+- [ ] Empty state: "Your journal is empty — start writing" illustration + New Entry button
+- [ ] Loading + error states on all API calls
 
-### 11.8 Groups
-- [ ] Group list: name, category, member count, description
-- [ ] Community agreement screen → POST /groups/:id/join
-- [ ] Chat UI: messages ordered by created_at, pinned at top, alias display, is_deleted shown as '[deleted]'
-- [ ] Long-press to report: reason selector → POST /groups/:id/messages/:msgId/report
+### 11.8 Groups Screens
+- [ ] Create src/screens/GroupsScreen.jsx — fetch GET /groups; display group cards: name, category badge, member count, description; tap navigates to GroupDetailScreen; loading + error states
+- [ ] Create src/screens/GroupDetailScreen.jsx — show group info; if is_member=false: show "Join" button → navigate to AgreementScreen; if is_member=true: "Enter Chat" button → navigate to GroupChatScreen; if membership_status=banned: show "You have been removed from this group"
+- [ ] Create src/screens/GroupAgreementScreen.jsx — community agreement text (all 5 rules from blueprint 7.7); "I Agree and Join" button → POST /groups/:id/join → navigate to GroupChatScreen; "Cancel" → back
+- [ ] Create src/screens/GroupChatScreen.jsx — pinned messages section at top (rendered from pinned[]); scrollable message list (newest at bottom); alias shown on each message; is_deleted messages show '[deleted]' in grey italic; auto-scroll to bottom on new messages; poll for new messages every 5s (GET /groups/:id/messages?page=1)
+- [ ] Message input: text field + send button; POST /groups/:id/messages; optimistic message render
+- [ ] Long-press on message (or press-and-hold): show context menu with "Report" option → ReportModal
+- [ ] Create src/components/ReportModal.jsx — reason selector (Harmful content / Abuse / Spam / Other); "Submit Report" → POST /groups/:id/messages/:msgId/report; show "Your report has been submitted. Thank you." and close modal
+- [ ] Leave group: "Leave Group" button in header → POST /groups/:id/leave → navigate back to GroupsScreen
 
-### 11.9 Emergency
-- [ ] Full-screen with 2 immediate options
-- [ ] "Talk now" → POST /emergency/trigger + show Befrienders Kenya 0800 723 253
-- [ ] Inline breathing module while waiting
-- [ ] One-tap "Open My Safety Plan" if plan exists
+### 11.9 Emergency Screen
+- [ ] Create src/screens/EmergencyScreen.jsx — full-screen, red/crisis colour scheme; no back navigation while active (override browser back)
+- [ ] Top section: "You're not alone" heading + Befrienders Kenya crisis line displayed prominently: "0800 723 253 — Free, 24/7" (always visible regardless of action taken)
+- [ ] Two action buttons: "I need to talk to someone now" (primary, large), "Breathing exercises first" (secondary)
+- [ ] On "Talk now": POST /emergency/trigger; show "Help is on the way. An admin has been alerted." message; render BreathingWidget inline below the message while waiting; poll GET /notifications every 10s for admin message (show as alert if received)
+- [ ] On "Breathing first": navigate to /breathing (or render inline BreathingWidget component)
+- [ ] Safety Plan quick-access: if GET /safety-plan returns a plan → show "Open My Safety Plan" button → navigate to /safety-plan; if null → show "Set up your Safety Plan" prompt with link to /safety-plan
+- [ ] Emergency screen accessible via: EmergencyButton FAB, Emergency tile on dashboard, AI action='emergency' auto-push
 
-### 11.10 Profile
-- [ ] Account: alias (read-only), masked email, deactivate option
-- [ ] AI Companion: persona details read-only
-- [ ] Credits: balance, Buy Credits button → Paystack redirect, transaction history
-- [ ] Privacy: consent version, Delete My Data, Clear Journal
-- [ ] Notifications: 4 toggle switches → PATCH /notifications/preferences
-- [ ] Send Feedback modal
+### 11.10 Safety Plan Screen
+- [ ] Create src/screens/SafetyPlanScreen.jsx — fetch GET /safety-plan on mount; if null: show empty form with "Your safety plan is empty — fill it in during a calm moment" prompt
+- [ ] 6-field form (all optional): warning_signs textarea, helpful_things textarea, things_to_avoid textarea, contacts section (up to 3: name field + contact_detail field per contact, "Add Contact" button, "Remove" per contact), emergency_resources textarea (pre-populated if empty with "Befrienders Kenya: 0800 723 253"), reason_to_continue textarea
+- [ ] "Save Plan" button → PUT /safety-plan; success toast "Safety plan saved"
+- [ ] Read-only display mode when viewing; "Edit" button toggles to edit mode
+- [ ] Accessible from: Profile screen link + Emergency screen button
 
-### 11.11 Psychoeducation Library
-- [ ] Category tabs + article card list
-- [ ] Search bar (client-side filter on loaded list)
-- [ ] Article reader (full content)
-- [ ] Bookmark toggle (localStorage)
+### 11.11 Therapist Referral Screen
+- [ ] Create src/screens/ReferralScreen.jsx — explanation screen: "We'll connect you with a qualified mental health professional. An admin will reach out to arrange your session." + "Continue" button
+- [ ] Form: struggles textarea (max 500 chars, required, with char counter), preferred_time select (Morning/Afternoon/Evening), contact_method select (In-app message/Phone call); if contact_method=phone: show contact_detail input (phone number); specific_needs textarea (optional)
+- [ ] POST /referrals on submit; navigate to confirmation screen
+- [ ] Confirmation screen: "Your request has been received. We'll be in touch within 24 hours." + illustration; "Back to Dashboard" button
+- [ ] Referral status: on Profile → "My Referrals" section shows GET /referrals/my with current status badge
 
-### 11.12 Breathing Exercises
-- [ ] Box Breathing (4-4-4-4) with animated CSS visual + timer
-- [ ] 4-7-8 Breathing with step timer
-- [ ] 5-4-3-2-1 Grounding: step-by-step text screens
-- [ ] Progressive Muscle Relaxation: body-part guided text + timer
-- [ ] Zero API calls — fully static UI
+### 11.12 Psychoeducation Library Screen
+- [ ] Create src/screens/ResourcesScreen.jsx — fetch GET /resources on mount; category filter tabs (9 categories from blueprint 7.10 + "All"); search bar input calls GET /resources?search=... on change; article card list: title, category badge, estimated read time, tags
+- [ ] Create src/screens/ArticleScreen.jsx — fetch GET /resources/:id; render full content; estimated read time display; bookmark button (toggles localStorage entry keyed by article ID); back button
+- [ ] Bookmark state: heart/bookmark icon filled if article ID in localStorage['bookmarks']; empty state on Resources screen: filter to show bookmarked articles (client-side filter)
+- [ ] Empty state when no articles match search: "No articles found"
+- [ ] Loading + error states
 
-### 11.13 Mood Analytics / Insights
-- [ ] GET /moods/analytics
-- [ ] 7-day recharts bar chart (colour by mood level)
-- [ ] 30-day recharts line chart
-- [ ] Most common mood card + frequent tags display
-- [ ] Streak display + total check-ins
-- [ ] Empty state if < 3 entries
+### 11.13 Breathing & Grounding Exercises Screen
+- [ ] Create src/screens/BreathingScreen.jsx — exercise list with 4 options; each shown as card with name, brief description, estimated duration
+- [ ] Create src/components/breathing/BoxBreathing.jsx — 4-4-4-4 pattern; animated circle (CSS keyframes): expand (inhale 4s), hold (4s), shrink (exhale 4s), hold (4s); phase label updates: "Breathe In / Hold / Breathe Out / Hold"; cycle counter; "Stop" button; zero API calls
+- [ ] Create src/components/breathing/Breathing478.jsx — 4-7-8 pattern; same animated circle approach; Breathe In (4s) / Hold (7s) / Breathe Out (8s); cycle counter; "Stop" button
+- [ ] Create src/components/breathing/Grounding54321.jsx — 5 steps as full-screen slides: "5 things you can SEE" / "4 things you can TOUCH" / "3 things you can HEAR" / "2 things you can SMELL" / "1 thing you can TASTE"; "Next" button between steps; completion screen "You've completed the grounding exercise"; fully text-based, no animation required
+- [ ] Create src/components/breathing/PMR.jsx — Progressive Muscle Relaxation; 8 body parts: feet, calves, thighs, abdomen, hands, arms, shoulders, face; each step: "Tense [body part] for 5 seconds" → 5s timer → "Release and relax for 10 seconds" → 10s timer → next; completion screen; "Stop" button
+- [ ] Create src/components/breathing/BreathingWidget.jsx — inline compact version of BoxBreathing for embedding on Emergency screen; no navigation controls
 
-### 11.14 Safety Plan
-- [ ] GET /safety-plan + PUT /safety-plan
-- [ ] 6-field form (all optional)
-- [ ] Pre-populated emergency_resources with Befrienders Kenya text
-- [ ] Accessible from Profile AND Emergency screen
+### 11.14 Mood Analytics Screen
+- [ ] Create src/screens/AnalyticsScreen.jsx — fetch GET /moods/analytics on mount
+- [ ] 7-day bar chart: recharts BarChart, x-axis = date labels (Mon–Sun), y-axis = avg_score (-2 to +2), bars colour-coded by score (red negative, yellow neutral, green positive); empty bars (null) shown as grey
+- [ ] Most common mood card: large mood face + label for common_mood field
+- [ ] Frequent tags section: tag pill list sorted by count descending, count shown on each pill
+- [ ] Streak display: "🔥 X day streak" + total check-ins count
+- [ ] Empty state (< 3 entries): "Keep checking in — your insights will appear here after a few days" with illustration
+- [ ] Loading skeleton for chart area
 
-### 11.15 Admin Dashboard
-- [ ] Admin-only route guard
-- [ ] Emergency Queue section: list + acknowledge/resolve buttons
-- [ ] Peer Escalation Alerts section
-- [ ] Therapist Referral Inbox: list + status management + notes
-- [ ] Group Moderation: report queue + warn/ban/dismiss
-- [ ] User Risk Flags list + send-message action
-- [ ] Content Library: article CRUD UI
-- [ ] System Stats display
-- [ ] Feedback Overview: avg ratings + recent comments
+### 11.15 Profile Screen
+- [ ] Create src/screens/ProfileScreen.jsx — sections rendered as accordion or stacked cards
+- [ ] My Account section: alias display (read-only, "Your alias is how others see you"), masked email, "Deactivate Account" button → confirmation dialog → PATCH /profile/deactivate → logout
+- [ ] My AI Companion section: persona_name, tone, response_style, formality — all read-only; note "Your companion's identity was set at signup and cannot be changed"
+- [ ] Credits section: balance display (red if < 2), "Buy Credits" button (opens credit purchase sheet), GET /credits/transactions paginated list showing date/type/amount/channel
+- [ ] Credit purchase sheet: 4 package options (Starter 50KSh/3cr, Standard 100KSh/7cr, Plus 200KSh/15cr, Support 500KSh/40cr); tap package → POST /credits/purchase → redirect window.open(payment_url) for Paystack
+- [ ] Privacy & Data section: consent version + date; "Delete My Data" → confirmation dialog with 24hr warning → POST /profile/delete-data → logout; "Clear My Journal" → confirmation → DELETE /journals
+- [ ] Notifications section: 4 toggle switches (notif_peer_broadcast, notif_checkin_reminder, notif_group_messages, notif_credit_low); on toggle: PATCH /notifications/preferences
+- [ ] Notifications bell: GET /notifications paginated list in a slide-out drawer from bell icon in dashboard top bar; PATCH /notifications/:id/read on tap; "Mark All Read" button → PATCH /notifications/read-all
+- [ ] Send Feedback button → FeedbackModal (type=general pre-selected); POST /feedback
+- [ ] Safety Plan link → navigate to /safety-plan
+- [ ] Referrals section: GET /referrals/my; show status badge + created_at; link to /referral to submit new
+
+### 11.16 Admin Dashboard Screen
+- [ ] Create src/screens/AdminDashboard.jsx — adminAuth guard (redirect to /dashboard if role != 'admin'); tab or section navigation
+- [ ] Emergency Queue section: GET /admin/emergency-queue; list with alias, triggered_at, time elapsed (computed), status; "Acknowledge" → PATCH /admin/emergency/:id/acknowledge; "Resolve" → PATCH /admin/emergency/:id/resolve; auto-refresh every 30s
+- [ ] Peer Escalation Alerts section: GET /admin/escalations; list with alias, channel_preference, escalated_at; "Send Message" → inline message input → POST /admin/users/:alias/message
+- [ ] Therapist Referral Inbox: GET /admin/referrals with ?status filter tabs; each item: alias, struggles preview, preferred_time, contact_method, status badge; expand to full detail; status select dropdown → PATCH /admin/referrals/:id; admin_notes textarea → PATCH /admin/referrals/:id
+- [ ] Group Moderation: GET /admin/reports; each report: group name, reported alias, reporter alias, reason, message preview; 3 action buttons: Dismiss, Warn, Ban → PATCH /admin/reports/:id/action with action field
+- [ ] User Risk Flags: GET /admin/risk-flags; alias list with risk_level badge; "Send Care Message" → inline input → POST /admin/users/:alias/message
+- [ ] Content Library: GET /admin/resources; article list with status badges; "New Article" form (title, category, content textarea, estimated_read_minutes, tags); POST /admin/resources; PATCH /admin/resources/:id/publish; PATCH /admin/resources/:id/archive; inline edit form for PATCH /admin/resources/:id
+- [ ] System Stats: GET /admin/stats; display DAU, check-ins, peer sessions, AI sessions, credits purchased — all today; auto-refresh every 60s
+- [ ] Feedback Overview: GET /admin/feedback; average rating per type (peer_session, ai_chat, bug, general) as progress bars or star displays; recent_comments list
 
 ---
 

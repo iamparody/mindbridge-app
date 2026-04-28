@@ -3,10 +3,10 @@
 ---
 
 ## Current Phase
-**Phase 11 — Frontend (React PWA)** (next)
+**Phase 11 — Frontend (React PWA)** (active)
 
 ## Current Task
-Active — Phase 10 complete. All backend routes done. Resume at Phase 11: Vite PWA setup, auth context, routing, 15 frontend modules.
+Phase 11 active. Building app shell: Vite PWA init, manifest.json, axios client, AuthContext, ProtectedRoute, all routes, BottomNav, EmergencyButton FAB, FCM registration, service worker offline caching.
 
 ---
 
@@ -28,7 +28,7 @@ Active — Phase 10 complete. All backend routes done. Resume at Phase 11: Vite 
 ---
 
 ## Active
-- Phase 5 — Peer Support
+- Phase 11 — Frontend (React PWA)
 
 ---
 
