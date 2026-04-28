@@ -8,102 +8,102 @@
 ### 1.0 Project Infrastructure
 - [x] Create directory structure: src/backend/, src/backend/migrations/, src/backend/db/, src/backend/routes/, src/backend/middleware/, src/backend/utils/, src/backend/jobs/, src/backend/ws/, src/frontend/
 - [x] Initialize backend Node.js project: src/backend/package.json with scripts (start, dev, migrate)
-- [ ] Install backend core dependencies: run `cd src/backend && npm install` (requires Node.js on host)
+- [x] Install backend core dependencies: run `cd src/backend && npm install` (requires Node.js on host)
 - [x] Create src/backend/.env.example with all required variables
 - [x] Create src/backend/db/index.js — pg Pool with DATABASE_URL, exported query function
 - [x] Create src/backend/migrations/run.js — reads and executes numbered .sql files, tracks applied migrations in migrations_log table
 
 ### 1.1 Users Table
 - [x] Write src/backend/migrations/001_users.sql — all 15 columns per blueprint 8.1 (consent_version nullable until consent step, notification prefs as 4 boolean columns appended)
-- [ ] Run 001_users.sql against Supabase and verify with SELECT column_name, data_type FROM information_schema.columns WHERE table_name='users'
+- [x] - [x] Run 001_users.sql against Supabase and verify with SELECT column_name, data_type FROM information_schema.columns WHERE table_name='users'
 
 ### 1.2 AI_Personas Table
 - [x] Write src/backend/migrations/002_ai_personas.sql — user_id UNIQUE FK, 4 enum columns, uses_alias boolean
-- [ ] Run 002 and verify FK to users
+- [x] - [x] Run 002 and verify FK to users
 
 ### 1.3 Moods Table
 - [x] Write src/backend/migrations/003_moods.sql — user_id FK, mood_level enum, tags TEXT[], note VARCHAR(200)
-- [ ] Run 003 and verify TEXT[] column type
+- [x] - [x] Run 003 and verify TEXT[] column type
 
 ### 1.4 Credits Table
 - [x] Write src/backend/migrations/004_credits.sql — user_id UNIQUE FK, balance INTEGER CHECK >= 0
-- [ ] Run 004 and verify CHECK constraint
+- [x] - [x] Run 004 and verify CHECK constraint
 
 ### 1.5 Sessions Table (peer_request_id FK added later)
 - [x] Write src/backend/migrations/005_sessions.sql — without peer_request_id FK (circular dep resolved in 007)
-- [ ] Run 005 and verify table created
+- [x] - [x] Run 005 and verify table created
 
 ### 1.6 PeerRequests Table
 - [x] Write src/backend/migrations/006_peer_requests.sql — user_id FK, accepted_by FK nullable, session_id FK nullable
-- [ ] Run 006 and verify all FKs
+- [x] - [x] Run 006 and verify all FKs
 
 ### 1.7 Sessions peer_request_id FK (resolves circular dependency)
 - [x] Write src/backend/migrations/007_sessions_peer_request_fk.sql — ALTER TABLE sessions ADD FK to peer_requests
-- [ ] Run 007 and verify FK exists in information_schema.referential_constraints
+- [x] - [x] Run 007 and verify FK exists in information_schema.referential_constraints
 
 ### 1.8 AI_Interactions Table
 - [x] Write src/backend/migrations/008_ai_interactions.sql — user_id nullable (anonymized on deletion), session_id FK, context_snapshot JSONB
-- [ ] Run 008 and verify nullable user_id and JSONB column
+- [x] - [x] Run 008 and verify nullable user_id and JSONB column
 
 ### 1.9 CreditTransactions Table
 - [x] Write src/backend/migrations/009_credit_transactions.sql — all enums, session_id FK nullable, amount_currency DECIMAL(10,2)
-- [ ] Run 009 and verify all column types
+- [x] - [x] Run 009 and verify all column types
 
 ### 1.10 Notifications Table
 - [x] Write src/backend/migrations/010_notifications.sql — type enum with all 12 notification types, payload JSONB
-- [ ] Run 010 and verify enum list is complete (12 values)
+- [x] Run 010 and verify enum list is complete (12 values)
 
 ### 1.11 Journals Table
 - [x] Write src/backend/migrations/011_journals.sql — user_id FK, mood_id FK nullable, tags TEXT[], content TEXT, risk_flagged boolean
-- [ ] Run 011 and verify FK to moods table
+- [x] Run 011 and verify FK to moods table
 
 ### 1.12 SafetyPlans Table
 - [x] Write src/backend/migrations/012_safety_plans.sql — user_id UNIQUE FK, contacts JSONB, emergency_resources with default pre-populated
-- [ ] Run 012 and verify UNIQUE constraint on user_id
+- [x] Run 012 and verify UNIQUE constraint on user_id
 
 ### 1.13 Groups Table
 - [x] Write src/backend/migrations/013_groups.sql — condition_category enum (8 values), created_by FK to users
-- [ ] Run 013 and verify enum values match blueprint exactly
+- [x] Run 013 and verify enum values match blueprint exactly
 
 ### 1.14 GroupMemberships Table
 - [x] Write src/backend/migrations/014_group_memberships.sql — group_id + user_id FKs, UNIQUE(group_id, user_id), agreed_at NOT NULL
-- [ ] Run 014 and verify composite UNIQUE constraint
+- [x] Run 014 and verify composite UNIQUE constraint
 
 ### 1.15 GroupMessages Table
 - [x] Write src/backend/migrations/015_group_messages.sql — group_id FK, user_id FK, deleted_by FK nullable (both ref users table)
-- [ ] Run 015 and verify two separate FK refs to users
+- [x] Run 015 and verify two separate FK refs to users
 
 ### 1.16 GroupReports Table
 - [x] Write src/backend/migrations/016_group_reports.sql — reported_user_id FK, reported_by FK, message_id FK nullable, reason enum, admin_action enum nullable
-- [ ] Run 016 and verify FK to group_messages
+- [x] Run 016 and verify FK to group_messages
 
 ### 1.17 GroupBans Table
 - [x] Write src/backend/migrations/017_group_bans.sql — group_id FK, user_id FK, banned_by FK, expires_at nullable
-- [ ] Run 017 and verify table
+- [x] Run 017 and verify table
 
 ### 1.18 Emergency_Logs Table
 - [x] Write src/backend/migrations/018_emergency_logs.sql — trigger_type enum, handled_by FK nullable, acknowledged_at + resolved_at nullable
-- [ ] Run 018 and verify two FK refs to users (user_id + handled_by)
+- [x] Run 018 and verify two FK refs to users (user_id + handled_by)
 
 ### 1.19 Escalation_Logs Table
 - [x] Write src/backend/migrations/019_escalation_logs.sql — session_id FK, trigger_type enum, escalated_to enum
-- [ ] Run 019 and verify FKs
+- [x] Run 019 and verify FKs
 
 ### 1.20 TherapistReferrals Table
 - [x] Write src/backend/migrations/020_therapist_referrals.sql — preferred_time enum, contact_method enum, contact_detail TEXT (encrypted app-side), status enum
-- [ ] Run 020 and verify table
+- [x] Run 020 and verify table
 
 ### 1.21 Feedback Table
 - [x] Write src/backend/migrations/021_feedback.sql — NO user_id column (fully anonymous by design), rating CHECK 1–5, session_id FK nullable
-- [ ] Run 021 and verify no user_id column exists
+- [x] Run 021 and verify no user_id column exists
 
 ### 1.22 PsychoeducationArticles Table
 - [x] Write src/backend/migrations/022_psychoeducation_articles.sql — category enum (9 values, differs from groups: has general_wellness + crisis_support), status enum, created_by FK
-- [ ] Run 022 and verify category enum is distinct from groups enum
+- [x] Run 022 and verify category enum is distinct from groups enum
 
 ### 1.23 FK Verification
-- [ ] Run FK audit query against information_schema.referential_constraints — list all constraints and verify count matches expected relationships
-- [ ] Test cascade behaviour: insert test user, insert dependent records, delete user, verify CASCADE and SET NULL behaviour per blueprint
+- [x] Run FK audit query against information_schema.referential_constraints — list all constraints and verify count matches expected relationships
+- [x] Test cascade behaviour: insert test user, insert dependent records, delete user, verify CASCADE and SET NULL behaviour per blueprint
 
 ---
 
