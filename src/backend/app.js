@@ -23,10 +23,10 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/onboarding',    require('./routes/onboarding'));
+app.use('/api/moods',         require('./routes/moods'));
+app.use('/api/journals',      require('./routes/journals'));
+app.use('/api/ai',            require('./routes/ai'));
 // Remaining routes added phase by phase:
-// app.use('/api/moods',         require('./routes/moods'));
-// app.use('/api/journals',      require('./routes/journals'));
-// app.use('/api/ai',            require('./routes/ai'));
 // app.use('/api/credits',       require('./routes/credits'));
 // app.use('/api/peer',          require('./routes/peer'));
 // app.use('/api/groups',        require('./routes/groups'));
