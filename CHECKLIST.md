@@ -264,152 +264,152 @@
 ## Phase 4 — Credits & Payments
 
 ### 4.1 GET /credits/balance
-- [ ] Require auth middleware
-- [ ] SELECT balance FROM credits WHERE user_id=req.user.id
-- [ ] Return 200: { balance }
+- [x] Require auth middleware
+- [x] SELECT balance FROM credits WHERE user_id=req.user.id
+- [x] Return 200: { balance }
 
 ### 4.2 GET /credits/transactions
-- [ ] Require auth middleware
-- [ ] Paginated credit_transactions for user, ordered desc
-- [ ] Return 200: { transactions, total, page }
+- [x] Require auth middleware
+- [x] Paginated credit_transactions for user, ordered desc
+- [x] Return 200: { transactions, total, page }
 
 ### 4.3 Create src/backend/utils/paystack.js
-- [ ] initializeTransaction(email, amountKobo, metadata) — POST to Paystack API
-- [ ] verifyWebhookSignature(rawBody, signature) — HMAC-SHA512 with PAYSTACK_WEBHOOK_SECRET
-- [ ] Define package constants: starter(50KSh/3cr), standard(100KSh/7cr), plus(200KSh/15cr), support(500KSh/40cr)
+- [x] initializeTransaction(email, amountKobo, metadata) — POST to Paystack API
+- [x] verifyWebhookSignature(rawBody, signature) — HMAC-SHA512 with PAYSTACK_WEBHOOK_SECRET
+- [x] Define package constants: starter(50KSh/3cr), standard(100KSh/7cr), plus(200KSh/15cr), support(500KSh/40cr)
 
 ### 4.4 POST /credits/purchase
-- [ ] Require auth middleware
-- [ ] Validate package_id in ['starter','standard','plus','support'] — 400 if invalid
-- [ ] INSERT pending credit_transaction
-- [ ] Call Paystack initializeTransaction with user email, amount in kobo, metadata {user_id, package_id}
-- [ ] Return 200: { payment_url, reference }
+- [x] Require auth middleware
+- [x] Validate package_id in ['starter','standard','plus','support'] — 400 if invalid
+- [x] INSERT pending credit_transaction
+- [x] Call Paystack initializeTransaction with user email, amount in kobo, metadata {user_id, package_id}
+- [x] Return 200: { payment_url, reference }
 
 ### 4.5 POST /credits/webhook
-- [ ] NO auth middleware — public, signature-verified only
-- [ ] Verify Paystack signature — 401 if invalid
-- [ ] Handle event='charge.success' only — ignore all others
-- [ ] Idempotency: check payment_reference not already confirmed
-- [ ] UPDATE credits balance += package_credits
-- [ ] UPDATE credit_transaction: status='confirmed', payment_reference set
-- [ ] INSERT credit_purchase_confirmed notification (push + in-app)
-- [ ] Return 200 to Paystack
+- [x] NO auth middleware — public, signature-verified only
+- [x] Verify Paystack signature — 401 if invalid
+- [x] Handle event='charge.success' only — ignore all others
+- [x] Idempotency: check payment_reference not already confirmed
+- [x] UPDATE credits balance += package_credits
+- [x] UPDATE credit_transaction: status='confirmed', payment_reference set
+- [x] INSERT credit_purchase_confirmed notification (push + in-app)
+- [x] Return 200 to Paystack
 
 ### 4.6 Create src/backend/utils/creditDeductor.js
-- [ ] deductCredit(user_id, session_id, channel): text=1cr/15min, voice=1cr/5min
-- [ ] Check balance >= 1 before deducting — if 0 return { blocked: true }
-- [ ] Voice grace buffer: on last credit, allow 2 min before blocking
-- [ ] INSERT credit_transaction debit record on each deduction
-- [ ] If balance drops below 2 after deduction: INSERT credit_low notification (in-app)
+- [x] deductCredit(user_id, session_id, channel): text=1cr/15min, voice=1cr/5min
+- [x] Check balance >= 1 before deducting — if 0 return { blocked: true }
+- [x] Voice grace buffer: on last credit, allow 2 min before blocking
+- [x] INSERT credit_transaction debit record on each deduction
+- [x] If balance drops below 2 after deduction: INSERT credit_low notification (in-app)
 
 ---
 
 ## Phase 5 — Peer Support
 
 ### 5.1 POST /peer/request
-- [ ] Require auth middleware
-- [ ] Check credits.balance >= 1 — 402 if zero (top-up prompt)
-- [ ] INSERT peer_requests (status='open')
-- [ ] INSERT peer_request_broadcast notification to all active members except requester (in-app + push)
-- [ ] Schedule 90s escalation via setTimeout (store timer reference keyed by request_id)
-- [ ] UPDATE peer_requests SET escalation_job_id = timer reference identifier
-- [ ] Return 201: { request_id }
+- [x] Require auth middleware
+- [x] Check credits.balance >= 1 — 402 if zero (top-up prompt)
+- [x] INSERT peer_requests (status='open')
+- [x] INSERT peer_request_broadcast notification to all active members except requester (in-app + push)
+- [x] Schedule 90s escalation via setTimeout (store timer reference keyed by request_id)
+- [x] UPDATE peer_requests SET escalation_job_id = timer reference identifier
+- [x] Return 201: { request_id }
 
 ### 5.2 GET /peer/requests/open
-- [ ] Require auth middleware
-- [ ] SELECT peer_requests WHERE status='open' AND user_id != req.user.id
-- [ ] Return 200: { requests: [{ id, channel_preference, created_at }] }
+- [x] Require auth middleware
+- [x] SELECT peer_requests WHERE status='open' AND user_id != req.user.id
+- [x] Return 200: { requests: [{ id, channel_preference, created_at }] }
 
 ### 5.3 PATCH /peer/request/:id/accept
-- [ ] Require auth middleware
-- [ ] Fetch request — 404 if not found, 409 if status != 'open', 403 if own request
-- [ ] DB transaction: UPDATE peer_requests status='locked', accepted_by=req.user.id
-- [ ] INSERT sessions (type='peer', channel=channel_preference, status='active')
-- [ ] UPDATE peer_requests SET session_id=new_session_id, status='active'
-- [ ] Cancel 90s escalation job for this request_id
-- [ ] INSERT session_confirmation notification to requester (in-app)
-- [ ] Return 200: { session_id }
+- [x] Require auth middleware
+- [x] Fetch request — 404 if not found, 409 if status != 'open', 403 if own request
+- [x] DB transaction: UPDATE peer_requests status='locked', accepted_by=req.user.id
+- [x] INSERT sessions (type='peer', channel=channel_preference, status='active')
+- [x] UPDATE peer_requests SET session_id=new_session_id, status='active'
+- [x] Cancel 90s escalation job for this request_id
+- [x] INSERT session_confirmation notification to requester (in-app)
+- [x] Return 200: { session_id }
 
 ### 5.4 PATCH /peer/request/:id/close
-- [ ] Require auth middleware — only requester or accepted_by can close
-- [ ] UPDATE sessions status='completed', ended_at=NOW()
-- [ ] UPDATE peer_requests status='closed'
-- [ ] Return 200: { ended_at }
+- [x] Require auth middleware — only requester or accepted_by can close
+- [x] UPDATE sessions status='completed', ended_at=NOW()
+- [x] UPDATE peer_requests status='closed'
+- [x] Return 200: { ended_at }
 
 ### 5.5 GET /peer/session/:id
-- [ ] Require auth middleware — only participants (user_id or accepted_by)
-- [ ] Return session details + credit_cost + channel
-- [ ] Return 200: { session }
+- [x] Require auth middleware — only participants (user_id or accepted_by)
+- [x] Return session details + credit_cost + channel
+- [x] Return 200: { session }
 
 ### 5.6 Create src/backend/jobs/peerEscalation.js
-- [ ] escalatePeerRequest(request_id): verify still status='open', UPDATE status='escalated', escalated_at=NOW(), INSERT peer_escalation notification to admin (push + in-app)
-- [ ] Verify cancellation: if called after accept, status check prevents double-escalation
+- [x] escalatePeerRequest(request_id): verify still status='open', UPDATE status='escalated', escalated_at=NOW(), INSERT peer_escalation notification to admin (push + in-app)
+- [x] Verify cancellation: if called after accept, status check prevents double-escalation
 
 ### 5.7 WebRTC + Signaling Server
-- [ ] Create src/backend/ws/signaling.js — WebSocket server (ws package), match peers by session_id only, relay offer/answer/ICE candidates
-- [ ] Ensure no alias or user_id transmitted through signaling channel — session_id only
-- [ ] Configure STUN: stun:stun.l.google.com:19302 (free public, zero cost)
-- [ ] Document TURN requirement in .env.example (TURN_URL, TURN_USERNAME, TURN_CREDENTIAL)
+- [x] Create src/backend/ws/signaling.js — WebSocket server (ws package), match peers by session_id only, relay offer/answer/ICE candidates
+- [x] Ensure no alias or user_id transmitted through signaling channel — session_id only
+- [x] Configure STUN: stun:stun.l.google.com:19302 (free public, zero cost)
+- [x] Document TURN requirement in .env.example (TURN_URL, TURN_USERNAME, TURN_CREDENTIAL)
 
 ---
 
 ## Phase 6 — Groups & Moderation
 
 ### 6.1 GET /groups
-- [ ] Require auth middleware
-- [ ] SELECT all groups WHERE is_active=true, compute member_count via subquery
-- [ ] Return 200: { groups }
+- [x] Require auth middleware
+- [x] SELECT all groups WHERE is_active=true, compute member_count via subquery
+- [x] Return 200: { groups }
 
 ### 6.2 GET /groups/:id
-- [ ] Require auth middleware
-- [ ] Return group details + membership status for authenticated user
-- [ ] Return 200: { group, is_member, membership_status }
+- [x] Require auth middleware
+- [x] Return group details + membership status for authenticated user
+- [x] Return 200: { group, is_member, membership_status }
 
 ### 6.3 POST /groups/:id/join
-- [ ] Require auth middleware
-- [ ] Validate: agreement_confirmed=true in body — 400 if false
-- [ ] Check existing membership — 409 if already active, 403 if banned
-- [ ] UPSERT group_memberships (insert or update left→active), set agreed_at=NOW()
-- [ ] Return 201: { membership_id }
+- [x] Require auth middleware
+- [x] Validate: agreement_confirmed=true in body — 400 if false
+- [x] Check existing membership — 409 if already active, 403 if banned
+- [x] UPSERT group_memberships (insert or update left→active), set agreed_at=NOW()
+- [x] Return 201: { membership_id }
 
 ### 6.4 POST /groups/:id/leave
-- [ ] Require auth middleware, verify is member
-- [ ] UPDATE group_memberships SET status='left'
-- [ ] Return 200
+- [x] Require auth middleware, verify is member
+- [x] UPDATE group_memberships SET status='left'
+- [x] Return 200
 
 ### 6.5 GET /groups/:id/messages
-- [ ] Require auth middleware — 403 if not active member
-- [ ] Paginated query, most recent first, is_pinned messages first, is_deleted shown as '[deleted]'
-- [ ] JOIN users to get alias for each message
-- [ ] Return 200: { messages, pinned, total, page }
+- [x] Require auth middleware — 403 if not active member
+- [x] Paginated query, most recent first, is_pinned messages first, is_deleted shown as '[deleted]'
+- [x] JOIN users to get alias for each message
+- [x] Return 200: { messages, pinned, total, page }
 
 ### 6.6 POST /groups/:id/messages
-- [ ] Require auth middleware — 403 if not active member
-- [ ] Validate: content non-empty, text only
-- [ ] INSERT group_messages record
-- [ ] INSERT group_message notifications to all active members with notif_group_messages=true (except poster)
-- [ ] Return 201: { message_id }
+- [x] Require auth middleware — 403 if not active member
+- [x] Validate: content non-empty, text only
+- [x] INSERT group_messages record
+- [x] INSERT group_message notifications to all active members with notif_group_messages=true (except poster)
+- [x] Return 201: { message_id }
 
 ### 6.7 POST /groups/:id/messages/:msgId/report
-- [ ] Require auth middleware
-- [ ] Validate: reason enum, reported message belongs to this group
-- [ ] INSERT group_reports record
-- [ ] INSERT admin notification (pending report alert)
-- [ ] Return 201: { report_id }
+- [x] Require auth middleware
+- [x] Validate: reason enum, reported message belongs to this group
+- [x] INSERT group_reports record
+- [x] INSERT admin notification (pending report alert)
+- [x] Return 201: { report_id }
 
 ### 6.8 GET /admin/reports
-- [ ] Require adminAuth middleware
-- [ ] SELECT group_reports WHERE status='pending', ordered by created_at
-- [ ] Include: group name, reported alias, reporting alias, reason, message preview, timestamp
-- [ ] Return 200: { reports }
+- [x] Require adminAuth middleware
+- [x] SELECT group_reports WHERE status='pending', ordered by created_at
+- [x] Include: group name, reported alias, reporting alias, reason, message preview, timestamp
+- [x] Return 200: { reports }
 
 ### 6.9 PATCH /admin/reports/:id/action
-- [ ] Require adminAuth middleware
-- [ ] Validate: action in ['warn','ban','dismiss']
-- [ ] warn: UPDATE report status='actioned', admin_action='warn', INSERT group_warning notification to reported user (in-app)
-- [ ] ban: INSERT group_bans, UPDATE group_memberships status='banned', UPDATE report status='actioned', admin_action='ban'
-- [ ] dismiss: UPDATE report status='dismissed', admin_action='dismiss'
-- [ ] Return 200: { action_taken }
+- [x] Require adminAuth middleware
+- [x] Validate: action in ['warn','ban','dismiss']
+- [x] warn: UPDATE report status='actioned', admin_action='warn', INSERT group_warning notification to reported user (in-app)
+- [x] ban: INSERT group_bans, UPDATE group_memberships status='banned', UPDATE report status='actioned', admin_action='ban'
+- [x] dismiss: UPDATE report status='dismissed', admin_action='dismiss'
+- [x] Return 200: { action_taken }
 
 ---
 

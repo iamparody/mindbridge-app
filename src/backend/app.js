@@ -27,9 +27,10 @@ app.use('/api/moods',         require('./routes/moods'));
 app.use('/api/journals',      require('./routes/journals'));
 app.use('/api/ai',            require('./routes/ai'));
 // Remaining routes added phase by phase:
-// app.use('/api/credits',       require('./routes/credits'));
-// app.use('/api/peer',          require('./routes/peer'));
-// app.use('/api/groups',        require('./routes/groups'));
+app.use('/api/credits',       require('./routes/credits'));
+app.use('/api/peer',          require('./routes/peer'));
+app.use('/api/groups',        require('./routes/groups'));
+app.use('/api/admin',         require('./routes/admin'));
 // app.use('/api/emergency',     require('./routes/emergency'));
 // app.use('/api/safety-plan',   require('./routes/safetyPlan'));
 // app.use('/api/referrals',     require('./routes/referrals'));

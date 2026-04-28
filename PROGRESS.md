@@ -3,10 +3,10 @@
 ---
 
 ## Current Phase
-**Phase 4 — Credits & Payments** (next)
+**Phase 7 — Emergency & Safety Plan** (next)
 
 ## Current Task
-STOPPED — session ended after Phase 3 commit. Resume at Phase 4: Paystack integration, credit purchase flow, webhook receiver.
+Active — Phase 6 complete. Resume at Phase 7: POST /emergency/trigger, PATCH /admin/emergency/:id/acknowledge, PATCH /admin/emergency/:id/resolve, GET /safety-plan, PUT /safety-plan.
 
 ---
 
@@ -28,7 +28,7 @@ STOPPED — session ended after Phase 3 commit. Resume at Phase 4: Paystack inte
 ---
 
 ## Active
-- None — session stopped
+- Phase 5 — Peer Support
 
 ---
 
@@ -57,3 +57,6 @@ None
 | 2026-04-28 | 1 | Blueprint read; CHECKLIST + PROGRESS rewritten; full project structure + all 22 migration files written |
 | 2026-04-28 | 2 | Migrations run against Supabase (22/22 applied); .gitignore created; Phase 1 committed + pushed; Phase 2 starting |
 | 2026-04-28 | 3 | Phase 2 complete (auth + onboarding APIs, all utilities, middleware); Phase 3 complete (moods, journals, AI chat); committed + pushed (80a618b); session stopped by user |
+| 2026-04-28 | 4 | Phase 4 complete: paystack.js utility (PACKAGES, initializeTransaction, verifyWebhookSignature), credits route (balance, transactions, purchase, webhook), creditDeductor.js (atomic deduct, grace buffer, credit_low notification); /api/credits mounted in app.js |
+| 2026-04-28 | 5 | Phase 5 complete: peer.js route (POST request, GET open, PATCH accept with atomic lock + race guard, PATCH close, GET session); peerEscalation.js job (90s timeout, status guard, admin push+in_app); signaling.js (WebSocket server, session_id rooms, STUN+TURN config, relay offer/answer/ICE); /api/peer mounted, signaling server attached to http.Server |
+| 2026-04-28 | 6 | Phase 6 complete: groups.js (GET list, GET :id, POST join with ban check + UPSERT, POST leave, GET messages with pinned/paginated split, POST message + member notifications, POST report); admin.js (GET /admin/reports, PATCH /admin/reports/:id/action with warn/ban/dismiss flows); /api/groups + /api/admin mounted |
