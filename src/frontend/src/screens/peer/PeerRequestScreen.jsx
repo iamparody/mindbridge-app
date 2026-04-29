@@ -40,7 +40,7 @@ export default function PeerRequestScreen() {
     setSubmitting(true);
     try {
       const { data } = await client.post('/api/peer/request', { channel });
-      navigate(`/peer/waiting/${data.id}`, { replace: true });
+      navigate(`/peer/waiting/${data.request_id}`, { replace: true });
     } catch (err) {
       const status = err.response?.status;
       setError(status === 402
@@ -133,7 +133,7 @@ export default function PeerRequestScreen() {
             {openRequests.map((req) => (
               <div key={req.id} className="card" style={{ marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.channel === 'voice' ? '🎙️ Voice' : '💬 Text'} session</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{req.channel_preference === 'voice' ? '🎙️ Voice' : '💬 Text'} session</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{new Date(req.created_at).toLocaleTimeString()}</div>
                 </div>
                 <button onClick={() => handleAccept(req.id)} className="btn btn--success btn--sm" style={{ width: 'auto' }}>

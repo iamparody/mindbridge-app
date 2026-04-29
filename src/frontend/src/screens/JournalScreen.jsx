@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 
 const MOODS = [
-  { value: 1, emoji: '😔', color: 'var(--mood-very-low)', label: 'Very Low' },
-  { value: 2, emoji: '😕', color: 'var(--mood-low)',      label: 'Low' },
-  { value: 3, emoji: '😐', color: 'var(--mood-neutral)',  label: 'Neutral' },
-  { value: 4, emoji: '🙂', color: 'var(--mood-good)',     label: 'Good' },
-  { value: 5, emoji: '😊', color: 'var(--mood-great)',    label: 'Great' },
+  { value: 'very_low', emoji: '😔', color: 'var(--mood-very-low)', label: 'Very Low' },
+  { value: 'low',      emoji: '😕', color: 'var(--mood-low)',      label: 'Low' },
+  { value: 'neutral',  emoji: '😐', color: 'var(--mood-neutral)',  label: 'Neutral' },
+  { value: 'good',     emoji: '🙂', color: 'var(--mood-good)',     label: 'Good' },
+  { value: 'great',    emoji: '😊', color: 'var(--mood-great)',    label: 'Great' },
 ];
 const TAGS = ['Anxious', 'Hopeful', 'Overwhelmed', 'Calm', 'Lonely', 'Grateful', 'Angry', 'Numb'];
 
@@ -36,15 +36,15 @@ function EntryCard({ entry, onDelete }) {
           {entry.tags.map((t) => <span key={t} className="pill" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>{t}</span>)}
         </div>
       )}
-      {entry.content && (
+      {(entry.content_preview || entry.content) && (
         <p
           style={{ fontSize: '0.9rem', color: 'var(--color-text)', cursor: 'pointer', lineHeight: 1.5 }}
           onClick={() => setExpanded((v) => !v)}
         >
-          {expanded ? entry.content : entry.content.slice(0, 100) + (entry.content.length > 100 ? '…' : '')}
+          {expanded ? (entry.content || entry.content_preview) : (entry.content_preview || entry.content?.slice(0, 100)) + ((entry.content_preview?.length >= 100 || entry.content?.length > 100) ? '…' : '')}
         </p>
       )}
-      {entry.content?.length > 100 && (
+      {(entry.content_preview?.length >= 100 || entry.content?.length > 100) && (
         <button onClick={() => setExpanded((v) => !v)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.8rem', marginTop: 4, padding: 0 }}>
           {expanded ? 'Show less' : 'Read more'}
         </button>
@@ -91,13 +91,13 @@ export default function JournalScreen() {
 
   async function handleSave() {
     setSaveError('');
-    if (!formContent.trim() && !formMood) { setSaveError('Add at least a mood or some text.'); return; }
+    if (!formContent.trim()) { setSaveError('Write something — journal entries require text.'); return; }
     setSaving(true);
     try {
       await client.post('/api/journals', {
-        content: formContent.trim() || undefined,
+        content: formContent.trim(),
         mood_level: formMood || undefined,
-        tags: formTags.length ? formTags : undefined,
+        tags: formTags.length ? formTags.map((t) => t.toLowerCase()) : undefined,
       });
       setShowForm(false);
       setFormMood(null);
@@ -182,6 +182,7 @@ export default function JournalScreen() {
         <select className="select" style={{ width: 'auto' }} value={moodFilter} onChange={(e) => setMoodFilter(e.target.value)}>
           <option value="">All moods</option>
           {MOODS.map((m) => <option key={m.value} value={m.value}>{m.emoji} {m.label}</option>)}
+
         </select>
       </div>
 

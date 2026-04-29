@@ -48,13 +48,13 @@ export default function AIChatScreen() {
     setMessages((prev) => [...prev, { role: 'user', content: text }]);
     setLoading(true);
     try {
-      const { data } = await client.post(`/api/ai/session/${sessionId}/message`, { message: text });
-      if (data.emergency) {
+      const { data } = await client.post(`/api/ai/session/${sessionId}/message`, { input_text: text });
+      if (data.action === 'emergency') {
         setEmergencyPushed(true);
         navigate('/emergency', { replace: true });
         return;
       }
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.response_text }]);
     } catch (err) {
       setSendError(err.response?.data?.error || 'Message failed. Please try again.');
       setMessages((prev) => prev.slice(0, -1));

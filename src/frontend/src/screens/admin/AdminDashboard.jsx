@@ -250,7 +250,7 @@ function ResourcesTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', category: 'general_wellness', content: '', read_time: '', tags: '' });
+  const [form, setForm] = useState({ title: '', category: 'general_wellness', content: '', estimated_read_minutes: '', tags: '' });
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -267,11 +267,11 @@ function ResourcesTab() {
     try {
       await client.post('/api/admin/resources', {
         ...form,
-        read_time: form.read_time ? parseInt(form.read_time) : undefined,
+        estimated_read_minutes: form.estimated_read_minutes ? parseInt(form.estimated_read_minutes) : undefined,
         tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
       });
       setShowForm(false);
-      setForm({ title: '', category: 'general_wellness', content: '', read_time: '', tags: '' });
+      setForm({ title: '', category: 'general_wellness', content: '', estimated_read_minutes: '', tags: '' });
       load();
     } catch { setError('Failed to save article.'); }
     finally { setSaving(false); }
@@ -294,7 +294,7 @@ function ResourcesTab() {
             <select className="select" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
               {['anxiety','depression','ocd','adhd','grief','loneliness','stress','general_wellness','crisis_support'].map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <input className="input" type="number" placeholder="Read time (mins)" value={form.read_time} onChange={(e) => setForm((f) => ({ ...f, read_time: e.target.value }))} />
+            <input className="input" type="number" placeholder="Read time (mins)" value={form.estimated_read_minutes} onChange={(e) => setForm((f) => ({ ...f, estimated_read_minutes: e.target.value }))} />
             <input className="input" placeholder="Tags (comma separated)" value={form.tags} onChange={(e) => setForm((f) => ({ ...f, tags: e.target.value }))} />
             <textarea className="textarea" rows={5} placeholder="Content" value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} />
             <div style={{ display: 'flex', gap: 8 }}>

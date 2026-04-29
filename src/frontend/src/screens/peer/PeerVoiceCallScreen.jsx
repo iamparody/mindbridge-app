@@ -30,20 +30,26 @@ export default function PeerVoiceCallScreen() {
     } catch { /* non-fatal */ }
   }, [sessionId]);
 
+  const requestIdRef = useRef(null);
+
   const endCall = useCallback(async () => {
     clearInterval(creditTimerRef.current);
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();
     wsRef.current?.close();
-    try { await client.patch(`/api/peer/request/${sessionId}/close`); } catch { /* best-effort */ }
+    const reqId = requestIdRef.current;
+    if (reqId) {
+      try { await client.patch(`/api/peer/request/${reqId}/close`); } catch { /* best-effort */ }
+    }
     navigate('/peer', { replace: true });
-  }, [sessionId, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     let pc;
     async function init() {
       try {
         const { data } = await client.get(`/api/peer/session/${sessionId}`);
+        requestIdRef.current = data.session?.request_id ?? null;
         setBalance(data.credit_balance ?? null);
         const iceServers = data.ice_servers || [{ urls: 'stun:stun.l.google.com:19302' }];
 

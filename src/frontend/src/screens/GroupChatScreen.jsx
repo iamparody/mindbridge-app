@@ -2,7 +2,12 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import client from '../api/client';
 
-const REPORT_REASONS = ['Harmful content', 'Abuse', 'Spam', 'Other'];
+const REPORT_REASONS = [
+  { value: 'harmful_content', label: 'Harmful content' },
+  { value: 'abuse', label: 'Abuse' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'other', label: 'Other' },
+];
 
 export default function GroupChatScreen() {
   const { id: groupId } = useParams();
@@ -49,8 +54,9 @@ export default function GroupChatScreen() {
     setInput('');
     setSending(true);
     try {
-      const { data } = await client.post(`/api/groups/${groupId}/messages`, { content: text });
-      setMessages((prev) => [...prev, data]);
+      await client.post(`/api/groups/${groupId}/messages`, { content: text });
+      const { data: msgData } = await client.get(`/api/groups/${groupId}/messages`);
+      setMessages(msgData.messages ?? []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send.');
       setInput(text);
@@ -177,9 +183,9 @@ export default function GroupChatScreen() {
                 <label className="label">Reason</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8, marginBottom: 16 }}>
                   {REPORT_REASONS.map((r) => (
-                    <label key={r} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.9rem' }}>
-                      <input type="radio" name="reason" value={r} checked={reportReason === r} onChange={() => setReportReason(r)} style={{ accentColor: 'var(--color-primary)' }} />
-                      {r}
+                    <label key={r.value} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input type="radio" name="reason" value={r.value} checked={reportReason === r.value} onChange={() => setReportReason(r.value)} style={{ accentColor: 'var(--color-primary)' }} />
+                      {r.label}
                     </label>
                   ))}
                 </div>

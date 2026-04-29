@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 
 const MOODS = [
-  { value: 1, label: 'Very Low', emoji: '😔', color: 'var(--mood-very-low)' },
-  { value: 2, label: 'Low',      emoji: '😕', color: 'var(--mood-low)' },
-  { value: 3, label: 'Neutral',  emoji: '😐', color: 'var(--mood-neutral)' },
-  { value: 4, label: 'Good',     emoji: '🙂', color: 'var(--mood-good)' },
-  { value: 5, label: 'Great',    emoji: '😊', color: 'var(--mood-great)' },
+  { value: 'very_low', label: 'Very Low', emoji: '😔', color: 'var(--mood-very-low)' },
+  { value: 'low',      label: 'Low',      emoji: '😕', color: 'var(--mood-low)' },
+  { value: 'neutral',  label: 'Neutral',  emoji: '😐', color: 'var(--mood-neutral)' },
+  { value: 'good',     label: 'Good',     emoji: '🙂', color: 'var(--mood-good)' },
+  { value: 'great',    label: 'Great',    emoji: '😊', color: 'var(--mood-great)' },
 ];
 
 const TAGS = ['Anxious', 'Hopeful', 'Overwhelmed', 'Calm', 'Lonely', 'Grateful', 'Angry', 'Numb'];
@@ -30,8 +30,8 @@ export default function MoodCheckinScreen() {
     setError('');
     setLoading(true);
     try {
-      await client.post('/api/mood', { mood_level: mood, note: note.trim() || undefined, tags });
-      if (mood === 1) {
+      await client.post('/api/moods', { mood_level: mood, note: note.trim() || undefined, tags: tags.map((t) => t.toLowerCase()) });
+      if (mood === 'very_low') {
         setShowLowPrompt(true);
       } else {
         navigate('/dashboard', { replace: true });

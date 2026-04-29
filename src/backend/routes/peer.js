@@ -133,7 +133,20 @@ router.patch('/request/:id/accept', auth, async (req, res) => {
     [requesterId, JSON.stringify({ session_id: sessionId, channel: channel_preference })]
   );
 
-  return res.status(200).json({ session_id: sessionId });
+  return res.status(200).json({ session_id: sessionId, channel: channel_preference, request_id: requestId });
+});
+
+// ─── GET /peer/request/:id/status ─────────────────────────────────────────────
+// Polled by waiting screen to detect when request is accepted or escalated.
+router.get('/request/:id/status', auth, async (req, res) => {
+  const { rows } = await query(
+    `SELECT pr.id, pr.status, pr.channel_preference, pr.session_id
+     FROM peer_requests pr
+     WHERE pr.id = $1 AND pr.user_id = $2`,
+    [req.params.id, req.user.id]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'Not found', code: 'NOT_FOUND' });
+  return res.status(200).json(rows[0]);
 });
 
 // ─── PATCH /peer/request/:id/close ───────────────────────────────────────────
@@ -169,7 +182,7 @@ router.patch('/request/:id/close', auth, async (req, res) => {
 router.get('/session/:id', auth, async (req, res) => {
   const { rows } = await query(
     `SELECT s.id, s.type, s.channel, s.status, s.credit_cost, s.started_at, s.ended_at,
-            pr.channel_preference, pr.user_id AS requester_id, pr.accepted_by AS responder_id
+            pr.id AS request_id, pr.channel_preference, pr.user_id AS requester_id, pr.accepted_by AS responder_id
      FROM sessions s
      JOIN peer_requests pr ON pr.session_id = s.id
      WHERE s.id = $1 AND s.type = 'peer'

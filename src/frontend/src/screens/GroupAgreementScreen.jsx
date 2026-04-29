@@ -22,7 +22,7 @@ export default function GroupAgreementScreen() {
     setError('');
     setLoading(true);
     try {
-      await client.post(`/api/groups/${id}/join`, { agreed: true });
+      await client.post(`/api/groups/${id}/join`, { agreement_confirmed: true });
       navigate(`/groups/${id}/chat`, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Could not join group. Please try again.');

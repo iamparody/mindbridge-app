@@ -8,12 +8,14 @@ const VALID_TONES = ['warm', 'motivational', 'clinical', 'casual'];
 const VALID_STYLES = ['brief', 'elaborate'];
 const VALID_FORMALITY = ['formal', 'neutral', 'informal'];
 
+const CURRENT_CONSENT_VERSION = '1.0';
+
 // ─── POST /onboarding/consent ─────────────────────────────────────────────────
 router.post('/consent', auth, async (req, res) => {
   const { consent_version } = req.body;
 
-  if (consent_version !== '1.0') {
-    return res.status(400).json({ error: 'consent_version must be "1.0"', code: 'INVALID_CONSENT_VERSION' });
+  if (consent_version !== CURRENT_CONSENT_VERSION) {
+    return res.status(400).json({ error: `consent_version must be "${CURRENT_CONSENT_VERSION}"`, code: 'INVALID_CONSENT_VERSION' });
   }
 
   const { rows } = await query(
@@ -21,7 +23,7 @@ router.post('/consent', auth, async (req, res) => {
      SET consent_version = $1, consented_at = NOW(), updated_at = NOW()
      WHERE id = $2
      RETURNING consented_at`,
-    [consent_version, req.user.id]
+    [CURRENT_CONSENT_VERSION, req.user.id]
   );
 
   return res.status(200).json({ consented_at: rows[0].consented_at });

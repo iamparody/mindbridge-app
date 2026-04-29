@@ -152,7 +152,7 @@ export default function ProfileScreen() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Email</span>
-              <span style={{ fontSize: '0.9rem' }}>{profile?.masked_email || '—'}</span>
+              <span style={{ fontSize: '0.9rem' }}>{profile?.email || '—'}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Streak</span>

@@ -2,29 +2,42 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 
-const MOOD_META = [
-  { value: 1, label: 'Very Low', color: 'var(--mood-very-low)', emoji: '😔' },
-  { value: 2, label: 'Low',      color: 'var(--mood-low)',      emoji: '😕' },
-  { value: 3, label: 'Neutral',  color: 'var(--mood-neutral)',  emoji: '😐' },
-  { value: 4, label: 'Good',     color: 'var(--mood-good)',     emoji: '🙂' },
-  { value: 5, label: 'Great',    color: 'var(--mood-great)',    emoji: '😊' },
+// avg_score range: very_low=-2, low=-1, neutral=0, good=1, great=2
+const SCORE_COLORS = [
+  { min: -2,   max: -1.5, color: 'var(--mood-very-low)' },
+  { min: -1.5, max: -0.5, color: 'var(--mood-low)' },
+  { min: -0.5, max:  0.5, color: 'var(--mood-neutral)' },
+  { min:  0.5, max:  1.5, color: 'var(--mood-good)' },
+  { min:  1.5, max:  2,   color: 'var(--mood-great)' },
 ];
 
-function getMoodMeta(value) {
-  return MOOD_META.find((m) => m.value === value) || MOOD_META[2];
+const MOOD_META = {
+  very_low: { label: 'Very Low', color: 'var(--mood-very-low)', emoji: '😔' },
+  low:      { label: 'Low',      color: 'var(--mood-low)',      emoji: '😕' },
+  neutral:  { label: 'Neutral',  color: 'var(--mood-neutral)',  emoji: '😐' },
+  good:     { label: 'Good',     color: 'var(--mood-good)',     emoji: '🙂' },
+  great:    { label: 'Great',    color: 'var(--mood-great)',    emoji: '😊' },
+};
+
+function scoreColor(score) {
+  if (score === null) return 'var(--color-border)';
+  for (const band of SCORE_COLORS) {
+    if (score >= band.min && score <= band.max) return band.color;
+  }
+  return score < 0 ? 'var(--mood-low)' : 'var(--mood-good)';
 }
 
-function BarChart({ data, days }) {
+function BarChart({ data }) {
   if (!data?.length) return null;
-  const max = 5;
+  const maxAbs = 2;
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 80 }}>
       {data.map((d, i) => {
-        const meta = getMoodMeta(Math.round(d.avg_mood));
-        const height = ((d.avg_mood || 0) / max) * 80;
+        const color = scoreColor(d.avg_score);
+        const height = d.avg_score !== null ? ((d.avg_score + 2) / 4) * 80 : 4;
         return (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <div style={{ width: '100%', height, background: meta.color, borderRadius: '3px 3px 0 0', minHeight: 2 }} />
+            <div style={{ width: '100%', height: Math.max(4, height), background: color, borderRadius: '3px 3px 0 0' }} />
             <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1 }}>
               {new Date(d.date).toLocaleDateString('en-KE', { weekday: 'narrow' })}
             </div>
@@ -58,6 +71,7 @@ export default function AnalyticsScreen() {
   if (loading) return <div className="loading-full"><div className="spinner" /></div>;
 
   const tooFewEntries = !data || (data.total_checkins ?? 0) < 3;
+  const commonMoodMeta = data?.common_mood ? MOOD_META[data.common_mood] : null;
 
   return (
     <div className="screen" style={{ padding: '0 0 16px' }}>
@@ -79,55 +93,46 @@ export default function AnalyticsScreen() {
         ) : (
           <>
             {/* Streak stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { label: 'Current Streak', value: `${data.streak_count ?? 0}🔥`, sub: 'days' },
-                { label: 'Longest Streak', value: `${data.longest_streak ?? 0}`, sub: 'days ever' },
-                { label: 'Total Check-ins', value: `${data.total_checkins ?? 0}`, sub: 'entries' },
+                { label: 'Current Streak', value: `${data.current_streak ?? 0}🔥` },
+                { label: 'Total Check-ins', value: `${data.total_checkins ?? 0}` },
               ].map((s) => (
                 <div key={s.label} className="card" style={{ textAlign: 'center', padding: 12 }}>
-                  <div style={{ fontWeight: 700, fontSize: '1.25rem' }}>{s.value}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{s.label}</div>
+                  <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{s.value}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Most common mood */}
-            {data.most_common_mood && (() => {
-              const meta = getMoodMeta(data.most_common_mood);
-              return (
-                <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 36 }}>{meta.emoji}</span>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>Most common mood (30 days)</div>
-                    <div style={{ color: meta.color, fontWeight: 600 }}>{meta.label}</div>
-                  </div>
+            {commonMoodMeta && (
+              <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 36 }}>{commonMoodMeta.emoji}</span>
+                <div>
+                  <div style={{ fontWeight: 700 }}>Most common mood (30 days)</div>
+                  <div style={{ color: commonMoodMeta.color, fontWeight: 600 }}>{commonMoodMeta.label}</div>
                 </div>
-              );
-            })()}
-
-            {/* 7-day chart */}
-            {data.seven_day?.length > 0 && (
-              <div className="card">
-                <h3 style={{ marginBottom: 12 }}>Last 7 days</h3>
-                <BarChart data={data.seven_day} days={7} />
               </div>
             )}
 
-            {/* 30-day chart */}
-            {data.thirty_day?.length > 0 && (
+            {/* 7-day chart */}
+            {data.week_trend?.length > 0 && (
               <div className="card">
-                <h3 style={{ marginBottom: 12 }}>Last 30 days</h3>
-                <BarChart data={data.thirty_day} days={30} />
+                <h3 style={{ marginBottom: 12 }}>Last 7 days</h3>
+                <BarChart data={data.week_trend} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                  <span>😔 Very Low</span><span>😊 Great</span>
+                </div>
               </div>
             )}
 
             {/* Top tags */}
-            {data.top_tags?.length > 0 && (
+            {data.frequent_tags?.length > 0 && (
               <div className="card">
                 <h3 style={{ marginBottom: 12 }}>Most frequent feelings (30 days)</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {data.top_tags.map((t) => (
+                  {data.frequent_tags.map((t) => (
                     <span key={t.tag} className="pill" style={{ fontSize: '0.85rem' }}>
                       {t.tag} <strong style={{ color: 'var(--color-primary)' }}>{t.count}</strong>
                     </span>

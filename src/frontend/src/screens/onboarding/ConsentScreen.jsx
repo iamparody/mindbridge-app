@@ -17,7 +17,7 @@ export default function ConsentScreen() {
     setError('');
     setLoading(true);
     try {
-      await client.post('/api/onboarding/consent', { version: CONSENT_VERSION });
+      await client.post('/api/onboarding/consent', { consent_version: CONSENT_VERSION });
       navigate('/onboarding/persona', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');

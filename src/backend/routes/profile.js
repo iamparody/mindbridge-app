@@ -9,6 +9,7 @@ router.get('/', auth, async (req, res) => {
   const { rows: userRows } = await query(
     `SELECT u.alias, u.email, u.consent_version, u.consented_at, u.streak_count,
             u.role, u.created_at, c.balance AS credits_balance,
+            u.notif_peer_broadcast, u.notif_checkin_reminder, u.notif_group_messages, u.notif_credit_low,
             p.persona_name, p.tone, p.response_style, p.formality
      FROM users u
      LEFT JOIN credits c ON c.user_id = u.id
@@ -34,6 +35,10 @@ router.get('/', auth, async (req, res) => {
     consented_at: user.consented_at,
     streak_count: user.streak_count,
     credits_balance: user.credits_balance,
+    notif_peer_broadcast: user.notif_peer_broadcast ?? true,
+    notif_checkin_reminder: user.notif_checkin_reminder ?? true,
+    notif_group_messages: user.notif_group_messages ?? true,
+    notif_credit_low: user.notif_credit_low ?? true,
     persona,
     member_since: user.created_at,
   });

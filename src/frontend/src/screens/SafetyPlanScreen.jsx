@@ -12,7 +12,7 @@ const DEFAULT_PLAN = {
     { name: '', contact_detail: '' },
   ],
   emergency_resources: 'Befrienders Kenya: 0800 723 253 (free, 24/7)',
-  reason_to_keep_going: '',
+  reason_to_continue: '',
 };
 
 export default function SafetyPlanScreen() {
@@ -144,8 +144,8 @@ export default function SafetyPlanScreen() {
           <textarea
             className="textarea"
             rows={2}
-            value={plan.reason_to_keep_going}
-            onChange={(e) => updateField('reason_to_keep_going', e.target.value)}
+            value={plan.reason_to_continue}
+            onChange={(e) => updateField('reason_to_continue', e.target.value)}
             placeholder="What matters most to you?"
           />
         </div>

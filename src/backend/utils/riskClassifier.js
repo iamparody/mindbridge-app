@@ -5,14 +5,14 @@ const KEYWORDS = {
   critical: [
     // Self-harm ideation
     { category: 'self_harm', keywords: [
-      'hurt myself','cut myself','cutting myself','self harm','self-harm',
-      'end it all','end it','don\'t want to be here','dont want to be here',
+      'hurt myself','hurting myself','cut myself','cutting myself','self harm','self-harm',
+      'end it all','ending it all','don\'t want to be here','dont want to be here',
       'want to disappear','wish i was dead',
     ]},
     // Suicidal ideation
     { category: 'suicidal_ideation', keywords: [
-      'kill myself','want to die','killing myself','suicide','suicidal',
-      'no reason to live','end my life','take my life','rather be dead',
+      'kill myself','killing myself','want to die','wanted to die','suicide','suicidal',
+      'no reason to live','end my life','ending my life','take my life','rather be dead',
       'better off dead','thinking of suicide',
     ]},
   ],

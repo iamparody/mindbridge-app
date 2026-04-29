@@ -2,6 +2,7 @@ const express = require('express');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
 const { PACKAGES, initializeTransaction, verifyWebhookSignature } = require('../utils/paystack');
+const { deductCredit } = require('../utils/creditDeductor');
 
 const router = express.Router();
 
@@ -80,6 +81,22 @@ router.post('/purchase', auth, async (req, res) => {
     payment_url: paystackData.authorization_url,
     reference: paystackData.reference,
   });
+});
+
+// ─── POST /credits/deduct ─────────────────────────────────────────────────────
+// Called by frontend every N minutes during an active peer session.
+router.post('/deduct', auth, async (req, res) => {
+  const { session_id, channel } = req.body;
+  if (!session_id || !['text', 'voice'].includes(channel)) {
+    return res.status(400).json({ error: 'session_id and channel (text|voice) are required', code: 'INVALID_INPUT' });
+  }
+  try {
+    const result = await deductCredit(req.user.id, session_id, channel);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('deduct error', err);
+    return res.status(500).json({ error: 'Credit deduction failed', code: 'DEDUCT_ERROR' });
+  }
 });
 
 // ─── POST /credits/webhook ────────────────────────────────────────────────────

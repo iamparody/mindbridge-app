@@ -26,14 +26,14 @@ export default function PeerWaitingScreen() {
       });
     }, 1000);
 
-    // Poll for session acceptance
+    // Poll peer request status for acceptance or escalation
     pollRef.current = setInterval(async () => {
       try {
-        const { data } = await client.get(`/api/peer/session/${id}`).catch(() => ({ data: null }));
-        if (data?.status === 'locked' && data?.session_id) {
+        const { data } = await client.get(`/api/peer/request/${id}/status`).catch(() => ({ data: null }));
+        if (data?.status === 'active' && data?.session_id) {
           clearInterval(pollRef.current);
           clearInterval(intervalRef.current);
-          navigate(`/peer/session/${data.session_id}/${data.channel || 'text'}`, { replace: true });
+          navigate(`/peer/session/${data.session_id}/${data.channel_preference || 'text'}`, { replace: true });
         }
         if (data?.status === 'escalated') {
           clearInterval(pollRef.current);

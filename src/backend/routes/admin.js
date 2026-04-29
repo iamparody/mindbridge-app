@@ -175,8 +175,13 @@ router.get('/referrals', async (req, res) => {
 });
 
 // ─── PATCH /admin/referrals/:id ───────────────────────────────────────────────
+const VALID_REFERRAL_STATUSES = ['pending', 'in_review', 'arranged', 'escalated', 'closed'];
 router.patch('/referrals/:id', async (req, res) => {
   const { status, admin_notes } = req.body;
+
+  if (status !== undefined && !VALID_REFERRAL_STATUSES.includes(status)) {
+    return res.status(400).json({ error: `status must be one of: ${VALID_REFERRAL_STATUSES.join(', ')}`, code: 'INVALID_STATUS' });
+  }
 
   const { rows: refRows } = await query(
     'SELECT user_id FROM therapist_referrals WHERE id = $1',

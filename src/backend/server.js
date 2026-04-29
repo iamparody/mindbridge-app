@@ -27,4 +27,8 @@ server.listen(PORT, () => {
   console.log(`MindBridge backend listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
 });
 
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
 module.exports = server;
