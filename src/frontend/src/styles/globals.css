@@ -1,0 +1,228 @@
+/* ── MindBridge Design System v2 — Globals ─────────────────────────────────── */
+/* Generated from blueprint/design_system.md — do not edit manually            */
+
+:root {
+  /* COLORS */
+  --color-bg-primary: #4B3A2F;
+  --color-bg-deep: #2F2622;
+  --color-bg-emergency: #1E1612;
+  --color-surface-primary: #7A5C4D;
+  --color-surface-secondary: #E8DDD3;
+  --color-surface-card: #5C4035;
+
+  --color-text-primary: #F5EDE4;
+  --color-text-secondary: #C2A48A;
+  --color-text-dark: #2F2622;
+  --color-text-muted: rgba(245,237,228,0.55);
+
+  --color-accent: #C2A48A;
+  --color-accent-hover: #D4B99E;
+  --color-accent-pressed: #A88B73;
+
+  --color-border: rgba(194,164,138,0.25);
+  --color-border-focus: rgba(194,164,138,0.70);
+  --color-divider: rgba(194,164,138,0.15);
+
+  --color-calm: #8FAF9A;
+  --color-calm-bg: rgba(143,175,154,0.15);
+  --color-warning: #D9A441;
+  --color-warning-bg: rgba(217,164,65,0.15);
+  --color-danger: #B35C5C;
+  --color-danger-bg: rgba(179,92,92,0.15);
+
+  --color-overlay: rgba(47,38,34,0.75);
+  --color-skeleton-base: rgba(75,58,47,0.4);
+  --color-skeleton-shine: rgba(194,164,138,0.15);
+
+  /* TYPOGRAPHY */
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-editorial: 'Lora', 'Playfair Display', Georgia, serif;
+
+  --text-h1: 28px;
+  --text-h2: 22px;
+  --text-h3: 18px;
+  --text-body: 16px;
+  --text-caption: 13px;
+  --text-label: 12px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  --tracking-label: 0.05em;
+
+  /* SPACING */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* RADIUS */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  /* SHADOWS */
+  --shadow-card: 0 2px 12px rgba(47,38,34,0.18);
+  --shadow-elevated: 0 4px 24px rgba(47,38,34,0.25);
+  --shadow-modal: 0 8px 40px rgba(47,38,34,0.40);
+  --shadow-button: 0 2px 8px rgba(47,38,34,0.20);
+  --shadow-input-focus: 0 0 0 3px rgba(194,164,138,0.35);
+
+  /* ANIMATION */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-reveal: 600ms;
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* LAYOUT */
+  --max-width-mobile: 430px;
+  --bottom-nav-height: 64px;
+  --top-bar-height: 56px;
+  --touch-target-min: 48px;
+
+  /* ── Legacy compatibility aliases ───────────────────────────────────────── */
+  --color-primary: var(--color-accent);
+  --color-primary-dark: var(--color-accent-pressed);
+  --color-emergency: var(--color-danger);
+  --color-success: var(--color-calm);
+  --color-text: var(--color-text-primary);
+  --color-white: var(--color-surface-card);
+  --color-surface: var(--color-bg-primary);
+  /* --color-text-muted: defined above as rgba */
+  /* --color-warning: defined above  */
+  /* --color-border: defined above   */
+
+  /* Mood color aliases */
+  --mood-very-low: var(--color-danger);
+  --mood-low: var(--color-warning);
+  --mood-neutral: var(--color-accent);
+  --mood-good: var(--color-calm);
+  --mood-great: #6BAF7A;
+
+  /* Legacy shadow/radius */
+  --radius: var(--radius-md);
+  --shadow: var(--shadow-card);
+}
+
+/* ── Reduced motion — mandatory ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Low-stimulation mode ────────────────────────────────────────────────────── */
+.low-stimulation *,
+.low-stimulation *::before,
+.low-stimulation *::after {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ── Base resets ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+#root {
+  max-width: var(--max-width-mobile);
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-skeleton-base) 25%,
+    var(--color-skeleton-shine) 50%,
+    var(--color-skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Emergency pulse ─────────────────────────────────────────────────────────── */
+@keyframes emergencyPulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(179,92,92,0.5); }
+  50%       { box-shadow: 0 0 0 12px rgba(179,92,92,0); }
+}
+
+/* ── Typing indicator dots ───────────────────────────────────────────────────── */
+@keyframes typingDot {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%            { transform: translateY(-6px); }
+}
+
+/* ── Breathing guide ─────────────────────────────────────────────────────────── */
+@keyframes breatheGuide {
+  0%, 100% { transform: scale(0.85); opacity: 0.7; }
+  50%       { transform: scale(1.0);  opacity: 1.0; }
+}
+
+/* ── Alias reveal character animation ───────────────────────────────────────── */
+@keyframes charReveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Persona confirmation scale ──────────────────────────────────────────────── */
+@keyframes personaIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1.0);  }
+}
+
+/* ── Screen enter transition ─────────────────────────────────────────────────── */
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── Toast slide down ─────────────────────────────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0);    }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+}
+
+/* ── Bottom sheet ────────────────────────────────────────────────────────────── */
+@keyframes sheetIn {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0);    }
+}

@@ -1,24 +1,23 @@
 .emergency-fab {
   position: fixed;
-  bottom: 76px; /* above bottom nav */
+  bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 12px);
   right: 16px;
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: var(--color-emergency);
-  color: #fff;
-  font-size: 24px;
+  background: var(--color-danger);
+  color: var(--color-text-primary);
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(231, 76, 60, 0.4);
   z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.1s, box-shadow 0.1s;
+  animation: emergencyPulse 2s ease-in-out infinite;
+  transition: transform var(--duration-fast);
 }
 
 .emergency-fab:active {
-  transform: scale(0.94);
-  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+  transform: scale(0.92);
+  animation: none;
 }

@@ -1,53 +1,62 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Notebook } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const MOODS = [
-  { value: 'very_low', emoji: '😔', color: 'var(--mood-very-low)', label: 'Very Low' },
-  { value: 'low',      emoji: '😕', color: 'var(--mood-low)',      label: 'Low' },
-  { value: 'neutral',  emoji: '😐', color: 'var(--mood-neutral)',  label: 'Neutral' },
-  { value: 'good',     emoji: '🙂', color: 'var(--mood-good)',     label: 'Good' },
-  { value: 'great',    emoji: '😊', color: 'var(--mood-great)',    label: 'Great' },
+  { value: 'very_low', emoji: '😔', color: 'var(--color-danger)',  label: 'Very Low' },
+  { value: 'low',      emoji: '😕', color: 'var(--color-warning)', label: 'Low' },
+  { value: 'neutral',  emoji: '😐', color: 'var(--color-accent)',  label: 'Neutral' },
+  { value: 'good',     emoji: '🙂', color: 'var(--color-calm)',    label: 'Good' },
+  { value: 'great',    emoji: '😊', color: '#6BAF7A',              label: 'Great' },
 ];
 const TAGS = ['Anxious', 'Hopeful', 'Overwhelmed', 'Calm', 'Lonely', 'Grateful', 'Angry', 'Numb'];
+
+function JournalSkeleton() {
+  return (
+    <div style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="skeleton" style={{ width: '100%', height: 80, borderRadius: 'var(--radius-lg)' }} />
+      ))}
+    </div>
+  );
+}
 
 function EntryCard({ entry, onDelete }) {
   const [expanded, setExpanded] = useState(false);
   const mood = MOODS.find((m) => m.value === entry.mood_level);
   return (
-    <div className="card" style={{ marginBottom: 12 }}>
+    <div
+      className="card card--interactive"
+      style={{ marginBottom: 'var(--space-sm)' }}
+      onClick={() => setExpanded((v) => !v)}
+    >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {mood && <span style={{ fontSize: 20, color: mood.color }}>{mood.emoji}</span>}
-          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          {mood && <span style={{ fontSize: 20 }} aria-hidden="true">{mood.emoji}</span>}
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>
             {new Date(entry.created_at).toLocaleDateString('en-KE', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
         <button
-          onClick={() => onDelete(entry.id)}
-          style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--color-text-muted)', padding: 4 }}
+          onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 4, minWidth: 'var(--touch-target-min)', minHeight: 'var(--touch-target-min)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)' }}
           aria-label="Delete entry"
         >
           🗑
         </button>
       </div>
       {entry.tags?.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-          {entry.tags.map((t) => <span key={t} className="pill" style={{ fontSize: '0.7rem', padding: '2px 8px' }}>{t}</span>)}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 'var(--space-sm)' }}>
+          {entry.tags.map((t) => <span key={t} className="pill" style={{ fontSize: 10, padding: '2px 8px' }}>{t}</span>)}
         </div>
       )}
       {(entry.content_preview || entry.content) && (
         <p
-          style={{ fontSize: '0.9rem', color: 'var(--color-text)', cursor: 'pointer', lineHeight: 1.5 }}
-          onClick={() => setExpanded((v) => !v)}
+          style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.6, fontFamily: 'var(--font-editorial)', transition: 'max-height 250ms ease-out' }}
         >
           {expanded ? (entry.content || entry.content_preview) : (entry.content_preview || entry.content?.slice(0, 100)) + ((entry.content_preview?.length >= 100 || entry.content?.length > 100) ? '…' : '')}
         </p>
-      )}
-      {(entry.content_preview?.length >= 100 || entry.content?.length > 100) && (
-        <button onClick={() => setExpanded((v) => !v)} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.8rem', marginTop: 4, padding: 0 }}>
-          {expanded ? 'Show less' : 'Read more'}
-        </button>
       )}
     </div>
   );
@@ -77,7 +86,7 @@ export default function JournalScreen() {
       const { data } = await client.get('/api/journals', { params });
       setEntries(data.entries ?? data ?? []);
     } catch {
-      setError('Failed to load journal entries. Please try again.');
+      setError('We couldn\'t connect. Check your internet and try again.');
     } finally {
       setLoading(false);
     }
@@ -105,7 +114,7 @@ export default function JournalScreen() {
       setFormContent('');
       load();
     } catch (err) {
-      setSaveError(err.response?.data?.error || 'Failed to save. Please try again.');
+      setSaveError(err.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -121,79 +130,120 @@ export default function JournalScreen() {
   }
 
   return (
-    <div className="screen" style={{ padding: '0 0 16px' }}>
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">Journal</h2>
         <button
           onClick={() => setShowForm((v) => !v)}
-          style={{ marginLeft: 'auto', background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}
+          className="btn btn--primary btn--sm"
+          style={{ marginLeft: 'auto', width: 'auto' }}
         >
           + New
         </button>
       </div>
 
       {showForm && (
-        <div className="card" style={{ margin: '0 16px 16px' }}>
-          <h3 style={{ marginBottom: 12 }}>New entry</h3>
-          <div style={{ marginBottom: 12 }}>
-            <label className="label">Mood (optional)</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+        <div className="card" style={{ margin: 'var(--space-md) var(--space-md) 0' }}>
+          <h3 style={{ marginBottom: 'var(--space-md)' }}>New entry</h3>
+          <div style={{ marginBottom: 'var(--space-md)' }}>
+            <label className="label">Mood <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 6 }}>
               {MOODS.map((m) => (
-                <button key={m.value} type="button" onClick={() => setFormMood(formMood === m.value ? null : m.value)}
-                  style={{ fontSize: 24, background: 'none', border: `2px solid ${formMood === m.value ? m.color : 'var(--color-border)'}`, borderRadius: 8, padding: '4px 8px', cursor: 'pointer' }}>
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setFormMood(formMood === m.value ? null : m.value)}
+                  style={{
+                    fontSize: 24,
+                    background: 'none',
+                    border: `2px solid ${formMood === m.value ? m.color : 'var(--color-border)'}`,
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    minWidth: 44,
+                    minHeight: 44,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label={m.label}
+                  aria-pressed={formMood === m.value}
+                >
                   {m.emoji}
                 </button>
               ))}
             </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label className="label">Tags (optional)</label>
+          <div style={{ marginBottom: 'var(--space-md)' }}>
+            <label className="label">Tags <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {TAGS.map((tag) => (
-                <button key={tag} type="button" onClick={() => toggleFormTag(tag)}
-                  className={`pill${formTags.includes(tag) ? ' pill--active' : ''}`} style={{ cursor: 'pointer', border: 'none', fontSize: '0.75rem' }}>
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleFormTag(tag)}
+                  className={`pill${formTags.includes(tag) ? ' pill--active' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                  aria-pressed={formTags.includes(tag)}
+                >
                   {tag}
                 </button>
               ))}
             </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 'var(--space-md)' }}>
             <label className="label" htmlFor="content">Write freely…</label>
-            <textarea id="content" className="textarea" rows={5} value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Write freely…" />
+            <textarea
+              id="content"
+              className="textarea textarea--journal"
+              rows={5}
+              value={formContent}
+              onChange={(e) => setFormContent(e.target.value)}
+              placeholder="Write freely… no rules, just you."
+              style={{ border: 'none', background: 'transparent', color: 'var(--color-text-dark)', padding: 0, resize: 'vertical', minHeight: 120 }}
+            />
           </div>
-          {saveError && <div className="error-msg" style={{ marginBottom: 8 }}>{saveError}</div>}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn--primary btn--sm" onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
-            <button className="btn btn--muted btn--sm" onClick={() => setShowForm(false)}>Cancel</button>
+          {saveError && <div className="error-msg" style={{ marginBottom: 'var(--space-sm)' }}>{saveError}</div>}
+          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+            <button className="btn btn--primary btn--sm" onClick={handleSave} disabled={saving} style={{ flex: 1 }}>{saving ? 'Saving…' : 'Save entry'}</button>
+            <button className="btn btn--muted btn--sm" onClick={() => setShowForm(false)} style={{ flex: 1 }}>Cancel</button>
           </div>
         </div>
       )}
 
-      <div style={{ padding: '0 16px', display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div style={{ padding: 'var(--space-md) var(--space-md) var(--space-sm)', display: 'flex', gap: 'var(--space-sm)' }}>
         <input
           type="search"
           className="input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search entries…"
-          style={{ flex: 1 }}
+          style={{ flex: 1, minHeight: 44 }}
+          aria-label="Search journal entries"
         />
-        <select className="select" style={{ width: 'auto' }} value={moodFilter} onChange={(e) => setMoodFilter(e.target.value)}>
+        <select
+          className="select"
+          style={{ width: 'auto', minWidth: 120, minHeight: 44 }}
+          value={moodFilter}
+          onChange={(e) => setMoodFilter(e.target.value)}
+          aria-label="Filter by mood"
+        >
           <option value="">All moods</option>
           {MOODS.map((m) => <option key={m.value} value={m.value}>{m.emoji} {m.label}</option>)}
-
         </select>
       </div>
 
-      <div style={{ padding: '0 16px' }}>
-        {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
+      <div style={{ padding: '0 var(--space-md)' }}>
+        {error && <div className="error-msg" style={{ marginBottom: 'var(--space-md)' }}>{error}</div>}
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}><div className="spinner" /></div>
+          <JournalSkeleton />
         ) : entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>📓</div>
-            <p>No entries yet. Start writing.</p>
+          <div className="empty-state">
+            <Notebook size={48} weight="duotone" color="var(--color-text-muted)" className="empty-state__icon" aria-hidden="true" />
+            <div className="empty-state__title">Your journal is waiting</div>
+            <div className="empty-state__body">Write your first entry — no rules, just you.</div>
+            <button className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => setShowForm(true)}>Write something</button>
           </div>
         ) : (
           entries.map((e) => <EntryCard key={e.id} entry={e} onDelete={handleDelete} />)

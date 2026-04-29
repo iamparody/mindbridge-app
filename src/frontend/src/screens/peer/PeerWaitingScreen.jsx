@@ -60,6 +60,7 @@ export default function PeerWaitingScreen() {
   const r = 44;
   const circumference = 2 * Math.PI * r;
   const dash = (pct / 100) * circumference;
+  const timerColor = pct > 60 ? 'var(--color-calm)' : pct > 30 ? 'var(--color-warning)' : 'var(--color-danger)';
 
   if (error) {
     return (
@@ -92,13 +93,13 @@ export default function PeerWaitingScreen() {
           <circle cx={50} cy={50} r={r} fill="none" stroke="var(--color-border)" strokeWidth={6} />
           <circle
             cx={50} cy={50} r={r} fill="none"
-            stroke="var(--color-primary)" strokeWidth={6}
+            stroke={timerColor} strokeWidth={6}
             strokeDasharray={`${dash} ${circumference}`}
             strokeLinecap="round"
             transform="rotate(-90 50 50)"
-            style={{ transition: 'stroke-dasharray 1s linear' }}
+            style={{ transition: 'stroke-dasharray 1s linear, stroke 0.5s ease' }}
           />
-          <text x={50} y={56} textAnchor="middle" fontSize={22} fontWeight={700} fill="var(--color-text)">{seconds}</text>
+          <text x={50} y={56} textAnchor="middle" fontSize={22} fontWeight={700} fill="var(--color-text-primary)">{seconds}</text>
         </svg>
       </div>
 

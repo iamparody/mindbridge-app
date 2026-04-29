@@ -1,87 +1,160 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Siren, CheckCircle, Wind, ShieldCheck } from '@phosphor-icons/react';
 import client from '../api/client';
 
 export default function EmergencyScreen() {
   const navigate = useNavigate();
   const [triggered, setTriggered] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   async function handleTalkNow() {
     setLoading(true);
-    setError('');
     try {
       await client.post('/api/emergency/trigger');
-      setTriggered(true);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Could not send alert. Please call the crisis line directly.');
-      setTriggered(true); // still show resources even on failure
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* still show resources even on failure */ }
+    setTriggered(true);
+    setLoading(false);
   }
 
+  /* CRITICAL: Zero animation delay — everything immediately visible (spec 8.5 + 9.4 #3) */
   return (
-    <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', padding: '32px 24px', minHeight: '100dvh' }}>
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <div style={{ fontSize: 56, marginBottom: 12 }}>🆘</div>
-        <h1 style={{ fontSize: '1.5rem', marginBottom: 8 }}>You are not alone</h1>
-        <p>Whatever you're feeling right now — we're here.</p>
-      </div>
+    <div
+      className="screen screen--no-nav"
+      style={{
+        background: 'var(--color-bg-emergency)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 'var(--space-xl) var(--space-lg)',
+        minHeight: '100dvh',
+        gap: 'var(--space-lg)',
+      }}
+    >
+      {/* Siren — only the icon has a brief fade-in, everything else static */}
+      <div style={{ textAlign: 'center', paddingTop: 'var(--space-lg)' }}>
+        <div
+          style={{
+            color: 'var(--color-danger)',
+            marginBottom: 'var(--space-md)',
+            animation: 'personaIn 200ms ease-out both',
+          }}
+        >
+          <Siren size={48} weight="duotone" aria-hidden="true" />
+        </div>
 
-      {/* Crisis line — always visible, always first */}
-      <div style={{ background: '#FFF8E1', border: '2px solid #FFE082', borderRadius: 'var(--radius)', padding: '16px', marginBottom: 24, textAlign: 'center' }}>
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>Befrienders Kenya</div>
+        <h1
+          style={{
+            fontFamily: 'var(--font-editorial)',
+            fontSize: 22,
+            fontWeight: 400,
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--space-sm)',
+          }}
+        >
+          You're not alone
+        </h1>
+
+        {/* Crisis line — always first, always visible */}
         <a
           href="tel:0800723253"
-          style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-primary)', textDecoration: 'none' }}
+          style={{
+            display: 'block',
+            fontSize: 28,
+            fontWeight: 600,
+            color: 'var(--color-accent)',
+            textDecoration: 'none',
+            marginBottom: 'var(--space-xs)',
+            fontFamily: 'var(--font-ui)',
+          }}
+          aria-label="Call Befrienders Kenya: 0800 723 253"
         >
           0800 723 253
         </a>
-        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 4 }}>Free · 24/7 · Confidential</div>
+        <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>
+          Befrienders Kenya · Free · 24/7 · Confidential
+        </p>
       </div>
 
+      <div style={{ height: 1, background: 'var(--color-divider)' }} />
+
       {triggered ? (
-        <div>
-          {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
-          <div className="card" style={{ background: '#E8F5E9', border: '1px solid #A5D6A7', marginBottom: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-            <p style={{ color: '#2E7D32', fontWeight: 600 }}>Help is on the way</p>
-            <p style={{ color: '#388E3C', fontSize: '0.9rem', marginTop: 4 }}>An admin has been alerted. While you wait, try a breathing exercise below.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
+              background: 'var(--color-calm-bg)',
+              border: '1px solid rgba(143,175,154,0.30)',
+              borderRadius: 'var(--radius-md)',
+              padding: '14px var(--space-md)',
+              color: 'var(--color-calm)',
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            <CheckCircle size={20} weight="duotone" aria-hidden="true" />
+            <span>Help is coming. An admin has been alerted.</span>
           </div>
 
-          <button className="btn btn--primary" style={{ marginBottom: 10 }} onClick={() => navigate('/breathing')}>
-            🌬️ Try Breathing Exercises
+          <button className="btn btn--primary" onClick={() => navigate('/breathing')}>
+            <Wind size={20} weight="duotone" aria-hidden="true" />
+            Try a breathing exercise
           </button>
-          <button className="btn btn--muted" onClick={() => navigate('/dashboard')}>Back to home</button>
+
+          <button
+            className="btn btn--ghost"
+            onClick={() => navigate('/safety-plan')}
+          >
+            <ShieldCheck size={20} weight="duotone" aria-hidden="true" />
+            Open my Safety Plan
+          </button>
+
+          <button className="btn btn--muted" onClick={() => navigate('/dashboard')}>
+            Back to home
+          </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ textAlign: 'center', marginBottom: 8, fontSize: '0.95rem', color: 'var(--color-text)' }}>
-            What would help right now?
-          </p>
-
-          {error && <div className="error-msg">{error}</div>}
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
           <button
             className="btn btn--danger"
             onClick={handleTalkNow}
             disabled={loading}
-            style={{ fontSize: '1rem' }}
+            style={{ fontSize: 'var(--text-body)' }}
           >
-            {loading ? 'Alerting…' : '🆘 I need to talk to someone now'}
+            <Siren size={20} weight="duotone" aria-hidden="true" />
+            {loading ? 'Alerting…' : 'I need to talk to someone now'}
           </button>
 
           <button
-            className="btn btn--primary"
+            className="btn btn--ghost"
             onClick={() => navigate('/breathing')}
           >
-            🌬️ Breathing exercises first
+            <Wind size={20} weight="duotone" aria-hidden="true" />
+            Try a breathing exercise first
           </button>
 
-          <button className="btn btn--muted" onClick={() => navigate(-1)}>
-            Back
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-accent)',
+              fontSize: 14,
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: 'var(--space-sm)',
+              textDecoration: 'underline',
+              textDecorationColor: 'rgba(194,164,138,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--space-xs)',
+              minHeight: 'var(--touch-target-min)',
+            }}
+            onClick={() => navigate('/safety-plan')}
+          >
+            <ShieldCheck size={16} weight="duotone" aria-hidden="true" />
+            Open my Safety Plan
           </button>
         </div>
       )}

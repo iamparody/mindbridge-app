@@ -58,14 +58,12 @@ export default function ReferralScreen() {
       </div>
 
       <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div className="card" style={{ background: '#EBF4FF', border: 'none' }}>
-          <p style={{ fontSize: '0.9rem', color: 'var(--color-text)', lineHeight: 1.6 }}>
-            We'll connect you with a qualified mental health professional. An admin will reach out to arrange your session based on your preferences.
-          </p>
+        <div className="info-banner">
+          We'll connect you with a qualified mental health professional. An admin will reach out to arrange your session based on your preferences.
         </div>
 
         <div>
-          <label className="label" htmlFor="struggles">What are you struggling with? <span style={{ color: 'var(--color-emergency)' }}>*</span></label>
+          <label className="label" htmlFor="struggles">What are you struggling with? <span style={{ color: 'var(--color-danger)' }}>*</span></label>
           <textarea
             id="struggles"
             className="textarea"
@@ -79,7 +77,7 @@ export default function ReferralScreen() {
         </div>
 
         <div>
-          <label className="label">Preferred contact time <span style={{ color: 'var(--color-emergency)' }}>*</span></label>
+          <label className="label">Preferred contact time <span style={{ color: 'var(--color-danger)' }}>*</span></label>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             {TIMES.map((t) => (
               <button
@@ -96,7 +94,7 @@ export default function ReferralScreen() {
         </div>
 
         <div>
-          <label className="label">Preferred contact method <span style={{ color: 'var(--color-emergency)' }}>*</span></label>
+          <label className="label">Preferred contact method <span style={{ color: 'var(--color-danger)' }}>*</span></label>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button type="button" onClick={() => setContactMethod('in_app')} className={`pill${contactMethod === 'in_app' ? ' pill--active' : ''}`} style={{ cursor: 'pointer', border: 'none', flex: 1 }}>💬 In-app message</button>
             <button type="button" onClick={() => setContactMethod('phone')} className={`pill${contactMethod === 'phone' ? ' pill--active' : ''}`} style={{ cursor: 'pointer', border: 'none', flex: 1 }}>📞 Phone call</button>

@@ -102,7 +102,7 @@ export default function PeerTextChatScreen() {
   return (
     <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--color-white)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--color-surface-card)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>💬 Peer Chat</div>
           <div style={{ fontSize: '0.7rem', color: connected ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
@@ -115,14 +115,14 @@ export default function PeerTextChatScreen() {
               {balance} cr
             </span>
           )}
-          <button onClick={handleEndSession} style={{ background: 'var(--color-emergency)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
+          <button onClick={handleEndSession} style={{ background: 'var(--color-danger)', color: 'var(--color-text-primary)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 12px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}>
             End
           </button>
         </div>
       </div>
 
       {peerLeft && (
-        <div style={{ background: '#FFF8E1', borderBottom: '1px solid #FFE082', padding: '8px 16px', fontSize: '0.85rem', color: '#7B6200', textAlign: 'center' }}>
+        <div className="info-banner info-banner--warning" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', textAlign: 'center', fontSize: '0.85rem' }}>
           Your peer has left the session.
         </div>
       )}
@@ -135,18 +135,8 @@ export default function PeerTextChatScreen() {
           </div>
         )}
         {messages.map((msg, i) => (
-          <div key={i} style={{
-            alignSelf: msg.from === 'me' ? 'flex-end' : 'flex-start',
-            maxWidth: '75%',
-            background: msg.from === 'me' ? 'var(--color-primary)' : 'var(--color-white)',
-            color: msg.from === 'me' ? '#fff' : 'var(--color-text)',
-            borderRadius: msg.from === 'me' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-            padding: '10px 14px',
-            boxShadow: 'var(--shadow)',
-            fontSize: '0.95rem',
-            lineHeight: 1.5,
-          }}>
-            <div>{msg.text}</div>
+          <div key={i} className={`bubble ${msg.from === 'me' ? 'bubble--user' : 'bubble--peer'}`}>
+            {msg.text}
             <div style={{ fontSize: '0.65rem', opacity: 0.7, marginTop: 4, textAlign: msg.from === 'me' ? 'right' : 'left' }}>
               {msg.from === 'me' ? 'You' : 'Peer'} · {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
@@ -156,7 +146,7 @@ export default function PeerTextChatScreen() {
       </div>
 
       {/* Input */}
-      <div style={{ padding: '12px 16px', background: 'var(--color-white)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
+      <div style={{ padding: '12px 16px', background: 'var(--color-surface-card)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
         <textarea
           className="textarea"
           rows={1}

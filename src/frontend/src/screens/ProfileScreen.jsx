@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Coin } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const PACKAGES = [
@@ -9,6 +10,16 @@ const PACKAGES = [
   { id: 'plus',     label: 'Plus',     price: 200, credits: 15 },
   { id: 'support',  label: 'Support',  price: 500, credits: 40 },
 ];
+
+function ProfileSkeleton() {
+  return (
+    <div style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="skeleton" style={{ width: '100%', height: 80, borderRadius: 'var(--radius-lg)' }} />
+      ))}
+    </div>
+  );
+}
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -46,13 +57,13 @@ export default function ProfileScreen() {
       const notifList = notifRes.data.notifications ?? notifRes.data ?? [];
       setNotifications(notifList);
       setNotifPrefs({
-        peer_broadcast: profRes.data.notif_peer_broadcast ?? true,
+        peer_broadcast:   profRes.data.notif_peer_broadcast ?? true,
         checkin_reminder: profRes.data.notif_checkin_reminder ?? true,
-        group_messages: profRes.data.notif_group_messages ?? true,
-        credit_low: profRes.data.notif_credit_low ?? true,
+        group_messages:   profRes.data.notif_group_messages ?? true,
+        credit_low:       profRes.data.notif_credit_low ?? true,
       });
     } catch {
-      setError('Failed to load profile. Please try again.');
+      setError('We couldn\'t connect. Check your internet and try again.');
     } finally {
       setLoading(false);
     }
@@ -66,7 +77,7 @@ export default function ProfileScreen() {
       const { data } = await client.post('/api/credits/purchase', { package: pkg.id });
       if (data.payment_url) window.location.href = data.payment_url;
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not initiate purchase.');
+      setError(err.response?.data?.error || 'Your payment didn\'t go through. Please try a different method.');
     } finally {
       setPurchasing(null);
     }
@@ -77,7 +88,7 @@ export default function ProfileScreen() {
     try {
       await client.patch('/api/notifications/preferences', { [key]: value });
     } catch {
-      setNotifPrefs((p) => ({ ...p, [key]: !value })); // revert on failure
+      setNotifPrefs((p) => ({ ...p, [key]: !value }));
     }
   }
 
@@ -88,7 +99,7 @@ export default function ProfileScreen() {
       logout();
       navigate('/login', { replace: true });
     } catch {
-      setError('Could not schedule deletion. Please try again.');
+      setError('Something went wrong on our end. We\'re on it.');
     } finally {
       setDeleting(false);
       setDeleteConfirm(false);
@@ -100,7 +111,7 @@ export default function ProfileScreen() {
     try {
       await client.delete('/api/journals');
     } catch {
-      setError('Could not clear journal. Please try again.');
+      setError('Something went wrong. Please try again.');
     }
   }
 
@@ -111,7 +122,7 @@ export default function ProfileScreen() {
       setFeedbackSent(true);
       setTimeout(() => { setFeedbackOpen(false); setFeedbackSent(false); setFeedbackRating(0); setFeedbackComment(''); }, 2000);
     } catch {
-      setError('Could not send feedback.');
+      setError('Something went wrong. Please try again.');
     } finally {
       setSendingFeedback(false);
     }
@@ -123,40 +134,49 @@ export default function ProfileScreen() {
     navigate('/login', { replace: true });
   }
 
-  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
+  if (loading) {
+    return (
+      <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+        <div className="page-header">
+          <h2 className="page-header__title">Profile</h2>
+        </div>
+        <ProfileSkeleton />
+      </div>
+    );
+  }
 
-  const balanceLow = balance !== null && balance < 2;
+  const balanceLow = balance !== null && balance <= 2;
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
   return (
-    <div className="screen" style={{ padding: '0 0 16px' }}>
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
       <div className="page-header">
         <h2 className="page-header__title">Profile</h2>
         {unreadCount > 0 && (
-          <span style={{ marginLeft: 'auto', background: 'var(--color-emergency)', color: '#fff', borderRadius: 999, padding: '2px 8px', fontSize: '0.75rem', fontWeight: 700 }}>
+          <span style={{ marginLeft: 'auto', background: 'var(--color-danger)', color: 'var(--color-text-primary)', borderRadius: 'var(--radius-pill)', padding: '2px 8px', fontSize: 12, fontWeight: 700 }}>
             {unreadCount} new
           </span>
         )}
       </div>
 
-      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ padding: '0 var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
         {error && <div className="error-msg">{error}</div>}
 
-        {/* Account */}
+        {/* Identity */}
         <div className="card">
-          <h3 style={{ marginBottom: 12 }}>My Account</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Alias</span>
-              <span style={{ fontWeight: 700 }}>{user?.alias || profile?.alias}</span>
+          <h3 style={{ marginBottom: 'var(--space-md)' }}>My Account</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Alias</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-accent)', fontSize: 16 }}>{user?.alias || profile?.alias}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Email</span>
-              <span style={{ fontSize: '0.9rem' }}>{profile?.email || '—'}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Email</span>
+              <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{profile?.email || '—'}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Streak</span>
-              <span style={{ fontWeight: 600 }}>{profile?.streak_count ?? 0} 🔥</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Streak</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-warning)' }}>{profile?.streak_count ?? 0} 🔥</span>
             </div>
           </div>
         </div>
@@ -164,129 +184,134 @@ export default function ProfileScreen() {
         {/* AI Companion */}
         {profile?.persona && (
           <div className="card">
-            <h3 style={{ marginBottom: 12 }}>My AI Companion</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.9rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Name</span>
-                <span style={{ fontWeight: 600 }}>{profile.persona.persona_name}</span>
+            <h3 style={{ marginBottom: 'var(--space-md)' }}>My AI Companion</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>Name</span>
+                <span style={{ fontWeight: 600, fontFamily: 'var(--font-editorial)', color: 'var(--color-accent)' }}>{profile.persona.persona_name}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Tone</span>
-                <span style={{ textTransform: 'capitalize' }}>{profile.persona.tone}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Style</span>
-                <span style={{ textTransform: 'capitalize' }}>{profile.persona.response_style}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--color-text-muted)' }}>Formality</span>
-                <span style={{ textTransform: 'capitalize' }}>{profile.persona.formality}</span>
-              </div>
+              {[
+                { label: 'Tone',     value: profile.persona.tone },
+                { label: 'Style',    value: profile.persona.response_style },
+                { label: 'Formality', value: profile.persona.formality },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{label}</span>
+                  <span style={{ fontSize: 13, color: 'var(--color-text-primary)', textTransform: 'capitalize' }}>{value}</span>
+                </div>
+              ))}
             </div>
-            <p style={{ fontSize: '0.75rem', marginTop: 10 }}>Your companion's identity was set at signup and cannot be changed.</p>
+            <p style={{ fontSize: 12, marginTop: 'var(--space-sm)', color: 'var(--color-text-muted)' }}>Your companion's identity was set at signup and cannot be changed.</p>
           </div>
         )}
 
         {/* Credits */}
         <div className="card">
-          <h3 style={{ marginBottom: 12 }}>Credits</h3>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h3 style={{ marginBottom: 'var(--space-md)' }}>Credits</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
             <div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Balance</div>
-              <div style={{ fontSize: '2rem', fontWeight: 700, color: balanceLow ? 'var(--color-emergency)' : 'var(--color-text)' }}>{balance ?? '—'}</div>
-              {balanceLow && <div style={{ fontSize: '0.75rem', color: 'var(--color-emergency)' }}>Low — top up to continue peer sessions</div>}
+              <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 4 }}>Balance</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                <Coin size={24} weight="duotone" color={balanceLow ? 'var(--color-danger)' : 'var(--color-accent)'} aria-hidden="true" />
+                <span style={{ fontSize: 32, fontWeight: 600, color: balanceLow ? 'var(--color-danger)' : 'var(--color-text-primary)' }}>{balance ?? '—'}</span>
+              </div>
+              {balanceLow && <div style={{ fontSize: 12, color: 'var(--color-danger)', marginTop: 4 }}>You need more credits for this. Top up to continue.</div>}
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
             {PACKAGES.map((pkg) => (
               <button
                 key={pkg.id}
                 onClick={() => handlePurchase(pkg)}
                 disabled={!!purchasing}
                 style={{
-                  padding: '10px 8px', borderRadius: 'var(--radius-sm)',
-                  border: '1.5px solid var(--color-border)', background: 'var(--color-white)',
-                  cursor: 'pointer', textAlign: 'center',
+                  padding: '10px 8px',
+                  borderRadius: 'var(--radius-md)',
+                  border: `1.5px solid ${purchasing === pkg.id ? 'var(--color-border-focus)' : 'var(--color-border)'}`,
+                  background: 'var(--color-surface-card)',
+                  cursor: 'pointer',
+                  textAlign: 'center',
                   opacity: purchasing && purchasing !== pkg.id ? 0.5 : 1,
+                  transition: 'opacity var(--duration-fast)',
                 }}
               >
-                <div style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{pkg.credits} cr</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>KSh {pkg.price}</div>
-                {purchasing === pkg.id && <div style={{ fontSize: '0.7rem' }}>Loading…</div>}
+                <div style={{ fontWeight: 600, color: 'var(--color-accent)', fontSize: 15 }}>{pkg.credits} cr</div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>KSh {pkg.price}</div>
+                {purchasing === pkg.id && <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>Loading…</div>}
               </button>
             ))}
           </div>
           {transactions.slice(0, 5).map((tx) => (
-            <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '6px 0', borderBottom: '1px solid var(--color-border)' }}>
+            <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '6px 0', borderBottom: '1px solid var(--color-divider)' }}>
               <span style={{ color: 'var(--color-text-muted)' }}>{new Date(tx.created_at).toLocaleDateString()}</span>
               <span style={{ textTransform: 'capitalize', color: 'var(--color-text-muted)' }}>{tx.type}</span>
-              <span style={{ fontWeight: 600, color: tx.type === 'debit' ? 'var(--color-emergency)' : 'var(--color-success)' }}>
+              <span style={{ fontWeight: 600, color: tx.type === 'debit' ? 'var(--color-danger)' : 'var(--color-calm)' }}>
                 {tx.type === 'debit' ? '-' : '+'}{tx.amount} cr
               </span>
             </div>
           ))}
         </div>
 
+        {/* Privacy & Data */}
+        <div className="card">
+          <h3 style={{ marginBottom: 'var(--space-md)' }}>Privacy & Data</h3>
+          {profile?.consent_version && (
+            <p style={{ fontSize: 13, marginBottom: 'var(--space-md)', color: 'var(--color-text-muted)' }}>
+              Consent v{profile.consent_version} accepted {profile.consented_at ? new Date(profile.consented_at).toLocaleDateString() : ''}
+            </p>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+            <button className="btn btn--muted btn--sm" onClick={handleClearJournal}>Clear My Journal</button>
+            {deleteConfirm ? (
+              <div>
+                <p style={{ fontSize: 13, marginBottom: 'var(--space-sm)', color: 'var(--color-danger)' }}>
+                  This will delete all your data within 24 hours. Are you sure?
+                </p>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                  <button className="btn btn--danger btn--sm" onClick={handleDeleteData} disabled={deleting} style={{ flex: 1, animation: 'none' }}>
+                    {deleting ? 'Deleting…' : 'Yes, delete everything'}
+                  </button>
+                  <button className="btn btn--muted btn--sm" onClick={() => setDeleteConfirm(false)} style={{ flex: 1 }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <button className="btn btn--danger btn--sm" onClick={() => setDeleteConfirm(true)} style={{ animation: 'none' }}>Delete My Data</button>
+            )}
+          </div>
+        </div>
+
         {/* Notifications */}
         <div className="card">
-          <h3 style={{ marginBottom: 12 }}>Notifications</h3>
+          <h3 style={{ marginBottom: 'var(--space-sm)' }}>Notifications</h3>
           {[
-            { key: 'peer_broadcast', label: 'Peer request broadcasts' },
+            { key: 'peer_broadcast',   label: 'Peer request broadcasts' },
             { key: 'checkin_reminder', label: 'Daily check-in reminder' },
-            { key: 'group_messages', label: 'Group messages' },
-            { key: 'credit_low', label: 'Low balance alerts' },
+            { key: 'group_messages',   label: 'Group messages' },
+            { key: 'credit_low',       label: 'Low balance alerts' },
           ].map(({ key, label }) => (
-            <label key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer' }}>
-              <span style={{ fontSize: '0.9rem' }}>{label}</span>
+            <label key={key} className="toggle-row" style={{ cursor: 'pointer' }}>
+              <span className="toggle-label">{label}</span>
               <input
                 type="checkbox"
                 checked={notifPrefs[key] ?? true}
                 onChange={(e) => updateNotifPref(key, e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: 'var(--color-primary)' }}
+                style={{ width: 20, height: 20, accentColor: 'var(--color-accent)', cursor: 'pointer' }}
               />
             </label>
           ))}
         </div>
 
-        {/* Privacy & Data */}
-        <div className="card">
-          <h3 style={{ marginBottom: 12 }}>Privacy & Data</h3>
-          {profile?.consent_version && (
-            <p style={{ fontSize: '0.85rem', marginBottom: 12 }}>
-              Consent v{profile.consent_version} accepted {profile.consented_at ? new Date(profile.consented_at).toLocaleDateString() : ''}
-            </p>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button className="btn btn--muted btn--sm" onClick={handleClearJournal}>Clear My Journal</button>
-            {deleteConfirm ? (
-              <div>
-                <p style={{ fontSize: '0.85rem', marginBottom: 8, color: 'var(--color-emergency)' }}>
-                  This will delete all your data within 24 hours. Are you sure?
-                </p>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn--danger btn--sm" onClick={handleDeleteData} disabled={deleting}>
-                    {deleting ? 'Deleting…' : 'Yes, delete everything'}
-                  </button>
-                  <button className="btn btn--muted btn--sm" onClick={() => setDeleteConfirm(false)}>Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <button className="btn btn--danger btn--sm" onClick={() => setDeleteConfirm(true)}>Delete My Data</button>
-            )}
-          </div>
-        </div>
-
-        {/* Safety Plan quick link */}
-        <button className="btn btn--ghost" onClick={() => navigate('/safety-plan')}>🛡️ My Safety Plan</button>
+        {/* Safety Plan */}
+        <button className="btn btn--ghost" onClick={() => navigate('/safety-plan')}>My Safety Plan</button>
 
         {/* Feedback */}
         <div className="card">
-          <h3 style={{ marginBottom: 12 }}>App Feedback</h3>
+          <h3 style={{ marginBottom: 'var(--space-md)' }}>App Feedback</h3>
           {feedbackOpen ? (
             feedbackSent ? (
-              <p style={{ textAlign: 'center', color: 'var(--color-success)' }}>✅ Thank you for your feedback!</p>
+              <p style={{ textAlign: 'center', color: 'var(--color-calm)' }}>Thank you for your feedback!</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                 <select className="select" value={feedbackType} onChange={(e) => setFeedbackType(e.target.value)}>
                   <option value="general">General</option>
                   <option value="peer_session">Peer Session</option>
@@ -295,24 +320,23 @@ export default function ProfileScreen() {
                 </select>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {[1,2,3,4,5].map((s) => (
-                    <button key={s} type="button" onClick={() => setFeedbackRating(s)} style={{ fontSize: 24, background: 'none', border: 'none', cursor: 'pointer', opacity: s <= feedbackRating ? 1 : 0.3 }}>⭐</button>
+                    <button key={s} type="button" onClick={() => setFeedbackRating(s)} style={{ fontSize: 24, background: 'none', border: 'none', cursor: 'pointer', opacity: s <= feedbackRating ? 1 : 0.3, minWidth: 44, minHeight: 44 }} aria-label={`Rate ${s}`}>⭐</button>
                   ))}
                 </div>
                 <textarea className="textarea" rows={3} maxLength={300} value={feedbackComment} onChange={(e) => setFeedbackComment(e.target.value)} placeholder="Optional comment…" />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn--primary btn--sm" onClick={handleFeedbackSubmit} disabled={sendingFeedback}>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                  <button className="btn btn--primary btn--sm" onClick={handleFeedbackSubmit} disabled={sendingFeedback} style={{ flex: 1 }}>
                     {sendingFeedback ? 'Sending…' : 'Send'}
                   </button>
-                  <button className="btn btn--muted btn--sm" onClick={() => setFeedbackOpen(false)}>Cancel</button>
+                  <button className="btn btn--muted btn--sm" onClick={() => setFeedbackOpen(false)} style={{ flex: 1 }}>Cancel</button>
                 </div>
               </div>
             )
           ) : (
-            <button className="btn btn--ghost btn--sm" onClick={() => setFeedbackOpen(true)}>Send Feedback</button>
+            <button className="btn btn--ghost btn--sm" style={{ width: 'auto' }} onClick={() => setFeedbackOpen(true)}>Send Feedback</button>
           )}
         </div>
 
-        {/* Logout */}
         <button className="btn btn--muted" onClick={handleLogout}>Sign Out</button>
       </div>
     </div>

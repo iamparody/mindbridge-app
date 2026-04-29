@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChartLine } from '@phosphor-icons/react';
 import client from '../api/client';
 
-// avg_score range: very_low=-2, low=-1, neutral=0, good=1, great=2
 const SCORE_COLORS = [
-  { min: -2,   max: -1.5, color: 'var(--mood-very-low)' },
-  { min: -1.5, max: -0.5, color: 'var(--mood-low)' },
-  { min: -0.5, max:  0.5, color: 'var(--mood-neutral)' },
-  { min:  0.5, max:  1.5, color: 'var(--mood-good)' },
-  { min:  1.5, max:  2,   color: 'var(--mood-great)' },
+  { min: -2,   max: -1.5, color: 'var(--color-danger)' },
+  { min: -1.5, max: -0.5, color: 'var(--color-warning)' },
+  { min: -0.5, max:  0.5, color: 'var(--color-accent)' },
+  { min:  0.5, max:  1.5, color: 'var(--color-calm)' },
+  { min:  1.5, max:  2,   color: '#6BAF7A' },
 ];
 
 const MOOD_META = {
-  very_low: { label: 'Very Low', color: 'var(--mood-very-low)', emoji: '😔' },
-  low:      { label: 'Low',      color: 'var(--mood-low)',      emoji: '😕' },
-  neutral:  { label: 'Neutral',  color: 'var(--mood-neutral)',  emoji: '😐' },
-  good:     { label: 'Good',     color: 'var(--mood-good)',     emoji: '🙂' },
-  great:    { label: 'Great',    color: 'var(--mood-great)',    emoji: '😊' },
+  very_low: { label: 'Very Low', color: 'var(--color-danger)',  emoji: '😔' },
+  low:      { label: 'Low',      color: 'var(--color-warning)', emoji: '😕' },
+  neutral:  { label: 'Neutral',  color: 'var(--color-accent)',  emoji: '😐' },
+  good:     { label: 'Good',     color: 'var(--color-calm)',    emoji: '🙂' },
+  great:    { label: 'Great',    color: '#6BAF7A',              emoji: '😊' },
 };
 
 function scoreColor(score) {
@@ -24,12 +24,28 @@ function scoreColor(score) {
   for (const band of SCORE_COLORS) {
     if (score >= band.min && score <= band.max) return band.color;
   }
-  return score < 0 ? 'var(--mood-low)' : 'var(--mood-good)';
+  return score < 0 ? 'var(--color-warning)' : 'var(--color-calm)';
+}
+
+function AnalyticsSkeleton() {
+  return (
+    <div style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+        <div className="skeleton" style={{ height: 72, borderRadius: 'var(--radius-lg)' }} />
+        <div className="skeleton" style={{ height: 72, borderRadius: 'var(--radius-lg)' }} />
+      </div>
+      <div className="skeleton" style={{ height: 80, borderRadius: 'var(--radius-lg)' }} />
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 80 }}>
+        {[40, 60, 30, 80, 50, 70, 45].map((h, i) => (
+          <div key={i} className="skeleton" style={{ flex: 1, height: h, borderRadius: '3px 3px 0 0' }} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function BarChart({ data }) {
   if (!data?.length) return null;
-  const maxAbs = 2;
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 80 }}>
       {data.map((d, i) => {
@@ -37,8 +53,8 @@ function BarChart({ data }) {
         const height = d.avg_score !== null ? ((d.avg_score + 2) / 4) * 80 : 4;
         return (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <div style={{ width: '100%', height: Math.max(4, height), background: color, borderRadius: '3px 3px 0 0' }} />
-            <div style={{ fontSize: '0.6rem', color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1 }}>
+            <div style={{ width: '100%', height: Math.max(4, height), background: color, borderRadius: '3px 3px 0 0', transition: 'height 300ms ease' }} />
+            <div style={{ fontSize: 10, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1 }}>
               {new Date(d.date).toLocaleDateString('en-KE', { weekday: 'narrow' })}
             </div>
           </div>
@@ -60,7 +76,7 @@ export default function AnalyticsScreen() {
         const { data: res } = await client.get('/api/moods/analytics');
         setData(res);
       } catch {
-        setError('Failed to load analytics. Please try again.');
+        setError('We couldn\'t connect. Check your internet and try again.');
       } finally {
         setLoading(false);
       }
@@ -68,73 +84,68 @@ export default function AnalyticsScreen() {
     load();
   }, []);
 
-  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
-
   const tooFewEntries = !data || (data.total_checkins ?? 0) < 3;
   const commonMoodMeta = data?.common_mood ? MOOD_META[data.common_mood] : null;
 
   return (
-    <div className="screen" style={{ padding: '0 0 16px' }}>
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">My Insights</h2>
       </div>
 
-      <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ padding: 'var(--space-sm) var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
         {error && <div className="error-msg">{error}</div>}
 
-        {tooFewEntries ? (
-          <div style={{ textAlign: 'center', padding: '40px 16px' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
-            <h3 style={{ marginBottom: 8 }}>Keep checking in</h3>
-            <p>Your insights will appear here after a few days of check-ins.</p>
-            <button className="btn btn--primary" style={{ marginTop: 24 }} onClick={() => navigate('/mood')}>Check In Now</button>
+        {loading ? (
+          <AnalyticsSkeleton />
+        ) : tooFewEntries ? (
+          <div className="empty-state">
+            <ChartLine size={48} weight="duotone" color="var(--color-text-muted)" aria-hidden="true" />
+            <div className="empty-state__title">Keep checking in</div>
+            <div className="empty-state__body">Your mood insights appear after a few days of check-ins.</div>
           </div>
         ) : (
           <>
-            {/* Streak stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
               {[
                 { label: 'Current Streak', value: `${data.current_streak ?? 0}🔥` },
                 { label: 'Total Check-ins', value: `${data.total_checkins ?? 0}` },
               ].map((s) => (
-                <div key={s.label} className="card" style={{ textAlign: 'center', padding: 12 }}>
-                  <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{s.value}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{s.label}</div>
+                <div key={s.label} className="card" style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
+                  <div style={{ fontWeight: 600, fontSize: 24, color: 'var(--color-text-primary)' }}>{s.value}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
-            {/* Most common mood */}
             {commonMoodMeta && (
-              <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 36 }}>{commonMoodMeta.emoji}</span>
+              <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                <span style={{ fontSize: 36 }} aria-hidden="true">{commonMoodMeta.emoji}</span>
                 <div>
-                  <div style={{ fontWeight: 700 }}>Most common mood (30 days)</div>
-                  <div style={{ color: commonMoodMeta.color, fontWeight: 600 }}>{commonMoodMeta.label}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary)' }}>Most common mood (30 days)</div>
+                  <div style={{ color: commonMoodMeta.color, fontWeight: 600, marginTop: 2 }}>{commonMoodMeta.label}</div>
                 </div>
               </div>
             )}
 
-            {/* 7-day chart */}
             {data.week_trend?.length > 0 && (
               <div className="card">
-                <h3 style={{ marginBottom: 12 }}>Last 7 days</h3>
+                <h3 style={{ marginBottom: 'var(--space-md)', fontSize: 16 }}>Last 7 days</h3>
                 <BarChart data={data.week_trend} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--color-text-muted)' }}>
                   <span>😔 Very Low</span><span>😊 Great</span>
                 </div>
               </div>
             )}
 
-            {/* Top tags */}
             {data.frequent_tags?.length > 0 && (
               <div className="card">
-                <h3 style={{ marginBottom: 12 }}>Most frequent feelings (30 days)</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <h3 style={{ marginBottom: 'var(--space-md)', fontSize: 16 }}>Most frequent feelings (30 days)</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                   {data.frequent_tags.map((t) => (
-                    <span key={t.tag} className="pill" style={{ fontSize: '0.85rem' }}>
-                      {t.tag} <strong style={{ color: 'var(--color-primary)' }}>{t.count}</strong>
+                    <span key={t.tag} className="pill" style={{ fontSize: 13 }}>
+                      {t.tag} <strong style={{ color: 'var(--color-accent)', marginLeft: 4 }}>{t.count}</strong>
                     </span>
                   ))}
                 </div>

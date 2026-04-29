@@ -66,7 +66,19 @@ export default function PeerRequestScreen() {
     }
   }
 
-  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
+  if (loading) return (
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+      <div className="page-header">
+        <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
+        <h2 className="page-header__title">Peer Support</h2>
+      </div>
+      <div style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <div className="skeleton" style={{ height: 72, borderRadius: 'var(--radius-lg)' }} />
+        <div className="skeleton" style={{ height: 100, borderRadius: 'var(--radius-lg)' }} />
+        <div className="skeleton" style={{ height: 52, borderRadius: 'var(--radius-pill)' }} />
+      </div>
+    </div>
+  );
 
   const balanceLow = balance !== null && balance < 2;
 
@@ -103,7 +115,7 @@ export default function PeerRequestScreen() {
                   padding: 14,
                   borderRadius: 'var(--radius-sm)',
                   border: `2px solid ${channel === val ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                  background: channel === val ? '#EBF4FF' : 'var(--color-white)',
+                  background: channel === val ? 'rgba(194,164,138,0.15)' : 'var(--color-surface-card)',
                   cursor: 'pointer',
                   textAlign: 'center',
                 }}

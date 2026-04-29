@@ -1,16 +1,42 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Handshake, Robot, Stethoscope, Notebook, UsersThree, Siren, Bell, Coin } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const TILES = [
-  { label: 'Peer Help',   emoji: '🤝', to: '/peer',        desc: 'Talk to someone now' },
-  { label: 'AI Chat',     emoji: '💬', to: '/ai-chat',     desc: 'Your companion is here' },
-  { label: 'Therapist',   emoji: '🏥', to: '/referral',    desc: 'Professional referral' },
-  { label: 'Journal',     emoji: '📓', to: '/journal',     desc: 'Write freely' },
-  { label: 'Groups',      emoji: '👥', to: '/groups',      desc: 'Peer communities' },
-  { label: 'Emergency',   emoji: '🆘', to: '/emergency',   desc: 'Get help right now', emergency: true },
+  { label: 'Peer Help',  Icon: Handshake,   to: '/peer',      desc: 'Talk to someone now' },
+  { label: 'AI Chat',    Icon: Robot,        to: '/ai-chat',   desc: 'Your companion is here' },
+  { label: 'Therapist',  Icon: Stethoscope,  to: '/referral',  desc: 'Professional referral' },
+  { label: 'Journal',    Icon: Notebook,     to: '/journal',   desc: 'Write freely' },
+  { label: 'Groups',     Icon: UsersThree,   to: '/groups',    desc: 'Peer communities' },
+  { label: 'Emergency',  Icon: Siren,        to: '/emergency', desc: 'Get help right now', emergency: true },
 ];
+
+function DashboardSkeleton() {
+  return (
+    <div style={{ padding: 'var(--space-md)' }}>
+      {/* Top bar skeleton */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', height: 'var(--top-bar-height)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-md)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="skeleton" style={{ width: 140, height: 16 }} />
+          <div className="skeleton" style={{ width: 80, height: 14 }} />
+        </div>
+        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+      </div>
+      {/* Streak bar */}
+      <div className="skeleton" style={{ width: '100%', height: 40, borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)' }} />
+      {/* Mood banner */}
+      <div className="skeleton" style={{ width: '100%', height: 72, borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-lg)' }} />
+      {/* Tiles grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="skeleton" style={{ height: 96, borderRadius: 'var(--radius-lg)' }} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardScreen() {
   const { user } = useAuth();
@@ -38,7 +64,7 @@ export default function DashboardScreen() {
       setUnread(notifs.filter((n) => !n.read_at).length);
       setMoodDone(!!moodRes.data);
     } catch {
-      setError('Failed to load dashboard. Pull down to retry.');
+      setError('We couldn\'t connect. Check your internet and try again.');
     } finally {
       setLoading(false);
     }
@@ -47,39 +73,77 @@ export default function DashboardScreen() {
   useEffect(() => { load(); }, [load]);
 
   const alias = user?.alias ?? '';
-  const balanceLow = balance !== null && balance < 2;
+  const balanceLow = balance !== null && balance <= 2;
 
   if (loading) {
     return (
-      <div className="loading-full">
-        <div className="spinner" />
+      <div className="screen">
+        <DashboardSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="screen" style={{ padding: '0 0 16px' }}>
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 8px', background: 'var(--color-white)', borderBottom: '1px solid var(--color-border)' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 'var(--top-bar-height)',
+          padding: '0 var(--space-md)',
+          background: 'var(--color-bg-primary)',
+          borderBottom: '1px solid var(--color-border)',
+          flexShrink: 0,
+        }}
+      >
         <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Signed in as</div>
-          <div style={{ fontWeight: 700, fontSize: '1rem' }}>{alias}</div>
+          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>Signed in as</div>
+          <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--color-text-secondary)' }}>{alias}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>Credits</div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: balanceLow ? 'var(--color-emergency)' : 'var(--color-text)' }}>
-              {balance !== null ? balance : '—'}
-            </div>
-          </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+          <span className={`credit-badge${balanceLow ? ' credit-badge--low' : ''}`} aria-label={`${balance} credits`}>
+            <Coin size={16} weight="duotone" aria-hidden="true" />
+            {balance !== null ? balance : '—'}
+          </span>
           <button
             onClick={() => navigate('/profile')}
-            style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', position: 'relative' }}
-            aria-label="Notifications"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative',
+              width: 'var(--touch-target-min)',
+              height: 'var(--touch-target-min)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-primary)',
+              borderRadius: 'var(--radius-sm)',
+            }}
+            aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
           >
-            🔔
+            <Bell size={24} weight="duotone" aria-hidden="true" />
             {unread > 0 && (
-              <span style={{ position: 'absolute', top: 0, right: 0, background: 'var(--color-emergency)', color: '#fff', borderRadius: '50%', width: 16, height: 16, fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  background: 'var(--color-danger)',
+                  color: 'var(--color-text-primary)',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  fontSize: 9,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                }}
+              >
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
@@ -88,45 +152,113 @@ export default function DashboardScreen() {
       </div>
 
       {error && (
-        <div className="error-msg" style={{ margin: '12px 16px' }}>
-          {error} <button onClick={load} style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>Retry</button>
+        <div className="error-msg" style={{ margin: 'var(--space-md)' }}>
+          {error}{' '}
+          <button
+            onClick={load}
+            style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: 'inherit' }}
+          >
+            Retry
+          </button>
         </div>
       )}
 
-      {/* Mood prompt banner */}
-      {!moodDone && !moodDismissed && (
-        <div style={{ margin: '12px 16px', background: '#EBF4FF', border: '1px solid #C7D8F5', borderRadius: 'var(--radius-sm)', padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div>
-            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-primary)' }}>Daily check-in</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'block' }}>How are you feeling today?</span>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={() => navigate('/mood')} className="btn btn--primary btn--sm" style={{ width: 'auto' }}>Check In</button>
-            <button onClick={() => setMoodDismissed(true)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-muted)' }}>×</button>
-          </div>
-        </div>
-      )}
-
-      {/* Streak */}
-      <div style={{ margin: '12px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 24 }}>🔥</span>
-        <div>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{streak}</span>
-          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}> day streak</span>
-        </div>
+      {/* Streak bar */}
+      <div
+        style={{
+          margin: 'var(--space-md) var(--space-md) 0',
+          background: 'var(--color-surface-card)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--color-border)',
+          height: 48,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 'var(--space-sm)',
+        }}
+      >
+        <span style={{ fontSize: 20 }} aria-hidden="true">🔥</span>
+        <span style={{ fontWeight: 600, fontSize: 20, color: 'var(--color-warning)' }}>{streak}</span>
+        <span style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>day streak</span>
         {balanceLow && balance !== null && (
-          <Link to="/profile" style={{ marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--color-emergency)', fontWeight: 600, textDecoration: 'none' }}>
-            Low credits — top up
+          <Link
+            to="/profile"
+            style={{
+              marginLeft: 'auto',
+              marginRight: 'var(--space-md)',
+              fontSize: 12,
+              color: 'var(--color-danger)',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            Low credits
           </Link>
         )}
       </div>
 
-      {/* Action tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, padding: '0 16px' }}>
-        {TILES.map((tile) => (
+      {/* Mood prompt banner */}
+      {!moodDone && !moodDismissed && (
+        <div
+          style={{
+            margin: 'var(--space-sm) var(--space-md)',
+            background: 'var(--color-warning-bg)',
+            borderLeft: '3px solid var(--color-warning)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 'var(--space-sm)',
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-warning)' }}>How are you feeling today?</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 2 }}>Daily check-in</div>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', flexShrink: 0 }}>
+            <button
+              onClick={() => navigate('/mood')}
+              className="btn btn--primary btn--sm"
+              style={{ width: 'auto' }}
+            >
+              Check In
+            </button>
+            <button
+              onClick={() => setMoodDismissed(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: 18,
+                cursor: 'pointer',
+                color: 'var(--color-text-muted)',
+                width: 'var(--touch-target-min)',
+                height: 'var(--touch-target-min)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Action tiles 2×3 grid */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 'var(--space-sm)',
+          padding: 'var(--space-sm) var(--space-md) 0',
+        }}
+      >
+        {TILES.map(({ label, Icon, to, desc, emergency }) => (
           <Link
-            key={tile.to}
-            to={tile.to}
+            key={to}
+            to={to}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -134,26 +266,37 @@ export default function DashboardScreen() {
               justifyContent: 'center',
               gap: 6,
               padding: '20px 12px',
-              background: tile.emergency ? 'var(--color-emergency)' : 'var(--color-white)',
-              borderRadius: 'var(--radius)',
-              boxShadow: 'var(--shadow)',
+              background: emergency ? 'var(--color-danger-bg)' : 'var(--color-surface-card)',
+              border: `1px solid ${emergency ? 'rgba(179,92,92,0.40)' : 'var(--color-border)'}`,
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-card)',
               textDecoration: 'none',
-              color: tile.emergency ? '#fff' : 'var(--color-text)',
-              transition: 'transform 0.1s',
+              color: emergency ? 'var(--color-danger)' : 'var(--color-text-primary)',
+              transition: 'transform var(--duration-fast), box-shadow var(--duration-fast)',
+              minHeight: 96,
             }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.985)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = ''}
+            onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.985)'}
+            onTouchEnd={(e) => e.currentTarget.style.transform = ''}
           >
-            <span style={{ fontSize: 32 }}>{tile.emoji}</span>
-            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{tile.label}</span>
-            <span style={{ fontSize: '0.75rem', color: tile.emergency ? 'rgba(255,255,255,0.85)' : 'var(--color-text-muted)', textAlign: 'center' }}>{tile.desc}</span>
+            <Icon
+              size={32}
+              weight="duotone"
+              aria-hidden="true"
+              color={emergency ? 'var(--color-danger)' : 'var(--color-accent)'}
+            />
+            <span style={{ fontWeight: 600, fontSize: 13 }}>{label}</span>
+            <span style={{ fontSize: 11, color: emergency ? 'rgba(179,92,92,0.80)' : 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.3 }}>{desc}</span>
           </Link>
         ))}
       </div>
 
       {/* Quick links */}
-      <div style={{ display: 'flex', gap: 8, padding: '16px 16px 0', flexWrap: 'wrap' }}>
-        <Link to="/analytics" className="pill">📊 My insights</Link>
-        <Link to="/safety-plan" className="pill">🛡️ Safety plan</Link>
-        <Link to="/breathing" className="pill">🌬️ Breathing</Link>
+      <div style={{ display: 'flex', gap: 'var(--space-sm)', padding: 'var(--space-md) var(--space-md) 0', flexWrap: 'wrap' }}>
+        <Link to="/analytics" className="pill" style={{ cursor: 'pointer' }}>My insights</Link>
+        <Link to="/safety-plan" className="pill" style={{ cursor: 'pointer' }}>Safety plan</Link>
+        <Link to="/breathing" className="pill" style={{ cursor: 'pointer' }}>Breathing</Link>
       </div>
     </div>
   );

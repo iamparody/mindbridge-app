@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Siren } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const DEFAULT_PLAN = {
@@ -14,6 +15,16 @@ const DEFAULT_PLAN = {
   emergency_resources: 'Befrienders Kenya: 0800 723 253 (free, 24/7)',
   reason_to_continue: '',
 };
+
+function SafetyPlanSkeleton() {
+  return (
+    <div style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="skeleton" style={{ width: '100%', height: 96, borderRadius: 'var(--radius-lg)' }} />
+      ))}
+    </div>
+  );
+}
 
 export default function SafetyPlanScreen() {
   const navigate = useNavigate();
@@ -36,7 +47,7 @@ export default function SafetyPlanScreen() {
         });
       }
     } catch {
-      setError('Failed to load safety plan. Please try again.');
+      setError('We couldn\'t connect. Check your internet and try again.');
     } finally {
       setLoading(false);
     }
@@ -60,45 +71,52 @@ export default function SafetyPlanScreen() {
     setError('');
     setSaving(true);
     try {
-      const payload = {
-        ...plan,
-        contacts: plan.contacts.filter((c) => c.name.trim()),
-      };
+      const payload = { ...plan, contacts: plan.contacts.filter((c) => c.name.trim()) };
       await client.put('/api/safety-plan', payload);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save. Please try again.');
+      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
+  if (loading) {
+    return (
+      <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+        <div className="page-header">
+          <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
+          <h2 className="page-header__title">My Safety Plan</h2>
+        </div>
+        <SafetyPlanSkeleton />
+      </div>
+    );
+  }
 
   return (
-    <div className="screen" style={{ padding: '0 0 16px' }}>
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">My Safety Plan</h2>
       </div>
 
-      <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ background: '#EBF4FF', border: '1px solid #C7D8F5', borderRadius: 'var(--radius-sm)', padding: 12, fontSize: '0.85rem', color: 'var(--color-primary)' }}>
-          📋 Write this during a calm moment — it's here for you when things get hard. All fields are optional and completely private.
+      <div style={{ padding: 'var(--space-sm) var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+        <div className="info-banner">
+          Write this during a calm moment — it's here for you when things get hard. All fields are optional and completely private.
         </div>
 
         {error && <div className="error-msg">{error}</div>}
 
         {[
-          { field: 'warning_signs', label: '1. Warning signs I notice in myself', placeholder: 'e.g. withdrawing from people, difficulty sleeping…' },
-          { field: 'helpful_things', label: '2. Things that have helped me before', placeholder: 'e.g. calling a friend, going for a walk…' },
-          { field: 'things_to_avoid', label: '3. Things that make it worse — to avoid', placeholder: 'e.g. isolating, social media at night…' },
+          { field: 'warning_signs',  label: '1. Warning signs I notice in myself',          placeholder: 'e.g. withdrawing from people, difficulty sleeping…' },
+          { field: 'helpful_things', label: '2. Things that have helped me before',           placeholder: 'e.g. calling a friend, going for a walk…' },
+          { field: 'things_to_avoid', label: '3. Things that make it worse — to avoid',       placeholder: 'e.g. isolating, social media at night…' },
         ].map(({ field, label, placeholder }) => (
           <div key={field}>
             <label className="label">{label}</label>
             <textarea
-              className="textarea"
+              className="textarea textarea--journal"
               rows={3}
               value={plan[field]}
               onChange={(e) => updateField(field, e.target.value)}
@@ -110,7 +128,7 @@ export default function SafetyPlanScreen() {
         <div>
           <label className="label">4. People I can contact (up to 3)</label>
           {plan.contacts.map((c, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div key={i} style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
               <input
                 type="text"
                 className="input"
@@ -142,7 +160,7 @@ export default function SafetyPlanScreen() {
         <div>
           <label className="label">6. One thing that gives me a reason to keep going</label>
           <textarea
-            className="textarea"
+            className="textarea textarea--journal"
             rows={2}
             value={plan.reason_to_continue}
             onChange={(e) => updateField('reason_to_continue', e.target.value)}
@@ -151,11 +169,16 @@ export default function SafetyPlanScreen() {
         </div>
 
         <button className="btn btn--primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : saved ? '✅ Saved' : 'Save Safety Plan'}
+          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save Safety Plan'}
         </button>
 
-        <button className="btn btn--danger" onClick={() => navigate('/emergency')}>
-          🆘 Emergency — I need help now
+        <button
+          className="btn btn--danger"
+          onClick={() => navigate('/emergency')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-sm)' }}
+        >
+          <Siren size={20} weight="duotone" aria-hidden="true" />
+          Emergency — I need help now
         </button>
       </div>
     </div>

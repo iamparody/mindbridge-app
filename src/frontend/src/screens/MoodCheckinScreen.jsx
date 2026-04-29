@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Robot, Handshake, Siren } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const MOODS = [
-  { value: 'very_low', label: 'Very Low', emoji: '😔', color: 'var(--mood-very-low)' },
-  { value: 'low',      label: 'Low',      emoji: '😕', color: 'var(--mood-low)' },
-  { value: 'neutral',  label: 'Neutral',  emoji: '😐', color: 'var(--mood-neutral)' },
-  { value: 'good',     label: 'Good',     emoji: '🙂', color: 'var(--mood-good)' },
-  { value: 'great',    label: 'Great',    emoji: '😊', color: 'var(--mood-great)' },
+  { value: 'very_low', label: 'Very Low', emoji: '😔', color: 'var(--color-danger)' },
+  { value: 'low',      label: 'Low',      emoji: '😕', color: 'var(--color-warning)' },
+  { value: 'neutral',  label: 'Neutral',  emoji: '😐', color: 'var(--color-accent)' },
+  { value: 'good',     label: 'Good',     emoji: '🙂', color: 'var(--color-calm)' },
+  { value: 'great',    label: 'Great',    emoji: '😊', color: '#6BAF7A' },
 ];
 
 const TAGS = ['Anxious', 'Hopeful', 'Overwhelmed', 'Calm', 'Lonely', 'Grateful', 'Angry', 'Numb'];
@@ -40,7 +41,7 @@ export default function MoodCheckinScreen() {
       const status = err.response?.status;
       setError(status === 409
         ? 'You already checked in today. See you tomorrow!'
-        : err.response?.data?.error || 'Something went wrong. Please try again.');
+        : 'Something went wrong saving your mood. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,16 +49,22 @@ export default function MoodCheckinScreen() {
 
   if (showLowPrompt) {
     return (
-      <div className="screen" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '32px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>💙</div>
-          <h1 style={{ fontSize: '1.375rem', marginBottom: 8 }}>We noticed you're having a hard day</h1>
+      <div className="screen" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'var(--space-xl) var(--space-lg)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+          <div style={{ fontSize: 48, marginBottom: 'var(--space-md)' }}>💙</div>
+          <h1 style={{ fontSize: 'var(--text-h2)', marginBottom: 'var(--space-sm)' }}>We noticed you're having a hard day</h1>
           <p>You don't have to go through this alone.</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <button className="btn btn--primary" onClick={() => navigate('/ai-chat', { replace: true })}>💬 AI Chat</button>
-          <button className="btn btn--ghost" onClick={() => navigate('/peer', { replace: true })}>🤝 Peer Help</button>
-          <button className="btn btn--danger" onClick={() => navigate('/emergency', { replace: true })}>🆘 Emergency</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+          <button className="btn btn--primary" onClick={() => navigate('/ai-chat', { replace: true })}>
+            <Robot size={20} weight="duotone" aria-hidden="true" /> Talk to your AI companion
+          </button>
+          <button className="btn btn--ghost" onClick={() => navigate('/peer', { replace: true })}>
+            <Handshake size={20} weight="duotone" aria-hidden="true" /> Connect with a peer
+          </button>
+          <button className="btn btn--danger" onClick={() => navigate('/emergency', { replace: true })}>
+            <Siren size={20} weight="duotone" aria-hidden="true" /> Emergency help
+          </button>
           <button className="btn btn--muted" onClick={() => navigate('/dashboard', { replace: true })}>Not now</button>
         </div>
       </div>
@@ -65,66 +72,61 @@ export default function MoodCheckinScreen() {
   }
 
   return (
-    <div className="screen" style={{ padding: '0 0 16px' }}>
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">Daily Check-In</h2>
       </div>
 
-      <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ padding: 'var(--space-sm) var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
         <div>
           <label className="label">How are you feeling right now?</label>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
             {MOODS.map((m) => (
               <button
                 key={m.value}
                 type="button"
                 onClick={() => setMood(m.value)}
+                className={`mood-btn${mood === m.value ? ' mood-btn--selected' : mood ? ' mood-btn--unselected' : ''}`}
                 style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '12px 4px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: `2px solid ${mood === m.value ? m.color : 'var(--color-border)'}`,
-                  background: mood === m.value ? `${m.color}20` : 'var(--color-white)',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s, background 0.15s',
+                  borderColor: mood === m.value ? m.color : 'transparent',
+                  background: mood === m.value ? `${m.color}20` : 'var(--color-surface-card)',
                 }}
+                aria-pressed={mood === m.value}
+                aria-label={m.label}
               >
-                <span style={{ fontSize: 28 }}>{m.emoji}</span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: mood === m.value ? m.color : 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.2 }}>{m.label}</span>
+                <span style={{ fontSize: 28 }} aria-hidden="true">{m.emoji}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: mood === m.value ? m.color : 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.2 }}>{m.label}</span>
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="label" htmlFor="note">What's on your mind? <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(optional)</span></label>
+          <label className="label" htmlFor="note">What's on your mind? <span style={{ fontWeight: 400, color: 'var(--color-text-muted)', textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
           <textarea
             id="note"
-            className="textarea"
+            className="textarea textarea--journal"
             rows={3}
             maxLength={200}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="What's on your mind?"
+            placeholder="Write freely…"
           />
           <div className={`char-counter${note.length > 190 ? ' char-counter--over' : ''}`}>{note.length}/200</div>
         </div>
 
         <div>
-          <label className="label">How would you describe this feeling? <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(optional)</span></label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+          <label className="label">How would you describe this feeling? <span style={{ fontWeight: 400, color: 'var(--color-text-muted)', textTransform: 'none', letterSpacing: 0 }}>(optional)</span></label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
             {TAGS.map((tag) => (
               <button
                 key={tag}
                 type="button"
                 onClick={() => toggleTag(tag)}
                 className={`pill${tags.includes(tag) ? ' pill--active' : ''}`}
-                style={{ cursor: 'pointer', border: 'none' }}
+                style={{ cursor: 'pointer' }}
+                aria-pressed={tags.includes(tag)}
               >
                 {tag}
               </button>

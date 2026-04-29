@@ -1,24 +1,28 @@
 import { NavLink } from 'react-router-dom';
+import { House, BookOpen, Wind, UserCircle } from '@phosphor-icons/react';
 import './BottomNav.css';
 
 const tabs = [
-  { to: '/dashboard', label: 'Home',      icon: '🏠' },
-  { to: '/resources', label: 'Library',   icon: '📚' },
-  { to: '/breathing', label: 'Breathing', icon: '🌬️' },
-  { to: '/profile',   label: 'Profile',   icon: '👤' },
+  { to: '/dashboard', label: 'Home',      Icon: House },
+  { to: '/resources', label: 'Resources', Icon: BookOpen },
+  { to: '/breathing', label: 'Breathing', Icon: Wind },
+  { to: '/profile',   label: 'Profile',   Icon: UserCircle },
 ];
 
 export default function BottomNav() {
   return (
-    <nav className="bottom-nav">
-      {tabs.map((tab) => (
+    <nav className="bottom-nav" role="navigation" aria-label="Main navigation">
+      {tabs.map(({ to, label, Icon }) => (
         <NavLink
-          key={tab.to}
-          to={tab.to}
+          key={to}
+          to={to}
           className={({ isActive }) => `bottom-nav__tab${isActive ? ' active' : ''}`}
+          aria-label={label}
         >
-          <span className="bottom-nav__icon">{tab.icon}</span>
-          <span className="bottom-nav__label">{tab.label}</span>
+          <span className="bottom-nav__icon" aria-hidden="true">
+            <Icon size={24} weight="duotone" />
+          </span>
+          <span className="bottom-nav__label">{label}</span>
         </NavLink>
       ))}
     </nav>

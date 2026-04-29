@@ -3,33 +3,80 @@ import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 
 const TONES = [
-  { value: 'warm', label: 'Warm', desc: 'Compassionate and nurturing' },
-  { value: 'motivational', label: 'Motivational', desc: 'Energetic and encouraging' },
-  { value: 'clinical', label: 'Clinical', desc: 'Structured and objective' },
-  { value: 'casual', label: 'Casual', desc: 'Relaxed and conversational' },
+  { value: 'warm',         label: 'Warm',         desc: 'Compassionate and nurturing' },
+  { value: 'motivational', label: 'Motivational',  desc: 'Energetic and encouraging' },
+  { value: 'clinical',     label: 'Clinical',      desc: 'Structured and objective' },
+  { value: 'casual',       label: 'Casual',        desc: 'Relaxed and conversational' },
 ];
 
 const STYLES = [
-  { value: 'brief', label: 'Brief', desc: 'Short, focused replies' },
+  { value: 'brief',     label: 'Brief',     desc: 'Short, focused replies' },
   { value: 'elaborate', label: 'Elaborate', desc: 'Detailed, thorough responses' },
 ];
 
 const FORMALITIES = [
-  { value: 'formal', label: 'Formal' },
-  { value: 'neutral', label: 'Neutral' },
+  { value: 'formal',   label: 'Formal' },
+  { value: 'neutral',  label: 'Neutral' },
   { value: 'informal', label: 'Informal' },
 ];
 
 function previewSnippet(name, tone, style, usesAlias, alias) {
   const addressee = usesAlias && alias ? alias : 'you';
   const greetings = {
-    warm: `Hello${usesAlias && alias ? `, ${addressee}` : ''}. I'm ${name || 'your companion'}. I'm here to listen — what's on your heart today?`,
+    warm:         `Hello${usesAlias && alias ? `, ${addressee}` : ''}. I'm ${name || 'your companion'}. I'm here to listen — what's on your heart today?`,
     motivational: `Hey${usesAlias && alias ? ` ${addressee}` : ''}! I'm ${name || 'your companion'}. Ready to take on the day together? What's going on?`,
-    clinical: `Hello. I'm ${name || 'your companion'}. Let's begin. How are you feeling at this moment?`,
-    casual: `Hey${usesAlias && alias ? ` ${addressee}` : ''}! I'm ${name || 'your companion'}. What's up?`,
+    clinical:     `Hello. I'm ${name || 'your companion'}. Let's begin. How are you feeling at this moment?`,
+    casual:       `Hey${usesAlias && alias ? ` ${addressee}` : ''}! I'm ${name || 'your companion'}. What's up?`,
   };
   const elaboration = style === 'elaborate' ? " I'm fully present and there's no rush — take all the time you need to share." : '';
   return (greetings[tone] || greetings.warm) + elaboration;
+}
+
+/* Persona confirmation sequence (spec 9.4 #2) */
+function PersonaConfirmation({ name, onDone }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'var(--color-bg-deep)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 999,
+        padding: 'var(--space-xl)',
+        textAlign: 'center',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'var(--font-editorial)',
+          fontSize: 28,
+          fontWeight: 400,
+          color: 'var(--color-accent)',
+          marginBottom: 'var(--space-md)',
+          animation: 'personaIn 400ms var(--easing-spring) both',
+          animationDelay: '300ms',
+          opacity: 0,
+        }}
+      >
+        {name}
+      </div>
+      <p
+        style={{
+          fontFamily: 'var(--font-ui)',
+          fontSize: 16,
+          color: 'var(--color-text-muted)',
+          animation: 'personaIn 300ms ease-out both',
+          animationDelay: '700ms',
+          opacity: 0,
+        }}
+      >
+        Your companion is ready.
+      </p>
+    </div>
+  );
 }
 
 export default function PersonaScreen() {
@@ -42,6 +89,7 @@ export default function PersonaScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const storedUser = (() => { try { return JSON.parse(localStorage.getItem('mb_user') || '{}'); } catch { return {}; } })();
   const alias = storedUser.alias || '';
@@ -61,32 +109,54 @@ export default function PersonaScreen() {
         formality,
         uses_alias: usesAlias,
       });
-      navigate('/onboarding/first-mood', { replace: true });
+      setShowConfirmation(true);
+      setTimeout(() => navigate('/onboarding/first-mood', { replace: true }), 2500);
     } catch (err) {
       const status = err.response?.status;
       setError(status === 403
         ? 'Your persona has already been created.'
         : err.response?.data?.error || 'Something went wrong. Please try again.');
-    } finally {
       setLoading(false);
     }
   }
 
+  if (showConfirmation) {
+    return <PersonaConfirmation name={name.trim()} />;
+  }
+
   return (
-    <div className="screen screen--no-nav" style={{ padding: '32px 24px' }}>
-      <div style={{ marginBottom: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 8 }}>🤖</div>
-        <h1 style={{ fontSize: '1.5rem' }}>Create your AI companion</h1>
-        <p style={{ marginTop: 4 }}>This is permanent — choose thoughtfully</p>
+    <div className="screen screen--no-nav" style={{ padding: 'var(--space-xl) var(--space-lg)' }}>
+      {/* Progress dots */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 'var(--space-lg)' }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: i === 2 ? 24 : 8,
+              height: 8,
+              borderRadius: 'var(--radius-pill)',
+              background: i === 2 ? 'var(--color-accent)' : 'var(--color-border)',
+              transition: 'width var(--duration-normal)',
+            }}
+          />
+        ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ marginBottom: 'var(--space-lg)', textAlign: 'center' }}>
+        <h1 style={{ fontSize: 'var(--text-h2)', marginBottom: 'var(--space-xs)' }}>Create Your Companion</h1>
+        <p style={{ fontSize: 14 }}>This is permanent — choose thoughtfully</p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
         <div>
-          <label className="label" htmlFor="pname">Companion name <span style={{ fontWeight: 400, color: 'var(--color-text-muted)' }}>(max 20 chars)</span></label>
+          <label className="label" htmlFor="pname">
+            Companion name <span style={{ fontWeight: 400, color: 'var(--color-text-muted)', textTransform: 'none', letterSpacing: 0 }}>(max 20 chars)</span>
+          </label>
           <input
             id="pname"
             type="text"
             className="input"
+            style={{ fontFamily: 'var(--font-editorial)', fontSize: 'var(--text-h3)' }}
             maxLength={20}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -97,23 +167,25 @@ export default function PersonaScreen() {
 
         <div>
           <label className="label">Tone</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
             {TONES.map((t) => (
               <button
                 key={t.value}
                 type="button"
                 onClick={() => setTone(t.value)}
                 style={{
-                  padding: '12px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: `2px solid ${tone === t.value ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                  background: tone === t.value ? '#EBF4FF' : 'var(--color-white)',
+                  padding: 'var(--space-md)',
+                  borderRadius: 'var(--radius-md)',
+                  border: `2px solid ${tone === t.value ? 'var(--color-border-focus)' : 'var(--color-border)'}`,
+                  background: tone === t.value ? 'rgba(194,164,138,0.15)' : 'var(--color-surface-card)',
                   cursor: 'pointer',
                   textAlign: 'left',
+                  transition: 'border-color var(--duration-fast), background var(--duration-fast)',
+                  minHeight: 'var(--touch-target-min)',
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text)' }}>{t.label}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{t.desc}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary)' }}>{t.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 3 }}>{t.desc}</div>
               </button>
             ))}
           </div>
@@ -121,23 +193,25 @@ export default function PersonaScreen() {
 
         <div>
           <label className="label">Response style</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
             {STYLES.map((s) => (
               <button
                 key={s.value}
                 type="button"
                 onClick={() => setStyle(s.value)}
                 style={{
-                  padding: '12px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: `2px solid ${style === s.value ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                  background: style === s.value ? '#EBF4FF' : 'var(--color-white)',
+                  padding: 'var(--space-md)',
+                  borderRadius: 'var(--radius-md)',
+                  border: `2px solid ${style === s.value ? 'var(--color-border-focus)' : 'var(--color-border)'}`,
+                  background: style === s.value ? 'rgba(194,164,138,0.15)' : 'var(--color-surface-card)',
                   cursor: 'pointer',
                   textAlign: 'left',
+                  transition: 'border-color var(--duration-fast), background var(--duration-fast)',
+                  minHeight: 'var(--touch-target-min)',
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text)' }}>{s.label}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{s.desc}</div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary)' }}>{s.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 3 }}>{s.desc}</div>
               </button>
             ))}
           </div>
@@ -145,14 +219,14 @@ export default function PersonaScreen() {
 
         <div>
           <label className="label">Formality</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
             {FORMALITIES.map((f) => (
               <button
                 key={f.value}
                 type="button"
                 onClick={() => setFormality(f.value)}
                 className={`pill${formality === f.value ? ' pill--active' : ''}`}
-                style={{ cursor: 'pointer', border: 'none', padding: '8px 16px' }}
+                style={{ cursor: 'pointer', border: '1px solid var(--color-border)', flex: 1, padding: '10px', minHeight: 'var(--touch-target-min)', justifyContent: 'center' }}
               >
                 {f.label}
               </button>
@@ -160,34 +234,54 @@ export default function PersonaScreen() {
           </div>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', cursor: 'pointer', minHeight: 'var(--touch-target-min)' }}>
           <input
             type="checkbox"
             checked={usesAlias}
             onChange={(e) => setUsesAlias(e.target.checked)}
-            style={{ width: 20, height: 20, accentColor: 'var(--color-primary)' }}
+            style={{ width: 20, height: 20, accentColor: 'var(--color-accent)', flexShrink: 0 }}
           />
-          <span style={{ fontSize: '0.9rem' }}>Address me by my alias ({alias || 'your alias'})</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-primary)' }}>Address me by my alias ({alias || 'your alias'})</span>
         </label>
 
-        <div className="card" style={{ background: '#F0F4FF', border: '1px solid #C7D8F5' }}>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>Preview — how {name || 'your companion'} will greet you:</p>
-          <p style={{ fontSize: '0.9rem', color: 'var(--color-text)', fontStyle: 'italic', lineHeight: 1.6 }}>"{preview}"</p>
+        {/* Live preview card */}
+        <div
+          className="card"
+          style={{
+            background: 'rgba(194,164,138,0.08)',
+            borderColor: 'var(--color-border-focus)',
+          }}
+        >
+          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>
+            Preview — how {name || 'your companion'} will greet you:
+          </p>
+          <p
+            style={{
+              fontSize: 15,
+              fontFamily: 'var(--font-editorial)',
+              color: 'var(--color-text-primary)',
+              fontStyle: 'italic',
+              lineHeight: 1.7,
+              transition: 'color 200ms',
+            }}
+          >
+            "{preview}"
+          </p>
         </div>
 
-        <div style={{ background: '#FFF8E1', border: '1px solid #FFE082', borderRadius: 'var(--radius-sm)', padding: '12px 14px' }}>
-          <p style={{ fontSize: '0.875rem', color: '#7B6200', fontWeight: 600, marginBottom: 4 }}>⚠️ This cannot be changed</p>
-          <p style={{ fontSize: '0.875rem', color: '#7B6200' }}>Once set, your AI companion's identity is permanent. Take your time.</p>
+        <div className="info-banner info-banner--warning">
+          <strong style={{ color: 'var(--color-warning)', display: 'block', marginBottom: 4 }}>This cannot be changed</strong>
+          Once set, your AI companion's identity is permanent. Take your time.
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-md)', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
-            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-primary)' }}
+            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-accent)' }}
           />
-          <span style={{ fontSize: '0.875rem' }}>I understand this persona is permanent and cannot be changed later</span>
+          <span style={{ fontSize: 14, color: 'var(--color-text-primary)', lineHeight: 1.5 }}>I understand this persona is permanent and cannot be changed later</span>
         </label>
 
         {error && <div className="error-msg">{error}</div>}

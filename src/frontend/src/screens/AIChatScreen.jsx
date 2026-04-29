@@ -1,6 +1,26 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PaperPlaneRight, Robot } from '@phosphor-icons/react';
 import client from '../api/client';
+
+function AIChatSkeleton() {
+  return (
+    <div style={{ flex: 1, padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      {[80, 60, 90, 55, 70].map((w, i) => (
+        <div
+          key={i}
+          className="skeleton"
+          style={{
+            width: `${w}%`,
+            height: 48,
+            borderRadius: i % 2 === 0 ? '20px 20px 20px 4px' : '20px 20px 4px 20px',
+            alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function AIChatScreen() {
   const navigate = useNavigate();
@@ -16,7 +36,6 @@ export default function AIChatScreen() {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [ending, setEnding] = useState(false);
-  const [emergencyPushed, setEmergencyPushed] = useState(false);
   const bottomRef = useRef(null);
 
   const startSession = useCallback(async () => {
@@ -28,17 +47,14 @@ export default function AIChatScreen() {
       setPersonaName(data.persona_name || 'Your companion');
       setMessages([{ role: 'assistant', content: data.greeting || `Hello. I'm ${data.persona_name || 'your companion'}. How are you feeling today?` }]);
     } catch (err) {
-      setStartError(err.response?.data?.error || 'Could not start session. Please try again.');
+      setStartError(err.response?.data?.error || 'I\'m having trouble responding right now. Try again in a moment.');
     } finally {
       setStarting(false);
     }
   }, []);
 
   useEffect(() => { startSession(); }, [startSession]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   async function handleSend() {
     if (!input.trim() || loading || !sessionId) return;
@@ -50,13 +66,12 @@ export default function AIChatScreen() {
     try {
       const { data } = await client.post(`/api/ai/session/${sessionId}/message`, { input_text: text });
       if (data.action === 'emergency') {
-        setEmergencyPushed(true);
         navigate('/emergency', { replace: true });
         return;
       }
       setMessages((prev) => [...prev, { role: 'assistant', content: data.response_text }]);
     } catch (err) {
-      setSendError(err.response?.data?.error || 'Message failed. Please try again.');
+      setSendError(err.response?.data?.error || 'I\'m having trouble responding right now. Try again in a moment.');
       setMessages((prev) => prev.slice(0, -1));
       setInput(text);
     } finally {
@@ -79,37 +94,43 @@ export default function AIChatScreen() {
 
   if (starting) {
     return (
-      <div className="loading-full">
-        <div className="spinner" />
+      <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 'var(--top-bar-height)', padding: '0 var(--space-md)', background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+          <div className="skeleton" style={{ width: 160, height: 18, borderRadius: 'var(--radius-sm)' }} />
+          <div className="skeleton" style={{ width: 60, height: 32, borderRadius: 'var(--radius-pill)' }} />
+        </div>
+        <AIChatSkeleton />
+        <div style={{ height: 72, background: 'var(--color-bg-deep)', borderTop: '1px solid var(--color-border)', flexShrink: 0 }} />
       </div>
     );
   }
 
   if (startError) {
     return (
-      <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
-        <p style={{ marginBottom: 16 }}>{startError}</p>
+      <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'var(--space-lg)', textAlign: 'center' }}>
+        <p style={{ marginBottom: 'var(--space-md)' }}>{startError}</p>
         <button className="btn btn--primary" onClick={startSession}>Try Again</button>
-        <button className="btn btn--muted" style={{ marginTop: 8 }} onClick={() => navigate('/dashboard')}>Back</button>
+        <button className="btn btn--muted" style={{ marginTop: 'var(--space-sm)' }} onClick={() => navigate('/dashboard')}>Back</button>
       </div>
     );
   }
 
-  if (showEnd && !emergencyPushed) {
+  if (showEnd) {
     return (
-      <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '32px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>💙</div>
-          <h2>How did that feel?</h2>
-          <p style={{ marginTop: 4 }}>Your feedback helps improve your experience</p>
+      <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'var(--space-xl) var(--space-lg)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+          <div style={{ fontSize: 40, marginBottom: 'var(--space-sm)' }}>💙</div>
+          <h2 style={{ marginBottom: 'var(--space-xs)' }}>How did that feel?</h2>
+          <p style={{ fontSize: 14 }}>Your feedback helps improve your experience</p>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)' }}>
           {[1, 2, 3, 4, 5].map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setRating(s)}
-              style={{ fontSize: 32, background: 'none', border: 'none', cursor: 'pointer', opacity: s <= rating ? 1 : 0.3 }}
+              style={{ fontSize: 32, background: 'none', border: 'none', cursor: 'pointer', opacity: s <= rating ? 1 : 0.3, minWidth: 44, minHeight: 44 }}
+              aria-label={`Rate ${s} stars`}
             >
               ⭐
             </button>
@@ -121,14 +142,10 @@ export default function AIChatScreen() {
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
           placeholder="Anything you'd like to share? (optional)"
-          style={{ marginBottom: 16 }}
+          style={{ marginBottom: 'var(--space-md)' }}
         />
-        <button className="btn btn--primary" onClick={handleEnd} disabled={ending}>
-          {ending ? 'Ending…' : 'Done'}
-        </button>
-        <button className="btn btn--muted" style={{ marginTop: 8 }} onClick={handleEnd} disabled={ending}>
-          Skip
-        </button>
+        <button className="btn btn--primary" onClick={handleEnd} disabled={ending}>{ending ? 'Ending…' : 'Done'}</button>
+        <button className="btn btn--muted" style={{ marginTop: 'var(--space-sm)' }} onClick={handleEnd} disabled={ending}>Skip</button>
       </div>
     );
   }
@@ -136,54 +153,73 @@ export default function AIChatScreen() {
   return (
     <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--color-white)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 24 }}>🤖</span>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 'var(--top-bar-height)',
+          padding: '0 var(--space-md)',
+          background: 'var(--color-bg-primary)',
+          borderBottom: '1px solid var(--color-border)',
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+          <Robot size={24} weight="duotone" color="var(--color-accent)" aria-hidden="true" />
           <div>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Talking with {personaName}</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>AI companion · Free · Always available</div>
+            <div style={{ fontWeight: 500, fontSize: 16, color: 'var(--color-text-primary)' }}>{personaName}</div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>AI Companion</div>
           </div>
         </div>
         <button
           onClick={() => setShowEnd(true)}
-          style={{ background: 'none', border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 500,
+            color: 'var(--color-danger)',
+            padding: '0 var(--space-sm)',
+            minHeight: 'var(--touch-target-min)',
+            minWidth: 'var(--touch-target-min)',
+          }}
         >
-          End Chat
+          End
         </button>
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            style={{
-              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              maxWidth: '80%',
-              background: msg.role === 'user' ? 'var(--color-primary)' : 'var(--color-white)',
-              color: msg.role === 'user' ? '#fff' : 'var(--color-text)',
-              borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-              padding: '10px 14px',
-              boxShadow: 'var(--shadow)',
-              fontSize: '0.95rem',
-              lineHeight: 1.5,
-              whiteSpace: 'pre-wrap',
-            }}
-          >
+          <div key={i} className={`bubble bubble--${msg.role === 'user' ? 'user' : 'ai'}`}>
             {msg.content}
           </div>
         ))}
         {loading && (
-          <div style={{ alignSelf: 'flex-start', background: 'var(--color-white)', borderRadius: '16px 16px 16px 4px', padding: '12px 16px', boxShadow: 'var(--shadow)' }}>
-            <span style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Thinking…</span>
+          <div className="typing-indicator">
+            <div className="typing-dot" />
+            <div className="typing-dot" />
+            <div className="typing-dot" />
           </div>
         )}
         {sendError && <div className="error-msg">{sendError}</div>}
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div style={{ padding: '12px 16px', background: 'var(--color-white)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
+      {/* Input bar */}
+      <div
+        style={{
+          padding: '12px var(--space-md)',
+          background: 'var(--color-bg-deep)',
+          borderTop: '1px solid var(--color-border)',
+          display: 'flex',
+          gap: 'var(--space-sm)',
+          flexShrink: 0,
+          alignItems: 'flex-end',
+        }}
+      >
         <textarea
           className="textarea"
           rows={1}
@@ -192,16 +228,28 @@ export default function AIChatScreen() {
           onKeyDown={handleKeyDown}
           placeholder="Type a message…"
           disabled={loading}
-          style={{ resize: 'none', flex: 1 }}
+          style={{ resize: 'none', flex: 1, minHeight: 44, maxHeight: 96, borderRadius: 'var(--radius-md)', fontFamily: 'var(--font-ui)' }}
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || loading}
-          className="btn btn--primary"
-          style={{ width: 'auto', padding: '0 16px', flexShrink: 0 }}
-          aria-label="Send"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            background: input.trim() && !loading ? 'var(--color-accent)' : 'rgba(194,164,138,0.20)',
+            border: 'none',
+            cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background var(--duration-fast), transform var(--duration-fast)',
+            flexShrink: 0,
+            color: 'var(--color-text-dark)',
+          }}
+          aria-label="Send message"
         >
-          ➤
+          <PaperPlaneRight size={20} weight="duotone" aria-hidden="true" />
         </button>
       </div>
     </div>

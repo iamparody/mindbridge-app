@@ -32,7 +32,18 @@ export default function GroupDetailScreen() {
     }
   }
 
-  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
+  if (loading) return (
+    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+      <div className="page-header">
+        <button className="page-header__back" onClick={() => navigate('/groups')} aria-label="Back">‹</button>
+        <h2 className="page-header__title">Group</h2>
+      </div>
+      <div style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <div className="skeleton" style={{ height: 96, borderRadius: 'var(--radius-lg)' }} />
+        <div className="skeleton" style={{ height: 52, borderRadius: 'var(--radius-pill)' }} />
+      </div>
+    </div>
+  );
 
   if (!group) {
     return (

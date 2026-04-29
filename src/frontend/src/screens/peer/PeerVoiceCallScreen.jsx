@@ -137,32 +137,32 @@ export default function PeerVoiceCallScreen() {
   }
 
   return (
-    <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#1A1A2E', minHeight: '100dvh', padding: 32 }}>
+    <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'var(--color-bg-deep)', minHeight: '100dvh', padding: 'var(--space-xl)' }}>
       <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
 
-      <div style={{ textAlign: 'center', color: '#fff', marginBottom: 48 }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>🎙️</div>
-        <h2 style={{ color: '#fff', marginBottom: 8 }}>
+      <div style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+        <div style={{ fontSize: 64, marginBottom: 'var(--space-md)' }}>🎙️</div>
+        <h2 style={{ marginBottom: 'var(--space-sm)' }}>
           {callState === 'connecting' ? 'Connecting…' : callState === 'active' ? 'Voice Call' : 'Call Ended'}
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>
+        <p style={{ fontSize: '0.9rem' }}>
           {callState === 'active' ? 'Anonymous · Peer' : callState === 'connecting' ? 'Establishing connection…' : 'Your peer has left the call'}
         </p>
         {balance !== null && (
-          <div style={{ marginTop: 12, color: balance < 2 ? '#E74C3C' : 'rgba(255,255,255,0.7)', fontSize: '0.85rem', fontWeight: 600 }}>
+          <div style={{ marginTop: 'var(--space-sm)', color: balance < 2 ? 'var(--color-danger)' : 'var(--color-text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
             {balance} credit{balance !== 1 ? 's' : ''} remaining
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 24 }}>
+      <div style={{ display: 'flex', gap: 'var(--space-lg)' }}>
         <button
           onClick={toggleMute}
           style={{
             width: 64, height: 64, borderRadius: '50%',
-            background: muted ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)',
-            border: '2px solid rgba(255,255,255,0.3)',
-            color: '#fff', fontSize: 28, cursor: 'pointer',
+            background: muted ? 'rgba(194,164,138,0.10)' : 'rgba(194,164,138,0.20)',
+            border: `2px solid var(--color-border-focus)`,
+            color: 'var(--color-text-primary)', fontSize: 28, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
           aria-label={muted ? 'Unmute' : 'Mute'}
@@ -174,10 +174,10 @@ export default function PeerVoiceCallScreen() {
           onClick={endCall}
           style={{
             width: 72, height: 72, borderRadius: '50%',
-            background: 'var(--color-emergency)',
-            border: 'none', color: '#fff', fontSize: 28,
+            background: 'var(--color-danger)',
+            border: 'none', color: 'var(--color-text-primary)', fontSize: 28,
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(231,76,60,0.5)',
+            boxShadow: '0 4px 20px rgba(179,92,92,0.45)',
           }}
           aria-label="End call"
         >
@@ -186,7 +186,7 @@ export default function PeerVoiceCallScreen() {
       </div>
 
       {callState === 'ended' && (
-        <button className="btn btn--ghost" style={{ marginTop: 32, color: '#fff', borderColor: 'rgba(255,255,255,0.3)', width: 'auto', padding: '10px 24px' }} onClick={() => navigate('/peer')}>
+        <button className="btn btn--ghost" style={{ marginTop: 'var(--space-xl)', width: 'auto', padding: '10px 24px' }} onClick={() => navigate('/peer')}>
           Back
         </button>
       )}
