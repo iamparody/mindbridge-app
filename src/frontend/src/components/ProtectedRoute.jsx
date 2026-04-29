@@ -34,10 +34,9 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
       .catch(() => setOnboardingCheck({ done: true, redirect: null }));
   }, [token, location.pathname]);
 
-  if (loading || !onboardingCheck.done) {
-    return <div className="loading-full"><div className="spinner" /></div>;
-  }
+  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
   if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (!onboardingCheck.done) return <div className="loading-full"><div className="spinner" /></div>;
   if (adminOnly && user?.role !== 'admin') return <Navigate to="/dashboard" replace />;
   if (onboardingCheck.redirect) return <Navigate to={onboardingCheck.redirect} replace />;
 
