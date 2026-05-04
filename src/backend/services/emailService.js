@@ -1,12 +1,9 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
+let _resend = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
 }
 
 function verificationTemplate(alias, link) {
@@ -68,16 +65,16 @@ function resetTemplate(alias, link) {
 </html>`;
 }
 
-// Direct delivery — used by emailWorker and as fallback when queue is unavailable.
+// Direct delivery — called by emailWorker and as fallback when queue is unavailable.
 async function deliverEmail(to, subject, html) {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+  if (!process.env.RESEND_API_KEY) {
     if (process.env.NODE_ENV === 'development') {
       console.log(`[DEV] Would send email to ${to.slice(0, 3)}***: ${subject}`);
     }
     return;
   }
-  await getTransporter().sendMail({
-    from: `MindBridge <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`,
+  await getResend().emails.send({
+    from: process.env.EMAIL_FROM,
     to,
     subject,
     html,
