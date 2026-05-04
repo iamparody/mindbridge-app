@@ -1,7 +1,7 @@
-const { getCacheClient } = require('../config/redis');
+const { getRestClient } = require('../config/redis');
 
 function client() {
-  return getCacheClient();
+  return getRestClient();
 }
 
 async function get(key) {
@@ -20,7 +20,7 @@ async function set(key, value, ttlSeconds) {
   try {
     const r = client();
     if (!r) return;
-    await r.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+    await r.set(key, JSON.stringify(value), { ex: ttlSeconds });
   } catch (err) {
     console.warn('[cache] set error:', err.message);
   }
@@ -42,12 +42,12 @@ async function delPattern(prefix) {
   try {
     const r = client();
     if (!r) return;
-    let cursor = '0';
+    let cursor = 0;
     do {
-      const [next, keys] = await r.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 100);
+      const [next, keys] = await r.scan(cursor, { match: `${prefix}*`, count: 100 });
       cursor = next;
       if (keys.length) await r.del(...keys);
-    } while (cursor !== '0');
+    } while (cursor !== 0);
   } catch (err) {
     console.warn('[cache] delPattern error:', err.message);
   }
@@ -63,7 +63,7 @@ async function incrby(key, amount, expireAtTimestamp) {
     pipeline.incrby(key, amount);
     if (expireAtTimestamp) pipeline.expireat(key, expireAtTimestamp);
     const results = await pipeline.exec();
-    return results[0][1];
+    return results[0];
   } catch (err) {
     console.warn('[cache] incrby error:', err.message);
     return null;

@@ -1,5 +1,5 @@
 # MindBridge Knowledge Graph Report
-Generated: 2026-05-04 | Last updated: 2026-05-04 | Agent: Claude Code
+Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Code
 <!-- Update this file whenever credentials, migrations, or architecture change -->
 
 ---
@@ -400,8 +400,8 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 | Service/Utility | Depends On | Used By |
 |---|---|---|
 | `db/index.js` | PostgreSQL (pg Pool) | All routes, jobs, middleware/auth |
-| `config/redis.js` | UPSTASH_REDIS_URL env | services/cache.js, queues/index.js, middleware/rateLimit.js |
-| `services/cache.js` | config/redis.js | routes/moods (analytics), routes/ai (persona), routes/credits (balance), routes/groups (list), routes/resources (articles) |
+| `config/redis.js` | `getRestClient()`: UPSTASH_REDIS_REST_URL + TOKEN (HTTPS, always works); `createQueueClient()`: UPSTASH_REDIS_URL ioredis TCP (BullMQ only) | services/cache.js (REST), queues/index.js (TCP), middleware/rateLimit.js (REST via cache) |
+| `services/cache.js` | config/redis.js `getRestClient()` — @upstash/redis REST | routes/moods (analytics), routes/ai (persona), routes/credits (balance), routes/groups (list), routes/resources (articles) |
 | `services/emailService.js` | Resend SDK (RESEND_API_KEY env), queues/index.js | routes/auth (verification + reset), workers/emailWorker |
 | `utils/riskClassifier.js` | — (pure function) | routes/journals, routes/ai |
 | `utils/sanitizer.js` | — (pure function) | routes/ai |
@@ -446,17 +446,18 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 | **Groq AI** | ✅ Configured | GROQ_API_KEY set; llama-3.3-70b-versatile primary |
 | **Resend Email** | ✅ Configured | RESEND_API_KEY set; EMAIL_FROM=onboarding@resend.dev (Resend shared sender, no domain verification needed) |
 | **Firebase FCM** | ⚠️ Partial | Service account JSON present at `src/backend/config/` (gitignored); FCM_SERVICE_ACCOUNT_PATH set but FCM_SERVICE_ACCOUNT_JSON env not populated — verify which load path `utils/fcm.js` uses |
-| **Upstash Redis** | ❌ Misconfigured | `.env` has `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` (HTTP REST API) but code uses ioredis which needs TCP: `UPSTASH_REDIS_URL=rediss://default:TOKEN@host.upstash.io:6380` — get this from Upstash dashboard → Connect → ioredis tab |
+| **Upstash Redis (REST)** | ✅ Connected | UPSTASH_REDIS_REST_URL + TOKEN set; @upstash/redis REST client active for cache + rate limiting; PING verified; cache set/get/del round-trip verified |
+| **Upstash Redis (TCP)** | ⚠️ Blocked locally | UPSTASH_REDIS_URL set but port 6380 blocked on local network; ioredis gives up after 3 retries (family:4 fix prevents AggregateError flood); BullMQ falls back to sync delivery locally; will connect on Railway |
 | **Paystack** | ❌ Not configured | PAYSTACK_SECRET_KEY still placeholder; needs live account |
 | **TURN Server** | ⚠️ OpenRelay | Using free openrelay.metered.ca — adequate for testing, may drop under load; upgrade for production |
 
 ### Remaining Actions
 | Task | Blocker |
 |---|---|
-| Fix Redis URL | In Upstash dashboard: Connect → ioredis → copy `rediss://` URL → set as `UPSTASH_REDIS_URL` in `.env` |
 | Verify FCM path | Check `utils/fcm.js` — uses `FCM_SERVICE_ACCOUNT_JSON` env or `FCM_SERVICE_ACCOUNT_PATH` file; confirm which and set accordingly |
 | Test payment flow | Paystack live account + public webhook URL (Railway deploy needed) |
 | Configure TURN for production | Metered.ca paid plan or self-hosted coturn on Railway |
+| Deploy to Railway | Set all production env vars; run seed scripts; TCP Redis will connect from Railway |
 
 ---
 
@@ -464,7 +465,7 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 
 | Issue | Location | Severity | Notes |
 |---|---|---|---|
-| Redis URL type mismatch | `.env` / `config/redis.js` | High | `UPSTASH_REDIS_URL` not set — REST vars present but ioredis needs TCP `rediss://` URL; all Redis features (cache, queues, rate limiting) are gracefully disabled until fixed |
+| BullMQ TCP blocked locally | `config/redis.js` | Low | Port 6380 blocked on local network; ioredis retries 3× then stops (no crash, no flood); BullMQ falls back to sync delivery; resolves automatically on Railway |
 | FCM load path unclear | `utils/fcm.js` | Medium | Firebase JSON file exists at `src/backend/config/` (gitignored); verify fcm.js reads via `FCM_SERVICE_ACCOUNT_PATH` or `FCM_SERVICE_ACCOUNT_JSON` env |
 | Paystack not configured | `routes/credits.js` | Medium | Placeholder keys; purchase + webhook flow untestable |
 | TURN server is free tier | `ws/signaling.js` | Low | openrelay.metered.ca is adequate for testing; upgrade before launch |

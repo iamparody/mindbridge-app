@@ -6,7 +6,7 @@
 **Phase 16 — Performance, Security & Scale — COMPLETE**
 
 ## Current Task
-Run migrations 026, 027, 028 against the database. Add UPSTASH_REDIS_URL, DATABASE_POOLER_URL, DATABASE_DIRECT_URL to .env.
+Backend is live and fully functional locally. Next: deploy to Railway (set production env vars, run seeds, test payment webhook).
 
 ---
 
@@ -524,3 +524,7 @@ to their support system — a direct safety risk.
 | 2026-04-29 | 3 | Phase 11 frontend complete (all screens); 18 bugs fixed; 2 backend endpoints added; partial integration test (auth→mood→AI verified); Groq key added by user |
 | 2026-04-29 | 4 | Groq key configured; 5 more bugs fixed (bugs 19-23); all remaining flows verified; env secrets generated; unhandledRejection guard added; integration testing COMPLETE |
 | 2026-04-29 | 5 | Phase 12 Safety Tests: all 10 tests PASSED; riskClassifier keyword fix; Phase 13 (Launch Checklist) begins |
+| 2026-05-04 | 6 | GRAPH_REPORT.md knowledge graph generated; all Phase 12–16 uncommitted changes committed + pushed |
+| 2026-05-04 | 7 | RLS fix: 026 bug (token_blacklist not in migrations) fixed; migrations 029 + 030 applied — all 24 tables fully RLS-enabled with deny-anon policies |
+| 2026-05-04 | 8 | Email: nodemailer → Resend SDK; SMTP vars removed; lazy client init; RESEND_API_KEY + EMAIL_FROM configured |
+| 2026-05-04 | 9 | Redis: cache + rate limiting switched to @upstash/redis REST client (HTTPS 443, works locally); BullMQ keeps ioredis TCP with family:4 + retryStrategy(3) to suppress Node v24 AggregateError flood on blocked networks; server starts clean, cache round-trip verified |
