@@ -1,6 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const adminAuth = require('../middleware/adminAuth');
+const cache = require('../services/cache');
 
 const router = express.Router();
 
@@ -289,6 +290,7 @@ router.patch('/resources/:id', async (req, res) => {
     params
   );
   if (!rowCount) return res.status(404).json({ error: 'Article not found', code: 'NOT_FOUND' });
+  await cache.delPattern('resources:');
   return res.status(200).json({ updated: true });
 });
 
@@ -301,6 +303,7 @@ router.patch('/resources/:id/publish', async (req, res) => {
     [req.params.id]
   );
   if (!rowCount) return res.status(404).json({ error: 'Article not found', code: 'NOT_FOUND' });
+  await cache.delPattern('resources:');
   return res.status(200).json({ published: true });
 });
 
@@ -311,6 +314,7 @@ router.patch('/resources/:id/archive', async (req, res) => {
     [req.params.id]
   );
   if (!rowCount) return res.status(404).json({ error: 'Article not found', code: 'NOT_FOUND' });
+  await cache.delPattern('resources:');
   return res.status(200).json({ archived: true });
 });
 

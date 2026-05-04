@@ -32,7 +32,7 @@ export default function FirstMoodScreen() {
     try {
       await client.post('/api/moods', { mood_level: mood, note: note.trim() || undefined, tags: tags.map((t) => t.toLowerCase()) });
       setShowBonus(true);
-      setTimeout(() => navigate('/dashboard', { replace: true }), 2800);
+      setTimeout(() => navigate('/welcome', { replace: true }), 2800);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
@@ -68,22 +68,16 @@ export default function FirstMoodScreen() {
                 key={m.value}
                 type="button"
                 onClick={() => setMood(m.value)}
+                className={`mood-btn${mood === m.value ? ' mood-btn--selected' : mood ? ' mood-btn--unselected' : ''}`}
                 style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '12px 4px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: `2px solid ${mood === m.value ? m.color : 'var(--color-border)'}`,
-                  background: mood === m.value ? `${m.color}20` : 'var(--color-white)',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s, background 0.15s',
+                  borderColor: mood === m.value ? m.color : 'var(--color-border)',
+                  background: mood === m.value ? `${m.color}20` : 'var(--color-bg-primary)',
                 }}
+                aria-pressed={mood === m.value}
+                aria-label={m.label}
               >
-                <span style={{ fontSize: 24 }}>{m.emoji}</span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 600, color: mood === m.value ? m.color : 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.2 }}>{m.label}</span>
+                <span style={{ fontSize: 24 }} aria-hidden="true">{m.emoji}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: mood === m.value ? m.color : 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.2 }}>{m.label}</span>
               </button>
             ))}
           </div>

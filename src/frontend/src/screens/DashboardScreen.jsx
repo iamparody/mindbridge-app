@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Handshake, Robot, Stethoscope, Notebook, UsersThree, Siren, Bell, Coin } from '@phosphor-icons/react';
 import client from '../api/client';
+import MoodBlob from '../components/MoodBlob';
 
 const TILES = [
   { label: 'Peer Help',  Icon: Handshake,   to: '/peer',      desc: 'Talk to someone now' },
@@ -13,25 +14,46 @@ const TILES = [
   { label: 'Emergency',  Icon: Siren,        to: '/emergency', desc: 'Get help right now', emergency: true },
 ];
 
+function timeGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Good morning';
+  if (h >= 12 && h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  // PostgreSQL returns timestamps without 'Z' — browsers disagree on whether to treat
+  // bare strings as UTC or local time. Force UTC by appending 'Z' when absent.
+  const utcStr = dateStr.includes('Z') || dateStr.includes('+')
+    ? dateStr
+    : dateStr.replace(' ', 'T') + 'Z';
+  const diff = Date.now() - new Date(utcStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+const MOOD_LABELS = {
+  very_low: 'Very Low', low: 'Low', neutral: 'Neutral', good: 'Good', great: 'Great',
+};
+
 function DashboardSkeleton() {
   return (
     <div style={{ padding: 'var(--space-md)' }}>
-      {/* Top bar skeleton */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)', height: 'var(--top-bar-height)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-md)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div className="skeleton" style={{ width: 140, height: 16 }} />
-          <div className="skeleton" style={{ width: 80, height: 14 }} />
-        </div>
-        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 'var(--space-lg)', paddingTop: 'var(--space-lg)' }}>
+        <div className="skeleton" style={{ width: 80, height: 80, borderRadius: '50%' }} />
+        <div className="skeleton" style={{ width: 160, height: 18 }} />
+        <div className="skeleton" style={{ width: 120, height: 13 }} />
       </div>
-      {/* Streak bar */}
-      <div className="skeleton" style={{ width: '100%', height: 40, borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)' }} />
-      {/* Mood banner */}
-      <div className="skeleton" style={{ width: '100%', height: 72, borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-lg)' }} />
-      {/* Tiles grid */}
+      <div className="skeleton" style={{ width: '100%', height: 1, marginBottom: 'var(--space-lg)' }} />
+      <div className="skeleton" style={{ width: 100, height: 12, marginBottom: 'var(--space-md)' }} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="skeleton" style={{ height: 96, borderRadius: 'var(--radius-lg)' }} />
+          <div key={i} className="skeleton" style={{ height: 80, borderRadius: 'var(--radius-lg)' }} />
         ))}
       </div>
     </div>
@@ -42,32 +64,34 @@ export default function DashboardScreen() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [balance, setBalance] = useState(null);
-  const [streak, setStreak] = useState(0);
   const [unread, setUnread] = useState(0);
+  const [lastMood, setLastMood] = useState(null);
+  const [lastMoodTime, setLastMoodTime] = useState(null);
   const [moodDone, setMoodDone] = useState(true);
   const [moodDismissed, setMoodDismissed] = useState(false);
-  const [loading, setLoading] = useState(true);
+  // loading = false by default — screen renders immediately; data populates progressively
+  const [dataReady, setDataReady] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     setError('');
-    try {
-      const [profileRes, balanceRes, notifsRes, moodRes] = await Promise.all([
-        client.get('/api/profile'),
-        client.get('/api/credits/balance'),
-        client.get('/api/notifications'),
-        client.get('/api/moods/today').catch(() => ({ data: null })),
-      ]);
-      setStreak(profileRes.data.streak_count ?? 0);
-      setBalance(balanceRes.data.balance ?? 0);
-      const notifs = notifsRes.data.notifications ?? notifsRes.data ?? [];
-      setUnread(notifs.filter((n) => !n.read_at).length);
-      setMoodDone(!!moodRes.data);
-    } catch {
-      setError('We couldn\'t connect. Check your internet and try again.');
-    } finally {
-      setLoading(false);
+    // Every call has its own catch — Promise.all settles as soon as all resolve or catch
+    const [balanceRes, notifsRes, moodHistRes, moodTodayRes] = await Promise.all([
+      client.get('/api/credits/balance').catch(() => ({ data: { balance: null } })),
+      client.get('/api/notifications').catch(() => ({ data: [] })),
+      client.get('/api/moods/history?limit=1').catch(() => ({ data: { entries: [] } })),
+      client.get('/api/moods/today').catch(() => ({ data: null })),
+    ]);
+    setBalance(balanceRes.data.balance ?? 0);
+    const notifs = notifsRes.data.notifications ?? notifsRes.data ?? [];
+    setUnread(notifs.filter((n) => !n.read_at).length);
+    const entries = moodHistRes.data.entries ?? moodHistRes.data ?? [];
+    if (entries.length > 0) {
+      setLastMood(entries[0].mood_level);
+      setLastMoodTime(entries[0].created_at);
     }
+    setMoodDone(!!moodTodayRes.data?.entry);
+    setDataReady(true);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -75,16 +99,8 @@ export default function DashboardScreen() {
   const alias = user?.alias ?? '';
   const balanceLow = balance !== null && balance <= 2;
 
-  if (loading) {
-    return (
-      <div className="screen">
-        <DashboardSkeleton />
-      </div>
-    );
-  }
-
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       {/* Top bar */}
       <div
         style={{
@@ -98,11 +114,9 @@ export default function DashboardScreen() {
           flexShrink: 0,
         }}
       >
-        <div>
-          <div style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>Signed in as</div>
-          <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--color-text-secondary)' }}>{alias}</div>
+        <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-editorial)' }}>
+          MindBridge
         </div>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
           <span className={`credit-badge${balanceLow ? ' credit-badge--low' : ''}`} aria-label={`${balance} credits`}>
             <Coin size={16} weight="duotone" aria-hidden="true" />
@@ -130,13 +144,11 @@ export default function DashboardScreen() {
               <span
                 style={{
                   position: 'absolute',
-                  top: 6,
-                  right: 6,
+                  top: 6, right: 6,
                   background: 'var(--color-danger)',
-                  color: 'var(--color-text-primary)',
+                  color: '#F5EDE4',
                   borderRadius: '50%',
-                  width: 16,
-                  height: 16,
+                  width: 16, height: 16,
                   fontSize: 9,
                   display: 'flex',
                   alignItems: 'center',
@@ -154,48 +166,44 @@ export default function DashboardScreen() {
       {error && (
         <div className="error-msg" style={{ margin: 'var(--space-md)' }}>
           {error}{' '}
-          <button
-            onClick={load}
-            style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: 'inherit' }}
-          >
+          <button onClick={load} style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontSize: 'inherit' }}>
             Retry
           </button>
         </div>
       )}
 
-      {/* Streak bar */}
+      {/* TOP SECTION — blob + greeting + last mood */}
       <div
         style={{
-          margin: 'var(--space-md) var(--space-md) 0',
-          background: 'var(--color-surface-card)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--color-border)',
-          height: 48,
+          background: 'var(--color-bg-primary)',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: 'var(--space-sm)',
+          paddingTop: 'var(--space-lg)',
+          paddingBottom: 'var(--space-lg)',
+          textAlign: 'center',
         }}
       >
-        <span style={{ fontSize: 20 }} aria-hidden="true">🔥</span>
-        <span style={{ fontWeight: 600, fontSize: 20, color: 'var(--color-warning)' }}>{streak}</span>
-        <span style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>day streak</span>
-        {balanceLow && balance !== null && (
-          <Link
-            to="/profile"
-            style={{
-              marginLeft: 'auto',
-              marginRight: 'var(--space-md)',
-              fontSize: 12,
-              color: 'var(--color-danger)',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            Low credits
-          </Link>
+        {/* 80px blob — pointer-events none, ambient presence only */}
+        <div style={{ pointerEvents: 'none' }}>
+          <MoodBlob mood={lastMood} size={80} />
+        </div>
+
+        <h2 style={{ fontSize: 'var(--text-h2)', fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-secondary)', marginTop: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
+          {timeGreeting()}{alias ? `, ${alias}` : ''}.
+        </h2>
+
+        {lastMood ? (
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>
+            Last check-in: {MOOD_LABELS[lastMood] ?? lastMood} · {lastMoodTime ? timeAgo(lastMoodTime) : ''}
+          </p>
+        ) : (
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>No check-in yet today</p>
         )}
       </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: 'var(--color-divider)', margin: '0 var(--space-md)' }} />
 
       {/* Mood prompt banner */}
       {!moodDone && !moodDismissed && (
@@ -217,79 +225,54 @@ export default function DashboardScreen() {
             <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginTop: 2 }}>Daily check-in</div>
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-sm)', flexShrink: 0 }}>
-            <button
-              onClick={() => navigate('/mood')}
-              className="btn btn--primary btn--sm"
-              style={{ width: 'auto' }}
-            >
-              Check In
-            </button>
+            <button onClick={() => navigate('/mood')} className="btn btn--primary btn--sm" style={{ width: 'auto' }}>Check In</button>
             <button
               onClick={() => setMoodDismissed(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: 18,
-                cursor: 'pointer',
-                color: 'var(--color-text-muted)',
-                width: 'var(--touch-target-min)',
-                height: 'var(--touch-target-min)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--color-text-muted)', width: 'var(--touch-target-min)', height: 'var(--touch-target-min)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Dismiss"
-            >
-              ×
-            </button>
+            >×</button>
           </div>
         </div>
       )}
 
-      {/* Action tiles 2×3 grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 'var(--space-sm)',
-          padding: 'var(--space-sm) var(--space-md) 0',
-        }}
-      >
-        {TILES.map(({ label, Icon, to, desc, emergency }) => (
-          <Link
-            key={to}
-            to={to}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              padding: '20px 12px',
-              background: emergency ? 'var(--color-danger-bg)' : 'var(--color-surface-card)',
-              border: `1px solid ${emergency ? 'rgba(179,92,92,0.40)' : 'var(--color-border)'}`,
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-card)',
-              textDecoration: 'none',
-              color: emergency ? 'var(--color-danger)' : 'var(--color-text-primary)',
-              transition: 'transform var(--duration-fast), box-shadow var(--duration-fast)',
-              minHeight: 96,
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.985)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = ''}
-            onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.985)'}
-            onTouchEnd={(e) => e.currentTarget.style.transform = ''}
-          >
-            <Icon
-              size={32}
-              weight="duotone"
-              aria-hidden="true"
-              color={emergency ? 'var(--color-danger)' : 'var(--color-accent)'}
-            />
-            <span style={{ fontWeight: 600, fontSize: 13 }}>{label}</span>
-            <span style={{ fontSize: 11, color: emergency ? 'rgba(179,92,92,0.80)' : 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1.3 }}>{desc}</span>
-          </Link>
-        ))}
+      {/* BOTTOM SECTION — action tiles */}
+      <div style={{ padding: 'var(--space-md) var(--space-md) 0' }}>
+        <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', letterSpacing: 'var(--tracking-label)', textTransform: 'uppercase', marginBottom: 'var(--space-sm)' }}>
+          What would you like to do?
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+          {TILES.map(({ label, Icon, to, desc, emergency }) => (
+            <Link
+              key={to}
+              to={to}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '16px 12px',
+                background: emergency ? 'var(--color-danger-bg)' : 'var(--color-surface-card)',
+                border: `1px solid ${emergency ? 'rgba(179,92,92,0.40)' : 'var(--color-border)'}`,
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-card)',
+                textDecoration: 'none',
+                color: emergency ? 'var(--color-danger)' : '#F5EDE4',
+                transition: 'transform var(--duration-fast), box-shadow var(--duration-fast)',
+                minHeight: 80,
+              }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.985)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = ''}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.985)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = ''}
+            >
+              <Icon size={28} weight="duotone" aria-hidden="true" color={emergency ? 'var(--color-danger)' : 'var(--color-accent)'} />
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{label}</span>
+              <span style={{ fontSize: 11, color: emergency ? 'rgba(179,92,92,0.80)' : 'rgba(245,237,228,0.55)', textAlign: 'center', lineHeight: 1.3 }}>{desc}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Quick links */}

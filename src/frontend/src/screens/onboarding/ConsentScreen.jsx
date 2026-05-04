@@ -2,18 +2,60 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
+import PrivacyPolicyScreen from '../PrivacyPolicyScreen';
+import TermsScreen from '../TermsScreen';
 
 const CONSENT_VERSION = '1.0';
+
+function BottomSheet({ open, onClose, children }) {
+  if (!open) return null;
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+      }}
+    >
+      <div
+        onClick={onClose}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(47,38,34,0.7)' }}
+      />
+      <div
+        style={{
+          position: 'relative', zIndex: 1,
+          background: 'var(--color-bg-deep)',
+          borderRadius: '20px 20px 0 0',
+          maxHeight: '88dvh',
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ position: 'sticky', top: 0, background: 'var(--color-bg-deep)', padding: '14px 20px 10px', display: 'flex', justifyContent: 'flex-end', borderBottom: '1px solid rgba(245,237,228,0.08)' }}>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', color: '#F5EDE4', fontSize: 22, cursor: 'pointer', padding: '4px 8px', borderRadius: 6 }}
+            aria-label="Close"
+          >×</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function ConsentScreen() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [agreed, setAgreed] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sheet, setSheet] = useState(null); // 'privacy' | 'terms' | null
 
   async function handleAgree() {
-    if (!agreed) { setError('You must read and agree to the terms to continue.'); return; }
+    if (!agreed || !ageConfirmed) {
+      setError('Both checkboxes must be checked to continue.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -27,73 +69,106 @@ export default function ConsentScreen() {
   }
 
   return (
-    <div className="screen screen--no-nav" style={{ padding: '32px 24px' }}>
-      <div style={{ marginBottom: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 8 }}>📋</div>
-        <h1 style={{ fontSize: '1.5rem' }}>Data & Privacy Agreement</h1>
-        {user?.alias && <p style={{ marginTop: 4 }}>Welcome, <strong>{user.alias}</strong></p>}
+    <>
+      <div className="screen screen--no-nav" style={{ padding: '32px 24px' }}>
+        <div style={{ marginBottom: 24, textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>📋</div>
+          <h1 style={{ fontSize: '1.5rem' }}>Before You Begin</h1>
+          {user?.alias && <p style={{ marginTop: 4 }}>Welcome, <strong>{user.alias}</strong></p>}
+        </div>
+
+        <div className="card" style={{ marginBottom: 24, fontSize: '0.9rem', lineHeight: 1.7 }}>
+          <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>What we collect</h2>
+          <ul style={{ paddingLeft: 20, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <li>Mood entries — dates, levels, and optional tags</li>
+            <li>Journal entries — private text you write</li>
+            <li>AI conversation content — exchanges with your companion</li>
+            <li>Session metadata — timing and type of peer sessions</li>
+          </ul>
+
+          <div className="divider" />
+
+          <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>How it's used</h2>
+          <ul style={{ paddingLeft: 20, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <li>Solely to improve your own experience on MindBridge</li>
+            <li>No commercial use, no advertising, no third-party sharing</li>
+          </ul>
+
+          <div className="divider" />
+
+          <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>Safety exception</h2>
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            AI conversations that trigger a safety flag are anonymised (your user ID is removed) but retained for safety pattern analysis only. This cannot be opted out of.
+          </p>
+
+          <div className="divider" />
+
+          <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>Not a medical service</h2>
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            MindBridge is a peer support platform. It is not a substitute for professional mental health care. The AI companion is not a therapist or clinical tool.
+          </p>
+        </div>
+
+        {/* Checkbox 1 — Terms + Privacy */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => { setAgreed(e.target.checked); setError(''); }}
+            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-accent)' }}
+          />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', lineHeight: 1.6 }}>
+            I have read and agree to the{' '}
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); setSheet('terms'); }}
+              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}
+            >
+              Terms of Service
+            </button>
+            {' '}and{' '}
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); setSheet('privacy'); }}
+              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-accent)', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit' }}
+            >
+              Privacy Policy
+            </button>
+            . I understand this platform is not a medical service.
+          </span>
+        </label>
+
+        {/* Checkbox 2 — Age confirmation */}
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 24, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={ageConfirmed}
+            onChange={(e) => { setAgeConfirmed(e.target.checked); setError(''); }}
+            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-accent)' }}
+          />
+          <span style={{ fontSize: '0.875rem', color: 'var(--color-text)', lineHeight: 1.6 }}>
+            I confirm I am 18 years of age or older.
+          </span>
+        </label>
+
+        {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
+
+        <button
+          className="btn btn--primary"
+          onClick={handleAgree}
+          disabled={loading || !agreed || !ageConfirmed}
+        >
+          {loading ? 'Saving…' : 'I Agree — Continue'}
+        </button>
       </div>
 
-      <div className="card" style={{ marginBottom: 24, fontSize: '0.9rem', lineHeight: 1.7 }}>
-        <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>What we collect</h2>
-        <ul style={{ paddingLeft: 20, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <li>Mood entries — dates, levels, and optional tags</li>
-          <li>Journal entries — private text you write</li>
-          <li>AI conversation content — exchanges with your companion</li>
-          <li>Session metadata — timing and type of peer sessions</li>
-        </ul>
-
-        <div className="divider" />
-
-        <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>How it's used</h2>
-        <ul style={{ paddingLeft: 20, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <li>Solely to improve your own experience on MindBridge</li>
-          <li>No commercial use, no advertising, no third-party sharing</li>
-          <li>Mood data powers your personal analytics and check-in reminders</li>
-        </ul>
-
-        <div className="divider" />
-
-        <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>Your rights</h2>
-        <ul style={{ paddingLeft: 20, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <li>You can delete all your data at any time from Profile</li>
-          <li>Deletion is permanent and begins within 24 hours of your request</li>
-        </ul>
-
-        <div className="divider" />
-
-        <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>Safety exception</h2>
-        <p style={{ color: 'var(--color-text-muted)' }}>
-          AI conversations that trigger a safety flag are anonymised (your user ID is removed) but retained for safety pattern analysis only. This is disclosed here and cannot be opted out of — it is how we keep the community safe.
-        </p>
-
-        <div className="divider" />
-
-        <h2 style={{ marginBottom: 12, fontSize: '1rem' }}>Community standards</h2>
-        <ul style={{ paddingLeft: 20, color: 'var(--color-text-muted)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <li>No harassment, hate speech, or abuse in group spaces</li>
-          <li>No sharing of personal identifying information</li>
-          <li>Peer support is mutual — be the support you'd want to receive</li>
-        </ul>
-      </div>
-
-      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20, cursor: 'pointer' }}>
-        <input
-          type="checkbox"
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-          style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-primary)' }}
-        />
-        <span style={{ fontSize: '0.9rem', color: 'var(--color-text)' }}>
-          I have read and agree to the data and privacy terms above (v{CONSENT_VERSION})
-        </span>
-      </label>
-
-      {error && <div className="error-msg" style={{ marginBottom: 16 }}>{error}</div>}
-
-      <button className="btn btn--primary" onClick={handleAgree} disabled={loading || !agreed}>
-        {loading ? 'Saving…' : 'I Agree — Continue'}
-      </button>
-    </div>
+      {/* Bottom sheets */}
+      <BottomSheet open={sheet === 'privacy'} onClose={() => setSheet(null)}>
+        <PrivacyPolicyScreen embedded />
+      </BottomSheet>
+      <BottomSheet open={sheet === 'terms'} onClose={() => setSheet(null)}>
+        <TermsScreen embedded />
+      </BottomSheet>
+    </>
   );
 }

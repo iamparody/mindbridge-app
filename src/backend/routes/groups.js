@@ -1,10 +1,13 @@
 const express = require('express');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
+const cache = require('../services/cache');
 
 const router = express.Router();
 
 const VALID_REASONS = ['harmful_content', 'abuse', 'spam', 'other'];
+const MAX_MSG_LEN = 1000;
+const { stripHtml } = require('../utils/sanitizer');
 
 // Helper: verify active membership for a user in a group
 async function getActiveMembership(group_id, user_id) {
@@ -18,6 +21,9 @@ async function getActiveMembership(group_id, user_id) {
 
 // ─── GET /groups ──────────────────────────────────────────────────────────────
 router.get('/', auth, async (req, res) => {
+  const cached = await cache.get('groups:list');
+  if (cached) return res.status(200).json(cached);
+
   const { rows } = await query(
     `SELECT g.id, g.name, g.condition_category, g.description, g.is_active,
             COUNT(gm.id) FILTER (WHERE gm.status = 'active') AS member_count
@@ -27,7 +33,9 @@ router.get('/', auth, async (req, res) => {
      GROUP BY g.id
      ORDER BY g.name ASC`
   );
-  return res.status(200).json({ groups: rows });
+  const result = { groups: rows };
+  await cache.set('groups:list', result, 300);
+  return res.status(200).json(result);
 });
 
 // ─── GET /groups/:id ──────────────────────────────────────────────────────────
@@ -158,10 +166,17 @@ router.post('/:id/messages', auth, async (req, res) => {
   if (!content || typeof content !== 'string' || content.trim().length === 0) {
     return res.status(400).json({ error: 'content is required', code: 'MISSING_CONTENT' });
   }
+  const cleanContent = stripHtml(content);
+  if (cleanContent.length === 0) {
+    return res.status(400).json({ error: 'content is required', code: 'MISSING_CONTENT' });
+  }
+  if (cleanContent.length > MAX_MSG_LEN) {
+    return res.status(400).json({ error: `Message must be ${MAX_MSG_LEN} characters or fewer`, code: 'CONTENT_TOO_LONG' });
+  }
 
   const { rows } = await query(
     'INSERT INTO group_messages (group_id, user_id, content) VALUES ($1, $2, $3) RETURNING id',
-    [req.params.id, req.user.id, content.trim()]
+    [req.params.id, req.user.id, cleanContent]
   );
   const messageId = rows[0].id;
 

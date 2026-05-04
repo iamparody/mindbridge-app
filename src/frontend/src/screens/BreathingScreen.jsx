@@ -267,7 +267,7 @@ export default function BreathingScreen() {
   const [active, setActive] = useState(null);
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <button
           className="page-header__back"

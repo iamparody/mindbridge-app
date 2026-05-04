@@ -177,7 +177,7 @@ export default function PersonaScreen() {
                   padding: 'var(--space-md)',
                   borderRadius: 'var(--radius-md)',
                   border: `2px solid ${tone === t.value ? 'var(--color-border-focus)' : 'var(--color-border)'}`,
-                  background: tone === t.value ? 'rgba(194,164,138,0.15)' : 'var(--color-surface-card)',
+                  background: tone === t.value ? 'rgba(194,164,138,0.15)' : 'rgba(194,164,138,0.06)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'border-color var(--duration-fast), background var(--duration-fast)',
@@ -203,7 +203,7 @@ export default function PersonaScreen() {
                   padding: 'var(--space-md)',
                   borderRadius: 'var(--radius-md)',
                   border: `2px solid ${style === s.value ? 'var(--color-border-focus)' : 'var(--color-border)'}`,
-                  background: style === s.value ? 'rgba(194,164,138,0.15)' : 'var(--color-surface-card)',
+                  background: style === s.value ? 'rgba(194,164,138,0.15)' : 'rgba(194,164,138,0.06)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'border-color var(--duration-fast), background var(--duration-fast)',
@@ -246,10 +246,11 @@ export default function PersonaScreen() {
 
         {/* Live preview card */}
         <div
-          className="card"
           style={{
             background: 'rgba(194,164,138,0.08)',
-            borderColor: 'var(--color-border-focus)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1.5px solid var(--color-border-focus)',
+            padding: 'var(--space-md)',
           }}
         >
           <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>

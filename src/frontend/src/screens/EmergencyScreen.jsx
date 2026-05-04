@@ -47,7 +47,7 @@ export default function EmergencyScreen() {
             fontFamily: 'var(--font-editorial)',
             fontSize: 22,
             fontWeight: 400,
-            color: 'var(--color-text-primary)',
+            color: '#F5EDE4',
             marginBottom: 'var(--space-sm)',
           }}
         >
@@ -70,12 +70,12 @@ export default function EmergencyScreen() {
         >
           0800 723 253
         </a>
-        <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>
+        <p style={{ fontSize: 'var(--text-caption)', color: 'rgba(245,237,228,0.60)' }}>
           Befrienders Kenya · Free · 24/7 · Confidential
         </p>
       </div>
 
-      <div style={{ height: 1, background: 'var(--color-divider)' }} />
+      <div style={{ height: 1, background: 'rgba(245,237,228,0.12)' }} />
 
       {triggered ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
@@ -105,12 +105,17 @@ export default function EmergencyScreen() {
           <button
             className="btn btn--ghost"
             onClick={() => navigate('/safety-plan')}
+            style={{ color: '#F5EDE4', borderColor: 'rgba(245,237,228,0.25)' }}
           >
             <ShieldCheck size={20} weight="duotone" aria-hidden="true" />
             Open my Safety Plan
           </button>
 
-          <button className="btn btn--muted" onClick={() => navigate('/dashboard')}>
+          <button
+            className="btn btn--muted"
+            onClick={() => navigate('/dashboard')}
+            style={{ color: '#F5EDE4', background: 'rgba(245,237,228,0.08)', borderColor: 'rgba(245,237,228,0.15)' }}
+          >
             Back to home
           </button>
         </div>
@@ -129,6 +134,7 @@ export default function EmergencyScreen() {
           <button
             className="btn btn--ghost"
             onClick={() => navigate('/breathing')}
+            style={{ color: '#F5EDE4', borderColor: 'rgba(245,237,228,0.25)' }}
           >
             <Wind size={20} weight="duotone" aria-hidden="true" />
             Try a breathing exercise first

@@ -88,7 +88,7 @@ export default function AnalyticsScreen() {
   const commonMoodMeta = data?.common_mood ? MOOD_META[data.common_mood] : null;
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">My Insights</h2>

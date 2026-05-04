@@ -3,14 +3,21 @@ const { query } = require('../db');
 const auth = require('../middleware/auth');
 const { PACKAGES, initializeTransaction, verifyWebhookSignature } = require('../utils/paystack');
 const { deductCredit } = require('../utils/creditDeductor');
+const cache = require('../services/cache');
 
 const router = express.Router();
 
 // ─── GET /credits/balance ─────────────────────────────────────────────────────
 router.get('/balance', auth, async (req, res) => {
+  const cacheKey = `credits:${req.user.id}`;
+  const cached = await cache.get(cacheKey);
+  if (cached !== null) return res.status(200).json(cached);
+
   const { rows } = await query('SELECT balance FROM credits WHERE user_id = $1', [req.user.id]);
   if (!rows.length) return res.status(404).json({ error: 'Credits record not found', code: 'NOT_FOUND' });
-  return res.status(200).json({ balance: rows[0].balance });
+  const result = { balance: rows[0].balance };
+  await cache.set(cacheKey, result, 30);
+  return res.status(200).json(result);
 });
 
 // ─── GET /credits/transactions ────────────────────────────────────────────────
@@ -142,6 +149,7 @@ router.post('/webhook', async (req, res) => {
     'UPDATE credits SET balance = balance + $1, updated_at = NOW() WHERE user_id = $2',
     [pkg.credits, user_id]
   );
+  await cache.del(`credits:${user_id}`);
 
   // Confirm the transaction record
   if (transaction_id) {

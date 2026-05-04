@@ -1,4 +1,5 @@
 const { query } = require('../db');
+const cache = require('../services/cache');
 
 // Deducts 1 credit for the given session channel.
 // Returns: { blocked, grace, balance }
@@ -38,6 +39,7 @@ async function deductCredit(user_id, session_id, channel) {
      VALUES ($1, 'debit', 1, 'bonus', $2, $3, 'confirmed')`,
     [user_id, session_id, channel]
   );
+  await cache.del(`credits:${user_id}`);
 
   // Blueprint 6.4: notify when balance drops below 2
   if (newBalance < 2) {

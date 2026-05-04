@@ -721,3 +721,145 @@
 - [x] Consent version locked at '1.0' as CURRENT_CONSENT_VERSION constant in onboarding.js
 - [x] Railway deployment: Dockerfile written, railway.json configured, GET /health endpoint verified
 - [x] Final smoke test: register → consent → persona → first mood (bonus_credited:true) → AI normal message (response_text) → AI emergency trigger (action:emergency) → onboarding status all true — **PASS**
+
+---
+
+## Phase 14 — Additional Features
+
+### 14.1 Fix: Articles Not Loading on Resources Screen
+- [x] Verify `seed_articles.js` has been run against the current database — 45 articles seeded, 5 per category
+- [x] Check GET /api/resources endpoint response — 200, `{ articles: [...] }` shape confirmed
+- [x] Fix frontend field mapping: `a.read_time` → `a.estimated_read_minutes`
+- [x] Fix category filter: converted to `{ label, value }` objects; filter sends snake_case enum values to API
+- [x] Confirm articles visible (45 returned from endpoint)
+
+### 14.2 Schema Migration: welcome_seen
+- [x] Write `src/backend/migrations/024_welcome_seen.sql` — `ALTER TABLE users ADD COLUMN welcome_seen BOOLEAN NOT NULL DEFAULT false`
+- [x] Run migration against Supabase and verify column exists — 1 applied, 23 skipped
+- [x] `GET /api/onboarding/status` response extended to include `welcome_seen` boolean
+- [x] `PATCH /api/onboarding/welcome-seen` endpoint added — sets welcome_seen=true for authenticated user
+
+### 14.3 Welcome / Landing Screen
+- [x] Create `src/frontend/src/screens/WelcomeScreen.jsx`
+- [x] On mount: fetch last mood entry from GET /api/moods/history?limit=1 — pass `mood_level` to MoodBlob component
+- [x] MoodBlob renders using existing MoodBlob.jsx component — reflects last logged mood state (idle state if no entries)
+- [x] Time-based greeting: compute local hour → "Good morning" (5–11) / "Good afternoon" (12–16) / "Good evening" (17–4) + user alias from AuthContext
+- [x] Rotating supportive messages: array of 3+ messages — animate in and fade out every 3 seconds using CSS opacity transition
+- [x] Auto-transition to /dashboard after 9 seconds (3 full message cycles — setTimeout cancelled on early tap or skip)
+- [x] Tap-anywhere handler: clear timeout, navigate to /dashboard immediately
+- [x] Skip button: visible immediately on every visit for returning users (`welcome_seen === true`); positioned top-right; navigates to /dashboard and cancels timeout
+- [x] First-time only (welcome_seen === false): no skip button — full welcome plays before navigation; PATCH /api/onboarding/welcome-seen called on navigate
+- [x] Add backend endpoint: `PATCH /api/onboarding/welcome-seen` — sets `welcome_seen=true` for authenticated user
+- [x] Style: dark background (`--color-bg-deep`) — same emotional treatment as alias reveal screen
+- [x] Wire into App.jsx routing: redirect to /welcome after login/onboarding; /welcome added to HIDE_NAV_ON
+
+### 14.4 Voice Journaling
+- [x] Add microphone button to JournalScreen.jsx new-entry form — positioned alongside the content textarea
+- [x] Check `window.SpeechRecognition || window.webkitSpeechRecognition` on render; if unsupported, hide mic button entirely (no fallback error shown)
+- [x] On mic button tap: instantiate SpeechRecognition, set `continuous=false`, `interimResults=true`, `lang='en-US'`; start recognition
+- [x] Show recording state: mic button turns red with a pulsing animation (`micPulse`); label changes to "Listening…"
+- [x] Interim results: append interim transcript to textarea in real time (replace previous interim segment, not the confirmed text)
+- [x] On `onresult` final: append confirmed transcript to existing textarea content (user can edit freely after)
+- [x] On `onend` / stop button tap: stop recognition, return mic button to idle state
+- [x] User reviews and edits transcription in the textarea before saving — no auto-save
+- [x] Audio is never stored — transcription text only; `aria-description` on mic button states this
+- [x] Add `aria-label="Record voice journal entry"` to mic button
+
+### 14.5 Calming Sounds
+- [x] Create `src/frontend/src/screens/CalmingSoundsScreen.jsx`
+- [ ] Source 8 ambient audio files from royalty-free providers (Freesound.org CC0): Rain / Forest / Ocean / White Noise / Tibetan Bowls / Fireplace / Stream / Wind — **PENDING: files must be placed in public/sounds/ manually**
+- [x] Place audio files in `src/frontend/public/sounds/` — directory created; README.txt lists required filenames
+- [x] Each sound rendered as a card: Phosphor icon + title + play/pause indicator + volume slider
+- [x] One sound plays at a time: single Audio instance in ref; new selection changes src and replays
+- [x] Play/pause state tracked per sound; currently playing sound shows filled/active icon state
+- [x] Volume slider: controls `audio.volume` directly; default 0.7
+- [x] Background audio: Audio instance in ref, not paused on unmount — only paused on user tap or new selection
+- [x] Add route `/sounds` in App.jsx
+- [x] Add "Sounds" tab to BottomNav alongside Breathing — uses `SpeakerHigh` Phosphor icon
+- [x] No user upload in this iteration — curated 8 sounds only
+
+---
+
+## Phase 15 — Email Verification & Password Reset
+
+### 15.1 Database
+- [x] Write migration 025_email_verification.sql — adds email_verified, email_verify_token_hash, email_verify_expires, jwt_issued_before to users table
+
+### 15.2 Email Service
+- [x] Create src/backend/services/emailService.js — nodemailer-based; sendVerificationEmail + sendPasswordResetEmail; dev fallback to console log; on-brand HTML templates
+
+### 15.3 Backend — Rate Limiting
+- [x] Add checkResendLimit(userId) to rateLimit.js — 3 resends per hour per user, in-memory Map
+
+### 15.4 Backend — Auth Middleware
+- [x] Update auth.js middleware — query users for jwt_issued_before + email_verified on every authenticated request
+- [x] Reject tokens where iat < jwt_issued_before (session invalidation after password reset)
+- [x] Email verification gate — return 403 EMAIL_NOT_VERIFIED for unverified users on non-exempt routes
+- [x] Exempt paths: /api/auth/*, POST /api/emergency, GET /api/resources
+
+### 15.5 Backend — Auth Routes
+- [x] Update POST /auth/register — generate verify token (SHA256-hashed), send email, return email_verified: false
+- [x] Add GET /auth/verify-email?token= — single-use token, clear regardless, mark email_verified = true
+- [x] Add POST /auth/resend-verification — auth required, rate-limited, new token generation + resend
+- [x] Update POST /auth/login — add email_verified to response
+- [x] Update POST /auth/recover — 1hr → 15min expiry; use emailService instead of inline nodemailer
+- [x] Add POST /auth/reset-password — validate token hash, bcrypt new password, set jwt_issued_before = NOW()
+
+### 15.6 Frontend — New Screens
+- [x] Create EmailSentScreen.jsx — envelope icon, email address display, 60s resend cooldown, emergency link
+- [x] Create VerifyEmailScreen.jsx — token on mount, success checkmark + auto-redirect, expired state + resend
+- [x] Create ResetPasswordScreen.jsx — inline validation (blur), success state, expired state
+
+### 15.7 Frontend — Updated Screens
+- [x] Update RegisterScreen.jsx — post-alias-reveal navigates to /email-sent with state { email }; stores email_verified: false
+- [x] Update LoginScreen.jsx — if email_verified: false, skip onboarding check, redirect to /email-sent
+- [x] Rewrite RecoverScreen.jsx — matches design system (wordmark, design tokens, btn classes); drops emojis
+
+### 15.8 Frontend — App Shell
+- [x] Update App.jsx — add routes /email-sent, /verify-email, /reset-password; add to HIDE_NAV_ON; add VerificationBanner component
+- [x] VerificationBanner — fixed top bar, orange warning color, inline resend button, hidden on auth/legal screens
+- [x] Add @keyframes spin to globals.css for VerifyEmailScreen loading state
+
+---
+
+## Phase 16 — Performance, Security & Scale
+
+### 16.1 Row Level Security
+- [x] Write src/backend/migrations/026_row_level_security.sql — deny all anon-role read/write on all 22 tables; idempotent (EXCEPTION WHEN duplicate_object)
+
+### 16.2 Database Indexes
+- [x] Write src/backend/migrations/027_indexes.sql — 20+ composite/partial indexes with IF NOT EXISTS; avoids collision with existing idx_users_risk_level from migration 001 (new partial index named idx_users_active_risk)
+
+### 16.3 Redis Caching (Upstash / ioredis)
+- [x] Install ioredis + bullmq: npm install ioredis bullmq in src/backend/
+- [x] Create src/backend/config/redis.js — getCacheClient() singleton (maxRetriesPerRequest:3), createQueueClient() fresh-per-call (maxRetriesPerRequest:null for BullMQ)
+- [x] Create src/backend/services/cache.js — get, set, del, delPattern (SCAN loop), incrby (pipeline INCRBY + EXPIREAT)
+- [x] Update routes/resources.js — GET / checks cache key resources:{category}:{search}, TTL 3600
+- [x] Update routes/groups.js — GET / checks cache key groups:list, TTL 300
+- [x] Update routes/moods.js — GET /analytics checks cache key analytics:{userId}, TTL 300; POST / invalidates on submit
+- [x] Update routes/ai.js — persona cache persona:{userId} TTL 86400 in session/start; token tracking (Redis incrby + ai_usage table) in session/:id/message; 50k daily token limit gate
+- [x] Update routes/credits.js — GET /balance checks credits:{userId} TTL 30; POST /webhook invalidates after balance credit
+- [x] Update utils/creditDeductor.js — del credits:{userId} after each debit
+- [x] Update routes/admin.js — delPattern('resources:') on publish, archive, and edit handlers
+
+### 16.4 BullMQ Queues & Workers
+- [x] Create src/backend/queues/index.js — emailQueue + notificationQueue; null if Redis unavailable; DEFAULT_JOB_OPTIONS (attempts:3, exponential backoff)
+- [x] Create src/backend/workers/emailWorker.js — BullMQ Worker on 'email' queue; calls deliverEmail()
+- [x] Create src/backend/workers/notificationWorker.js — BullMQ Worker on 'notification' queue; calls sendPushNotification()
+- [x] Update services/emailService.js — enqueueEmail() lazy-requires queues/index, falls back to deliverEmail(); sendVerificationEmail + sendPasswordResetEmail call enqueueEmail
+- [x] Update utils/fcm.js — enqueuePushNotification() lazy-requires queues, falls back to sendPushNotification()
+- [x] Update utils/notificationWriter.js — import enqueuePushNotification instead of sendPushNotification
+- [x] Update server.js — startEmailWorker() + startNotificationWorker() called at startup
+
+### 16.5 AI Token Tracking
+- [x] Write src/backend/migrations/028_ai_usage.sql — ai_usage table (user_id, date, token_count, message_count, UNIQUE(user_id,date)); index on user_id+date
+- [x] Update routes/ai.js — check Redis ai_tokens:{userId}:{date} before Groq call; 50k limit returns 429 TOKEN_LIMIT; after Groq: incrby Redis + UPSERT ai_usage table; estimate tokens if Groq usage not returned
+
+### 16.6 Connection Pooling
+- [x] Update db/index.js — DATABASE_POOLER_URL || DATABASE_URL for PgBouncer transaction-mode pooler
+- [x] Update migrations/run.js — DATABASE_DIRECT_URL || DATABASE_URL (DDL requires direct/session-mode connection)
+- [x] Update .env.example — add DATABASE_POOLER_URL and DATABASE_DIRECT_URL with comments
+
+### 16.7 Redis Login Tracking
+- [x] Update middleware/rateLimit.js — getRecord() checks Redis first (login_fail:{ip}), falls back to in-memory Map; recordFailedLogin() writes to both; clearLoginRecord() deletes from both; loginCooldownMiddleware() is now async
+- [x] Update .env.example — add UPSTASH_REDIS_URL with format comment

@@ -1,11 +1,16 @@
 const express = require('express');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
+const cache = require('../services/cache');
 
 const router = express.Router();
 
 // ─── GET /resources ───────────────────────────────────────────────────────────
 router.get('/', auth, async (req, res) => {
+  const cacheKey = `resources:${req.query.category || 'all'}:${req.query.search || ''}`;
+  const cached = await cache.get(cacheKey);
+  if (cached) return res.status(200).json(cached);
+
   const conditions = [`status = 'published'`];
   const params = [];
   let idx = 1;
@@ -26,7 +31,10 @@ router.get('/', auth, async (req, res) => {
      ORDER BY published_at DESC`,
     params
   );
-  return res.status(200).json({ articles: rows });
+
+  const result = { articles: rows };
+  await cache.set(cacheKey, result, 3600); // 1 hour
+  return res.status(200).json(result);
 });
 
 // ─── GET /resources/:id ───────────────────────────────────────────────────────

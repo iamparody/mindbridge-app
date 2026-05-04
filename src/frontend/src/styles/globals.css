@@ -3,25 +3,25 @@
 
 :root {
   /* COLORS */
-  --color-bg-primary: #4B3A2F;
+  --color-bg-primary: #FAF6F2;
   --color-bg-deep: #2F2622;
   --color-bg-emergency: #1E1612;
   --color-surface-primary: #7A5C4D;
   --color-surface-secondary: #E8DDD3;
   --color-surface-card: #5C4035;
 
-  --color-text-primary: #F5EDE4;
-  --color-text-secondary: #C2A48A;
+  --color-text-primary: #2F2622;
+  --color-text-secondary: #6B4F3A;
   --color-text-dark: #2F2622;
-  --color-text-muted: rgba(245,237,228,0.55);
+  --color-text-muted: rgba(47,38,34,0.50);
 
   --color-accent: #C2A48A;
   --color-accent-hover: #D4B99E;
   --color-accent-pressed: #A88B73;
 
-  --color-border: rgba(194,164,138,0.25);
-  --color-border-focus: rgba(194,164,138,0.70);
-  --color-divider: rgba(194,164,138,0.15);
+  --color-border: rgba(75,58,47,0.18);
+  --color-border-focus: rgba(75,58,47,0.45);
+  --color-divider: rgba(75,58,47,0.10);
 
   --color-calm: #8FAF9A;
   --color-calm-bg: rgba(143,175,154,0.15);
@@ -31,8 +31,8 @@
   --color-danger-bg: rgba(179,92,92,0.15);
 
   --color-overlay: rgba(47,38,34,0.75);
-  --color-skeleton-base: rgba(75,58,47,0.4);
-  --color-skeleton-shine: rgba(194,164,138,0.15);
+  --color-skeleton-base: rgba(75,58,47,0.07);
+  --color-skeleton-shine: rgba(194,164,138,0.30);
 
   /* TYPOGRAPHY */
   --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
@@ -225,4 +225,35 @@ body {
 @keyframes sheetIn {
   from { transform: translateY(100%); }
   to   { transform: translateY(0);    }
+}
+
+/* ── Mood blob animations ─────────────────────────────────────────────────────── */
+@keyframes blobBreathe {
+  0%, 100% { transform: scale(0.97); }
+  50%       { transform: scale(1.0);  }
+}
+
+@keyframes blobBounce {
+  0%   { transform: scale(1.0);  }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(1.0);  }
+}
+
+@keyframes micPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Screen content safe-area bottom padding ─────────────────────────────────── */
+.screen-content {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 24px);
 }

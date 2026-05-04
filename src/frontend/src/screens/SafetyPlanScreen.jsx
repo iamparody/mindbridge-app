@@ -84,7 +84,7 @@ export default function SafetyPlanScreen() {
 
   if (loading) {
     return (
-      <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+      <div className="screen">
         <div className="page-header">
           <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
           <h2 className="page-header__title">My Safety Plan</h2>
@@ -95,7 +95,7 @@ export default function SafetyPlanScreen() {
   }
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">My Safety Plan</h2>

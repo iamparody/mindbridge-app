@@ -23,19 +23,23 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const { data } = await client.post('/api/auth/register', { email, password });
-      login(data.token, { id: data.userId, alias: data.alias, role: data.role });
+      login(data.token, { id: data.userId, alias: data.alias, role: data.role, email_verified: false });
       setAlias(data.alias);
       setRevealPhase(1);
       setTimeout(() => setRevealPhase(2), 300);
       setTimeout(() => setRevealPhase(3), 600);
       setTimeout(() => setRevealPhase(4), 600 + data.alias.length * 80 + 400);
       setTimeout(() => setRevealPhase(5), 600 + data.alias.length * 80 + 1200);
-      setTimeout(() => navigate('/onboarding/consent', { replace: true }), 600 + data.alias.length * 80 + 2500);
+      setTimeout(() => navigate('/email-sent', { state: { email }, replace: true }), 600 + data.alias.length * 80 + 2500);
     } catch (err) {
       const msg = err.response?.data?.error;
-      setError(msg === 'Email already registered'
-        ? 'An account with that email already exists.'
-        : 'Something went wrong. Please try again.');
+      if (err.response?.status === 429) {
+        setError('Too many attempts. Please wait a few minutes and try again.');
+      } else {
+        setError(msg === 'Email already registered'
+          ? 'An account with that email already exists.'
+          : 'Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -121,7 +125,7 @@ export default function RegisterScreen() {
             opacity: revealPhase >= 5 ? 1 : 0,
             transition: 'opacity 300ms ease',
           }}
-          onClick={() => navigate('/onboarding/consent', { replace: true })}
+          onClick={() => navigate('/email-sent', { state: { email }, replace: true })}
         >
           Continue
         </button>

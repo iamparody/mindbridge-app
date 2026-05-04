@@ -25,6 +25,12 @@ const PRESCRIPTIVE_PATTERNS = [
   /i('d| would) recommend (taking|medication|a drug)/gi,
 ];
 
+// Strip all HTML tags from a string — prevents raw HTML from reaching the database
+function stripHtml(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str.replace(/<[^>]*>/g, '').trim();
+}
+
 function sanitize(text) {
   if (!text) return SAFE_FALLBACK;
 
@@ -46,4 +52,4 @@ function sanitize(text) {
   return result || SAFE_FALLBACK;
 }
 
-module.exports = { sanitize };
+module.exports = { sanitize, stripHtml };

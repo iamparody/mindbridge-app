@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
@@ -10,25 +10,56 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownEnd, setCooldownEnd] = useState(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  // Countdown ticker for soft cooldown
+  useEffect(() => {
+    if (!cooldownEnd) return;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownEnd - Date.now()) / 1000));
+      setCooldownSeconds(remaining);
+      if (remaining === 0) setCooldownEnd(null);
+    };
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [cooldownEnd]);
+
+  const inCooldown = Boolean(cooldownEnd && Date.now() < cooldownEnd);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!email || !password) return;
+    if (!email || !password || inCooldown) return;
     setLoading(true);
     try {
       const { data } = await client.post('/api/auth/login', { email, password });
-      login(data.token, { id: data.userId, alias: data.alias, role: data.role });
+      login(data.token, { id: data.userId, alias: data.alias, role: data.role, email_verified: data.email_verified });
+
+      if (!data.email_verified) {
+        navigate('/email-sent', { state: { email }, replace: true });
+        return;
+      }
+
       const { data: status } = await client.get('/api/onboarding/status');
       if (!status.consent) navigate('/onboarding/consent', { replace: true });
       else if (!status.persona) navigate('/onboarding/persona', { replace: true });
       else if (!status.first_mood) navigate('/onboarding/first-mood', { replace: true });
-      else navigate('/dashboard', { replace: true });
+      else navigate('/welcome', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.error;
+      const code = err.response?.data?.code;
+      const retryAfter = err.response?.data?.retry_after ?? 30;
+      setFailedAttempts((n) => n + 1);
+
       if (err.response?.status === 429) {
-        setError("You've reached your limit for now. Come back a little later.");
+        if (code === 'COOLDOWN') {
+          setCooldownEnd(Date.now() + retryAfter * 1000);
+        }
+        setError("Having trouble? Take a breath — you can keep trying.");
       } else {
+        const msg = err.response?.data?.error;
         setError(msg === 'Invalid credentials' || err.response?.status === 401
           ? 'Incorrect email or password.'
           : 'Something went wrong. Please try again.');
@@ -37,6 +68,8 @@ export default function LoginScreen() {
       setLoading(false);
     }
   }
+
+  const showSecondaryMsg = failedAttempts >= 10;
 
   return (
     <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'var(--space-xl) var(--space-lg)' }}>
@@ -71,9 +104,35 @@ export default function LoginScreen() {
             autoComplete="current-password"
           />
         </div>
-        {error && <div className="error-msg">{error}</div>}
-        <button type="submit" className="btn btn--primary" disabled={loading || !email || !password}>
-          {loading ? 'Signing in…' : 'Sign In'}
+
+        {error && (
+          <div className="error-msg">
+            <div>{error}</div>
+            {showSecondaryMsg && (
+              <div style={{ marginTop: 6, fontSize: 13 }}>
+                You can also{' '}
+                <Link
+                  to="/emergency-public"
+                  style={{ color: 'var(--color-accent)', textDecoration: 'underline' }}
+                >
+                  access support without logging in
+                </Link>
+                .
+              </div>
+            )}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="btn btn--primary"
+          disabled={loading || !email || !password || inCooldown}
+        >
+          {inCooldown
+            ? `Try again in ${cooldownSeconds}s…`
+            : loading
+            ? 'Signing in…'
+            : 'Sign In'}
         </button>
       </form>
 
@@ -85,6 +144,12 @@ export default function LoginScreen() {
           Don't have an account?{' '}
           <Link to="/register" style={{ color: 'var(--color-accent)', fontWeight: 600, textDecoration: 'none' }}>Sign up</Link>
         </p>
+        <Link
+          to="/emergency-public"
+          style={{ fontSize: 13, color: 'var(--color-text-muted)', textDecoration: 'none' }}
+        >
+          Need help right now?
+        </Link>
       </div>
     </div>
   );

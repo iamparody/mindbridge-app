@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Robot, Handshake, Siren } from '@phosphor-icons/react';
 import client from '../api/client';
+import MoodBlob from '../components/MoodBlob';
 
 const MOODS = [
   { value: 'very_low', label: 'Very Low', emoji: '😔', color: 'var(--color-danger)' },
@@ -72,13 +73,15 @@ export default function MoodCheckinScreen() {
   }
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">Daily Check-In</h2>
       </div>
 
       <div style={{ padding: 'var(--space-sm) var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+        <MoodBlob mood={mood} />
+
         <div>
           <label className="label">How are you feeling right now?</label>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)' }}>
@@ -89,8 +92,8 @@ export default function MoodCheckinScreen() {
                 onClick={() => setMood(m.value)}
                 className={`mood-btn${mood === m.value ? ' mood-btn--selected' : mood ? ' mood-btn--unselected' : ''}`}
                 style={{
-                  borderColor: mood === m.value ? m.color : 'transparent',
-                  background: mood === m.value ? `${m.color}20` : 'var(--color-surface-card)',
+                  borderColor: mood === m.value ? m.color : 'var(--color-border)',
+                  background: mood === m.value ? `${m.color}20` : 'var(--color-bg-primary)',
                 }}
                 aria-pressed={mood === m.value}
                 aria-label={m.label}

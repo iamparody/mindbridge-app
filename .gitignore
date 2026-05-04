@@ -2,6 +2,8 @@
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
 
 # Dependencies
 node_modules/
@@ -27,3 +29,13 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# Security — private keys and service accounts
+*.pem
+*.key
+*service-account*.json
+firebase-adminsdk*.json
+firebase-service-account*.json
+
+# Audio files (large binary assets — source from Freesound.org per README)
+src/frontend/public/sounds/

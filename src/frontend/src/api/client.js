@@ -14,7 +14,8 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const isAuthRoute = err.config?.url?.includes('/api/auth/');
+    if (err.response?.status === 401 && !isAuthRoute) {
       localStorage.removeItem('mb_token');
       localStorage.removeItem('mb_user');
       window.location.href = '/login';

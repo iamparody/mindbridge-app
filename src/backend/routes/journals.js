@@ -2,6 +2,9 @@ const express = require('express');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
 const { classify } = require('../utils/riskClassifier');
+const { stripHtml } = require('../utils/sanitizer');
+
+const MAX_CONTENT_LEN = 10000;
 
 const router = express.Router();
 
@@ -14,6 +17,13 @@ router.post('/', auth, async (req, res) => {
 
   if (!content || typeof content !== 'string' || content.trim().length === 0) {
     return res.status(400).json({ error: 'content is required', code: 'MISSING_CONTENT' });
+  }
+  const cleanContent = stripHtml(content);
+  if (cleanContent.length === 0) {
+    return res.status(400).json({ error: 'content is required', code: 'MISSING_CONTENT' });
+  }
+  if (cleanContent.length > MAX_CONTENT_LEN) {
+    return res.status(400).json({ error: `content must be ${MAX_CONTENT_LEN} characters or fewer`, code: 'CONTENT_TOO_LONG' });
   }
   if (mood_level && !VALID_MOOD_LEVELS.includes(mood_level)) {
     return res.status(400).json({ error: 'Invalid mood_level', code: 'INVALID_MOOD_LEVEL' });
@@ -34,7 +44,7 @@ router.post('/', auth, async (req, res) => {
   const { rows } = await query(
     `INSERT INTO journals (user_id, mood_id, mood_level, tags, content, risk_flagged)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [req.user.id, mood_id || null, mood_level || null, tags || null, content.trim(), risk_flagged]
+    [req.user.id, mood_id || null, mood_level || null, tags || null, cleanContent, risk_flagged]
   );
 
   // Passive admin alert — no interruption to user (blueprint section 7.6)

@@ -102,7 +102,7 @@ export default function PeerTextChatScreen() {
   return (
     <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--color-surface-card)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--color-bg-primary)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>💬 Peer Chat</div>
           <div style={{ fontSize: '0.7rem', color: connected ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
@@ -128,7 +128,7 @@ export default function PeerTextChatScreen() {
       )}
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--color-bg-primary)' }}>
         {messages.length === 0 && !peerLeft && (
           <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: 24, fontSize: '0.9rem' }}>
             You are connected. Neither party can see the other's identity.
@@ -146,7 +146,7 @@ export default function PeerTextChatScreen() {
       </div>
 
       {/* Input */}
-      <div style={{ padding: '12px 16px', background: 'var(--color-surface-card)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
+      <div style={{ padding: '12px 16px', background: 'var(--color-bg-deep)', borderTop: '1px solid rgba(245,237,228,0.10)', display: 'flex', gap: 8, flexShrink: 0 }}>
         <textarea
           className="textarea"
           rows={1}

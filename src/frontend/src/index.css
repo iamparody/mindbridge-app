@@ -1,18 +1,36 @@
 /* ── Screen Wrapper ─────────────────────────────────────────────────────────── */
 .screen {
   min-height: 100dvh;
-  padding-bottom: calc(var(--bottom-nav-height) + 16px);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 24px);
   background: var(--color-bg-primary);
   animation: screenIn var(--duration-normal) var(--easing-out);
 }
 .screen--no-nav { padding-bottom: 0; }
 
 /* ── Typography ─────────────────────────────────────────────────────────────── */
+/* ── Dark-surface token overrides ────────────────────────────────────────────── */
+/* Cards, nav bars, chat bubbles, and sheets sit on dark brown surfaces.         */
+/* Redefine text/border tokens locally so children inherit correct contrast.     */
+.card,
+.page-header,
+.bubble--ai,
+.bubble--peer,
+.typing-indicator,
+.sheet,
+.bottom-nav {
+  --color-text-primary:   #F5EDE4;
+  --color-text-secondary: #C2A48A;
+  --color-text-muted:     rgba(245,237,228,0.55);
+  --color-border:         rgba(194,164,138,0.25);
+  --color-divider:        rgba(194,164,138,0.15);
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
 h1 { font-size: var(--text-h1); font-weight: var(--weight-semibold); line-height: var(--leading-tight); color: var(--color-text-primary); }
 h2 { font-size: var(--text-h2); font-weight: var(--weight-semibold); line-height: 1.4; color: var(--color-text-primary); }
 h3 { font-size: var(--text-h3); font-weight: var(--weight-medium); line-height: 1.4; color: var(--color-text-primary); }
 p  { color: var(--color-text-muted); line-height: var(--leading-normal); }
-a  { color: var(--color-accent); }
+a  { color: var(--color-text-secondary); }
 
 /* ── Primary Button ─────────────────────────────────────────────────────────── */
 .btn {
@@ -167,8 +185,8 @@ a  { color: var(--color-accent); }
   gap: var(--space-md);
   height: var(--top-bar-height);
   padding: 0 var(--space-md);
-  background: var(--color-bg-primary);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-card);
+  border-bottom: 1px solid rgba(194,164,138,0.20);
   flex-shrink: 0;
 }
 .page-header__back {
@@ -186,7 +204,7 @@ a  { color: var(--color-accent); }
   flex-shrink: 0;
   margin-left: -8px;
 }
-.page-header__back:hover { background: rgba(194,164,138,0.12); }
+.page-header__back:hover { background: rgba(255,255,255,0.10); }
 .page-header__title {
   font-size: var(--text-h3);
   font-weight: var(--weight-medium);
@@ -373,8 +391,8 @@ a  { color: var(--color-accent); }
   box-shadow: var(--shadow-card);
 }
 .bubble--peer {
-  background: var(--color-surface-card);
-  color: var(--color-text-primary);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-dark);
   border-radius: 20px 20px 20px 4px;
   align-self: flex-start;
   font-family: var(--font-ui);
@@ -441,13 +459,13 @@ a  { color: var(--color-accent); }
 
 /* ── Info banner ─────────────────────────────────────────────────────────────── */
 .info-banner {
-  background: var(--color-calm-bg);
-  border: 1px solid rgba(143,175,154,0.30);
+  background: rgba(143,175,154,0.18);
+  border: 1px solid rgba(143,175,154,0.40);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   font-size: 14px;
   color: var(--color-text-primary);
   line-height: var(--leading-relaxed);
 }
-.info-banner--warning { background: var(--color-warning-bg); border-color: rgba(217,164,65,0.30); }
-.info-banner--danger  { background: var(--color-danger-bg);  border-color: rgba(179,92,92,0.30); }
+.info-banner--warning { background: rgba(217,164,65,0.18); border-color: rgba(217,164,65,0.40); }
+.info-banner--danger  { background: rgba(179,92,92,0.18);  border-color: rgba(179,92,92,0.40); }

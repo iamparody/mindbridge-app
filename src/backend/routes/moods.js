@@ -1,6 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
+const cache = require('../services/cache');
 
 const router = express.Router();
 
@@ -86,6 +87,7 @@ router.post('/', auth, async (req, res) => {
     bonusCredited = true;
   }
 
+  await cache.del(`analytics:${req.user.id}`);
   return res.status(201).json({ mood_id: moodId, streak_count: newStreak, bonus_credited: bonusCredited });
 });
 
@@ -104,6 +106,10 @@ router.get('/today', auth, async (req, res) => {
 
 // ─── GET /moods/analytics ─────────────────────────────────────────────────────
 router.get('/analytics', auth, async (req, res) => {
+  const cacheKey = `analytics:${req.user.id}`;
+  const cached = await cache.get(cacheKey);
+  if (cached) return res.status(200).json(cached);
+
   const LEVEL_SCORE = { very_low: -2, low: -1, neutral: 0, good: 1, great: 2 };
 
   // 7-day and 30-day entries
@@ -152,13 +158,15 @@ router.get('/analytics', auth, async (req, res) => {
   const { rows: userRows } = await query('SELECT streak_count FROM users WHERE id = $1', [req.user.id]);
   const { rows: totalRows } = await query('SELECT COUNT(*) FROM moods WHERE user_id = $1', [req.user.id]);
 
-  return res.status(200).json({
+  const result = {
     week_trend,
     common_mood,
     frequent_tags,
     current_streak: userRows[0]?.streak_count || 0,
     total_checkins: parseInt(totalRows[0].count),
-  });
+  };
+  await cache.set(cacheKey, result, 300);
+  return res.status(200).json(result);
 });
 
 // ─── GET /moods/history ───────────────────────────────────────────────────────

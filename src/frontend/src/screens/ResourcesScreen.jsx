@@ -3,7 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen } from '@phosphor-icons/react';
 import client from '../api/client';
 
-const CATEGORIES = ['All', 'Anxiety', 'Depression', 'OCD', 'ADHD', 'Grief', 'Loneliness', 'Stress', 'General Wellness', 'Crisis Support'];
+const CATEGORIES = [
+  { label: 'All',             value: '' },
+  { label: 'Anxiety',         value: 'anxiety' },
+  { label: 'Depression',      value: 'depression' },
+  { label: 'OCD',             value: 'ocd' },
+  { label: 'ADHD',            value: 'adhd' },
+  { label: 'Grief',           value: 'grief' },
+  { label: 'Loneliness',      value: 'loneliness' },
+  { label: 'Stress',          value: 'stress' },
+  { label: 'General Wellness',value: 'general_wellness' },
+  { label: 'Crisis Support',  value: 'crisis_support' },
+];
 
 function ResourcesSkeleton() {
   return (
@@ -21,7 +32,7 @@ export default function ResourcesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All');
+  const [category, setCategory] = useState(CATEGORIES[0]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -29,7 +40,7 @@ export default function ResourcesScreen() {
     try {
       const params = {};
       if (search) params.search = search;
-      if (category && category !== 'All') params.category = category;
+      if (category.value) params.category = category.value;
       const { data } = await client.get('/api/resources', { params });
       setArticles(data.articles ?? data ?? []);
     } catch {
@@ -42,7 +53,7 @@ export default function ResourcesScreen() {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">Resources</h2>
@@ -61,14 +72,14 @@ export default function ResourcesScreen() {
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
           {CATEGORIES.map((cat) => (
             <button
-              key={cat}
+              key={cat.value}
               type="button"
               onClick={() => setCategory(cat)}
-              className={`pill${category === cat ? ' pill--active' : ''}`}
+              className={`pill${category.value === cat.value ? ' pill--active' : ''}`}
               style={{ cursor: 'pointer', flexShrink: 0 }}
-              aria-pressed={category === cat}
+              aria-pressed={category.value === cat.value}
             >
-              {cat}
+              {cat.label}
             </button>
           ))}
         </div>
@@ -102,8 +113,8 @@ export default function ResourcesScreen() {
                     </div>
                   )}
                 </div>
-                {a.read_time && (
-                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)', flexShrink: 0, marginTop: 2 }}>{a.read_time} min</div>
+                {a.estimated_read_minutes && (
+                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)', flexShrink: 0, marginTop: 2 }}>{a.estimated_read_minutes} min</div>
                 )}
               </div>
             </div>

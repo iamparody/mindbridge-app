@@ -77,7 +77,7 @@ router.post('/persona', auth, async (req, res) => {
 // ─── GET /onboarding/status ───────────────────────────────────────────────────
 router.get('/status', auth, async (req, res) => {
   const { rows: userRows } = await query(
-    'SELECT consent_version, persona_created, signup_bonus_credited FROM users WHERE id = $1',
+    'SELECT consent_version, persona_created, signup_bonus_credited, welcome_seen FROM users WHERE id = $1',
     [req.user.id]
   );
 
@@ -95,7 +95,17 @@ router.get('/status', auth, async (req, res) => {
     persona: user.persona_created,
     first_mood: moodRows.length > 0,
     signup_bonus: user.signup_bonus_credited,
+    welcome_seen: user.welcome_seen,
   });
+});
+
+// ─── PATCH /onboarding/welcome-seen ──────────────────────────────────────────
+router.patch('/welcome-seen', auth, async (req, res) => {
+  await query(
+    'UPDATE users SET welcome_seen = true, updated_at = NOW() WHERE id = $1',
+    [req.user.id]
+  );
+  return res.status(200).json({ welcome_seen: true });
 });
 
 module.exports = router;

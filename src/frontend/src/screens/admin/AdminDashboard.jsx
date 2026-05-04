@@ -4,11 +4,21 @@ import client from '../../api/client';
 
 const TABS = ['Emergency', 'Escalations', 'Referrals', 'Reports', 'Risk', 'Resources', 'Stats'];
 
+function SectionSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {[1,2,3,4,5].map((i) => (
+        <div key={i} className="skeleton" style={{ height: 56, borderRadius: 'var(--radius-md)' }} />
+      ))}
+    </div>
+  );
+}
+
 function Section({ title, loading, error, children }) {
   return (
     <div style={{ marginBottom: 24 }}>
       <h3 style={{ marginBottom: 12 }}>{title}</h3>
-      {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><div className="spinner" /></div>
+      {loading ? <SectionSkeleton />
         : error ? <div className="error-msg">{error}</div>
         : children}
     </div>
@@ -381,20 +391,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="screen screen--no-nav" style={{ padding: '0 0 16px' }}>
-      <div style={{ background: 'var(--color-text)', padding: '16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 20, cursor: 'pointer' }}>‹</button>
-        <h2 style={{ color: '#fff', fontSize: '1rem' }}>Admin Dashboard</h2>
+      <div style={{ background: 'var(--color-bg-deep)', padding: '16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', color: '#F5EDE4', fontSize: 20, cursor: 'pointer' }}>‹</button>
+        <h2 style={{ color: '#F5EDE4', fontSize: '1rem' }}>Admin Dashboard</h2>
       </div>
 
-      <div style={{ display: 'flex', gap: 0, overflowX: 'auto', borderBottom: '1px solid var(--color-border)', background: 'var(--color-white)' }}>
+      <div style={{ display: 'flex', gap: 0, overflowX: 'auto', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface-card)' }}>
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
               padding: '10px 12px', border: 'none', background: 'none',
-              borderBottom: `2px solid ${tab === t ? 'var(--color-primary)' : 'transparent'}`,
-              color: tab === t ? 'var(--color-primary)' : 'var(--color-text-muted)',
+              borderBottom: `2px solid ${tab === t ? '#C2A48A' : 'transparent'}`,
+              color: tab === t ? '#C2A48A' : 'rgba(245,237,228,0.55)',
               fontWeight: tab === t ? 700 : 400, cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '0.85rem',
             }}
           >

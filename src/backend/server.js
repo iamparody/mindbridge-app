@@ -6,12 +6,18 @@ const { createSignalingServer } = require('./ws/signaling');
 const { runRiskScoreJob } = require('./jobs/riskScoreJob');
 const { runCheckinReminderJob } = require('./jobs/checkinReminderJob');
 const { runDeletionJob } = require('./jobs/deletionJob');
+const { startEmailWorker } = require('./workers/emailWorker');
+const { startNotificationWorker } = require('./workers/notificationWorker');
 
 const PORT = process.env.PORT || 3001;
 
 const server = http.createServer(app);
 
 createSignalingServer(server);
+
+// ─── Queue workers ────────────────────────────────────────────────────────────
+startEmailWorker();
+startNotificationWorker();
 
 // ─── Background jobs ──────────────────────────────────────────────────────────
 // Risk score recalculation — midnight UTC

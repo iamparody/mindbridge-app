@@ -53,7 +53,7 @@ export default function GroupAgreementScreen() {
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
-            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-primary)' }}
+            style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2, accentColor: 'var(--color-accent)' }}
           />
           <span style={{ fontSize: '0.9rem' }}>I agree to the community rules and understand that violations may result in removal</span>
         </label>

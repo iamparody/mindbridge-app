@@ -3,7 +3,11 @@ const Groq = require('groq-sdk');
 const { query } = require('../db');
 const auth = require('../middleware/auth');
 const { classify } = require('../utils/riskClassifier');
-const { sanitize } = require('../utils/sanitizer');
+const { sanitize, stripHtml } = require('../utils/sanitizer');
+const cache = require('../services/cache');
+
+const MAX_INPUT_LEN = 2000;
+const AI_DAILY_TOKEN_LIMIT = 50000;
 
 const router = express.Router();
 
@@ -67,16 +71,18 @@ router.post('/session/start', auth, async (req, res) => {
     return res.status(403).json({ error: 'Complete persona setup before starting AI chat', code: 'PERSONA_REQUIRED' });
   }
 
-  const { rows: personaRows } = await query(
-    'SELECT * FROM ai_personas WHERE user_id = $1',
-    [req.user.id]
-  );
+  let persona = await cache.get(`persona:${req.user.id}`);
+  if (!persona) {
+    const { rows: personaRows } = await query('SELECT * FROM ai_personas WHERE user_id = $1', [req.user.id]);
+    persona = personaRows[0];
+    await cache.set(`persona:${req.user.id}`, persona, 86400);
+  }
+
   const { rows: moodRows } = await query(
     'SELECT mood_level, tags, created_at FROM moods WHERE user_id = $1 ORDER BY created_at DESC LIMIT 3',
     [req.user.id]
   );
 
-  const persona = personaRows[0];
   const systemPrompt = buildSystemPrompt(persona, moodRows, userRows[0].alias);
 
   const { rows: sessionRows } = await query(
@@ -95,6 +101,13 @@ router.post('/session/:id/message', auth, async (req, res) => {
   const { input_text } = req.body;
   if (!input_text || typeof input_text !== 'string' || input_text.trim().length === 0) {
     return res.status(400).json({ error: 'input_text is required', code: 'MISSING_INPUT' });
+  }
+  const cleanInput = stripHtml(input_text);
+  if (cleanInput.length === 0) {
+    return res.status(400).json({ error: 'input_text is required', code: 'MISSING_INPUT' });
+  }
+  if (cleanInput.length > MAX_INPUT_LEN) {
+    return res.status(400).json({ error: `Message must be ${MAX_INPUT_LEN} characters or fewer`, code: 'INPUT_TOO_LONG' });
   }
 
   // Verify session ownership and active status
@@ -123,15 +136,23 @@ router.post('/session/:id/message', auth, async (req, res) => {
   daily.count++;
   dailyCounters.set(userId, daily);
 
+  // ── Daily token limit ─────────────────────────────────────────────────────
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const tokenKey = `ai_tokens:${userId}:${todayISO}`;
+  const tokenCount = (await cache.get(tokenKey)) || 0;
+  if (tokenCount >= AI_DAILY_TOKEN_LIMIT) {
+    return res.status(429).json({ error: 'Daily AI token limit reached', code: 'TOKEN_LIMIT' });
+  }
+
   // ── Risk classification ───────────────────────────────────────────────────
-  const riskResult = classify(input_text);
+  const riskResult = classify(cleanInput);
 
   if (riskResult?.severity === 'critical') {
     // Paused session — do NOT call Groq
     await query(
       `INSERT INTO ai_interactions (user_id, session_id, input_text, output_text, flagged, flag_reason)
        VALUES ($1, $2, $3, '', true, $4)`,
-      [userId, req.params.id, input_text, `${riskResult.category}: ${riskResult.keyword}`]
+      [userId, req.params.id, cleanInput, `${riskResult.category}: ${riskResult.keyword}`]
     );
     await query(
       `INSERT INTO escalation_logs (user_id, session_id, trigger_type, trigger_detail, escalated_to)
@@ -172,11 +193,12 @@ router.post('/session/:id/message', auth, async (req, res) => {
   const messages = [
     { role: 'system', content: systemOverride },
     ...sessionData.messages,
-    { role: 'user', content: input_text },
+    { role: 'user', content: cleanInput },
   ];
 
   // ── Call Groq ─────────────────────────────────────────────────────────────
   let rawOutput = '';
+  let tokensUsed = 0;
   try {
     const completion = await groq.chat.completions.create({
       model: PRIMARY_MODEL,
@@ -184,6 +206,7 @@ router.post('/session/:id/message', auth, async (req, res) => {
       max_tokens: 600,
     });
     rawOutput = completion.choices[0]?.message?.content || '';
+    tokensUsed = completion.usage?.total_tokens || 0;
   } catch (primaryErr) {
     console.warn('Groq primary model failed, trying fallback:', primaryErr.message);
     try {
@@ -193,19 +216,37 @@ router.post('/session/:id/message', auth, async (req, res) => {
         max_tokens: 600,
       });
       rawOutput = completion.choices[0]?.message?.content || '';
+      tokensUsed = completion.usage?.total_tokens || 0;
     } catch (fallbackErr) {
       console.error('Groq fallback model failed:', fallbackErr.message);
       return res.status(503).json({ error: 'AI service temporarily unavailable', code: 'AI_UNAVAILABLE' });
     }
   }
+  if (!tokensUsed) tokensUsed = Math.ceil((cleanInput.length + rawOutput.length) / 4);
 
   // ── Sanitize output ───────────────────────────────────────────────────────
   const responseText = sanitize(rawOutput);
   const flagged = !!riskResult;
   const flagReason = riskResult ? `${riskResult.category}: ${riskResult.keyword}` : null;
 
+  // ── Token tracking ────────────────────────────────────────────────────────
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  await Promise.all([
+    cache.incrby(tokenKey, tokensUsed, Math.floor(midnight.getTime() / 1000)),
+    query(
+      `INSERT INTO ai_usage (user_id, date, token_count, message_count)
+       VALUES ($1, $2, $3, 1)
+       ON CONFLICT (user_id, date) DO UPDATE
+         SET token_count = ai_usage.token_count + EXCLUDED.token_count,
+             message_count = ai_usage.message_count + 1,
+             updated_at = NOW()`,
+      [userId, todayISO, tokensUsed]
+    ),
+  ]);
+
   // Update session cache
-  sessionData.messages.push({ role: 'user', content: input_text });
+  sessionData.messages.push({ role: 'user', content: cleanInput });
   sessionData.messages.push({ role: 'assistant', content: responseText });
   sessionCache.set(req.params.id, sessionData);
 
@@ -217,7 +258,7 @@ router.post('/session/:id/message', auth, async (req, res) => {
   await query(
     `INSERT INTO ai_interactions (user_id, session_id, input_text, output_text, context_snapshot, flagged, flag_reason)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [userId, req.params.id, input_text, responseText, JSON.stringify(contextSnapshot), flagged, flagReason]
+    [userId, req.params.id, cleanInput, responseText, JSON.stringify(contextSnapshot), flagged, flagReason]
   );
 
   // Second high-severity flag in session → bump risk level + admin alert

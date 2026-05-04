@@ -13,8 +13,7 @@ function initFCM() {
   }
 }
 
-// Send a push notification to a single FCM token.
-// title/body are display strings; data is an optional key-value string map.
+// Direct delivery — used by notificationWorker and as fallback.
 async function sendPushNotification(fcm_token, title, body, data = {}) {
   initFCM();
   if (!initialized || !fcm_token) return;
@@ -25,9 +24,23 @@ async function sendPushNotification(fcm_token, title, body, data = {}) {
       data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
     });
   } catch (err) {
-    // Non-fatal — in-app notification still stored in DB
     console.warn('FCM send failed:', err.message);
   }
 }
 
-module.exports = { sendPushNotification };
+// Enqueue for async delivery — falls back to direct send if queue is down.
+async function enqueuePushNotification(fcm_token, title, body, data = {}) {
+  if (!fcm_token) return;
+  const { notificationQueue } = require('../queues');
+  if (notificationQueue) {
+    try {
+      await notificationQueue.add('push', { fcm_token, title, body, data });
+      return;
+    } catch (err) {
+      console.warn('[fcm] Queue unavailable, falling back to direct send:', err.message);
+    }
+  }
+  await sendPushNotification(fcm_token, title, body, data);
+}
+
+module.exports = { sendPushNotification, enqueuePushNotification };

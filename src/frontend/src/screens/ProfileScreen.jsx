@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Coin } from '@phosphor-icons/react';
+import { Coin, SignOut } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const PACKAGES = [
@@ -136,7 +136,7 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+      <div className="screen">
         <div className="page-header">
           <h2 className="page-header__title">Profile</h2>
         </div>
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
   const unreadCount = notifications.filter((n) => !n.read_at).length;
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <h2 className="page-header__title">Profile</h2>
         {unreadCount > 0 && (
@@ -337,7 +337,29 @@ export default function ProfileScreen() {
           )}
         </div>
 
-        <button className="btn btn--muted" onClick={handleLogout}>Sign Out</button>
+        <button
+          className="btn btn--muted"
+          onClick={handleLogout}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--color-danger)' }}
+        >
+          <SignOut size={20} weight="duotone" aria-hidden="true" />
+          Log Out
+        </button>
+
+        {/* Legal footer */}
+        <div style={{ textAlign: 'center', paddingTop: 'var(--space-sm)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+            <Link to="/privacy-policy" style={{ fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms-of-service" style={{ fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none' }}>Terms of Service</Link>
+            <Link to="/data-compliance" style={{ fontSize: 12, color: 'var(--color-text-muted)', textDecoration: 'none' }}>Data Compliance</Link>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+            © 2025 [Your Name]. All rights reserved.
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>
+            MindBridge is not a medical service.
+          </p>
+        </div>
       </div>
     </div>
   );

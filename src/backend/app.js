@@ -7,8 +7,21 @@ const { apiLimiter } = require('./middleware/rateLimit');
 const app = express();
 
 // ─── Security & parsing ───────────────────────────────────────────────────────
-app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || '*', credentials: true }));
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+// CORS — explicit allowlist; no wildcard in production
+const ALLOWED_ORIGINS = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
+  : ['http://localhost:5173', 'http://localhost:4173'];
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (curl, Postman, same-domain) and listed origins
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(null, false);
+  },
+  credentials: true,
+}));
 
 // Raw body needed for Paystack webhook signature verification
 app.use('/api/credits/webhook', express.raw({ type: 'application/json' }));

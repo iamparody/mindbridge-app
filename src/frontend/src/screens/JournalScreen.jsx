@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Notebook } from '@phosphor-icons/react';
+import { Notebook, Microphone, Stop } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const MOODS = [
@@ -75,6 +75,11 @@ export default function JournalScreen() {
   const [formContent, setFormContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const hasSpeech = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const recognizerRef = useRef(null);
+  const baseContentRef = useRef('');
+  const confirmedRef = useRef('');
 
   const load = useCallback(async () => {
     setError('');
@@ -96,6 +101,44 @@ export default function JournalScreen() {
 
   function toggleFormTag(tag) {
     setFormTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
+  }
+
+  function startRecording() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognizer = new SR();
+    recognizer.continuous = false;
+    recognizer.interimResults = true;
+    recognizer.lang = 'en-US';
+    baseContentRef.current = formContent;
+    confirmedRef.current = '';
+
+    recognizer.onresult = (e) => {
+      let interim = '';
+      let finalChunk = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const text = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalChunk += text;
+        else interim += text;
+      }
+      if (finalChunk) confirmedRef.current += finalChunk;
+      const separator = baseContentRef.current && (confirmedRef.current || interim) ? ' ' : '';
+      setFormContent(baseContentRef.current + separator + confirmedRef.current + interim);
+    };
+
+    recognizer.onend = () => {
+      setIsRecording(false);
+      recognizerRef.current = null;
+      const separator = baseContentRef.current && confirmedRef.current ? ' ' : '';
+      setFormContent(baseContentRef.current + separator + confirmedRef.current);
+    };
+
+    recognizerRef.current = recognizer;
+    recognizer.start();
+    setIsRecording(true);
+  }
+
+  function stopRecording() {
+    recognizerRef.current?.stop();
   }
 
   async function handleSave() {
@@ -130,7 +173,7 @@ export default function JournalScreen() {
   }
 
   return (
-    <div className="screen" style={{ padding: '0 0 var(--space-md)' }}>
+    <div className="screen">
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
         <h2 className="page-header__title">Journal</h2>
@@ -193,7 +236,35 @@ export default function JournalScreen() {
             </div>
           </div>
           <div style={{ marginBottom: 'var(--space-md)' }}>
-            <label className="label" htmlFor="content">Write freely…</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <label className="label" htmlFor="content" style={{ marginBottom: 0 }}>Write freely…</label>
+              {hasSpeech && (
+                <button
+                  type="button"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  aria-label="Record voice journal entry"
+                  aria-description="Voice is never stored — transcription text only"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: isRecording ? 'rgba(220,53,69,0.12)' : 'none',
+                    border: `1.5px solid ${isRecording ? 'var(--color-danger)' : 'var(--color-border)'}`,
+                    borderRadius: 'var(--radius-sm)',
+                    color: isRecording ? 'var(--color-danger)' : 'var(--color-text-muted)',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    padding: '4px 10px',
+                    minHeight: 32,
+                    animation: isRecording ? 'micPulse 1.2s ease-in-out infinite' : 'none',
+                  }}
+                >
+                  {isRecording
+                    ? <><Stop size={14} weight="fill" /> Listening…</>
+                    : <><Microphone size={14} weight="bold" /> Voice</>}
+                </button>
+              )}
+            </div>
             <textarea
               id="content"
               className="textarea textarea--journal"

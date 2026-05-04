@@ -92,12 +92,27 @@ export default function GroupChatScreen() {
     }
   }
 
-  if (loading) return <div className="loading-full"><div className="spinner" /></div>;
+  if (loading) return (
+    <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: 'var(--color-surface-card)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+        <div className="skeleton" style={{ width: 48, height: 48, borderRadius: 'var(--radius-sm)' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="skeleton" style={{ width: 120, height: 14, borderRadius: 4 }} />
+          <div className="skeleton" style={{ width: 80, height: 10, borderRadius: 4 }} />
+        </div>
+      </div>
+      <div style={{ flex: 1, padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+        {[60, 45, 70, 50, 65].map((w, i) => (
+          <div key={i} className="skeleton" style={{ height: 40, width: `${w}%`, borderRadius: 'var(--radius-md)', alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end' }} />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="screen screen--no-nav" style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: 'var(--color-white)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', background: 'var(--color-surface-card)', borderBottom: '1px solid rgba(194,164,138,0.20)', flexShrink: 0 }}>
         <button className="page-header__back" onClick={() => navigate(`/groups/${groupId}`)} aria-label="Back">‹</button>
         <div>
           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{group?.name}</div>
@@ -107,9 +122,9 @@ export default function GroupChatScreen() {
 
       {/* Pinned messages */}
       {pinned.length > 0 && (
-        <div style={{ background: '#EBF4FF', borderBottom: '1px solid #C7D8F5', padding: '8px 16px' }}>
+        <div className="info-banner" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none', padding: '8px 16px' }}>
           {pinned.map((p) => (
-            <div key={p.id} style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>
+            <div key={p.id} style={{ fontSize: '0.8rem' }}>
               📌 <strong>{p.alias}</strong>: {p.content}
             </div>
           ))}
@@ -134,13 +149,13 @@ export default function GroupChatScreen() {
             </div>
             <div style={{
               display: 'inline-block',
-              background: msg.is_deleted ? 'var(--color-surface)' : 'var(--color-white)',
+              background: 'var(--color-surface-card)',
               borderRadius: 'var(--radius-sm)',
               padding: '8px 12px',
               boxShadow: 'var(--shadow)',
               fontSize: '0.9rem',
               fontStyle: msg.is_deleted ? 'italic' : 'normal',
-              color: msg.is_deleted ? 'var(--color-text-muted)' : 'var(--color-text)',
+              color: msg.is_deleted ? 'rgba(245,237,228,0.45)' : '#F5EDE4',
               maxWidth: '80%',
             }}>
               {msg.content}
@@ -151,7 +166,7 @@ export default function GroupChatScreen() {
       </div>
 
       {/* Input */}
-      <div style={{ padding: '12px 16px', background: 'var(--color-white)', borderTop: '1px solid var(--color-border)', display: 'flex', gap: 8, flexShrink: 0 }}>
+      <div style={{ padding: '12px 16px', background: 'var(--color-surface-card)', borderTop: '1px solid rgba(194,164,138,0.20)', display: 'flex', gap: 8, flexShrink: 0 }}>
         <input
           type="text"
           className="input"
