@@ -3,6 +3,7 @@
 You are building a mobile-first mental health support platform.
 
 ## Read These First — In Order
+0. `graphify-out/GRAPH_REPORT.md` — full project knowledge graph: all files, routes, schema, endpoints, queues, cache keys, and phase status. Read this before any other file for fast context recovery.
 1. `blueprint/blueprint_v1.0.md` — full specification, all modules, all schema, all APIs
 2. `CHECKLIST.md` — ordered build tasks, mark items as you complete them
 3. `PROGRESS.md` — current status, what is done, what is active, blockers
