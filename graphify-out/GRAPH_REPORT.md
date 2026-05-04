@@ -1,5 +1,6 @@
 # MindBridge Knowledge Graph Report
-Generated: 2026-05-04 | Agent: Claude Code
+Generated: 2026-05-04 | Last updated: 2026-05-04 | Agent: Claude Code
+<!-- Update this file whenever credentials, migrations, or architecture change -->
 
 ---
 
@@ -401,7 +402,7 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 | `db/index.js` | PostgreSQL (pg Pool) | All routes, jobs, middleware/auth |
 | `config/redis.js` | UPSTASH_REDIS_URL env | services/cache.js, queues/index.js, middleware/rateLimit.js |
 | `services/cache.js` | config/redis.js | routes/moods (analytics), routes/ai (persona), routes/credits (balance), routes/groups (list), routes/resources (articles) |
-| `services/emailService.js` | nodemailer, queues/index.js | routes/auth (verification + reset), workers/emailWorker |
+| `services/emailService.js` | Resend SDK (RESEND_API_KEY env), queues/index.js | routes/auth (verification + reset), workers/emailWorker |
 | `utils/riskClassifier.js` | — (pure function) | routes/journals, routes/ai |
 | `utils/sanitizer.js` | — (pure function) | routes/ai |
 | `utils/encryption.js` | ENCRYPTION_KEY env | routes/safetyPlan, routes/referrals, routes/admin |
@@ -438,15 +439,24 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 | Phase 15 | ✅ | Email verification + password reset flow |
 | Phase 16 | ✅ | Performance, security, scale (Redis, RLS, indexes, BullMQ) |
 
-### Pending Actions (Requires External Credentials)
+### Credentials & External Services Status
+| Service | Status | Notes |
+|---|---|---|
+| **Supabase DB** | ✅ Connected | DATABASE_URL + POOLER_URL set; migrations 001–030 all applied |
+| **Groq AI** | ✅ Configured | GROQ_API_KEY set; llama-3.3-70b-versatile primary |
+| **Resend Email** | ✅ Configured | RESEND_API_KEY set; EMAIL_FROM=onboarding@resend.dev (Resend shared sender, no domain verification needed) |
+| **Firebase FCM** | ⚠️ Partial | Service account JSON present at `src/backend/config/` (gitignored); FCM_SERVICE_ACCOUNT_PATH set but FCM_SERVICE_ACCOUNT_JSON env not populated — verify which load path `utils/fcm.js` uses |
+| **Upstash Redis** | ❌ Misconfigured | `.env` has `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` (HTTP REST API) but code uses ioredis which needs TCP: `UPSTASH_REDIS_URL=rediss://default:TOKEN@host.upstash.io:6380` — get this from Upstash dashboard → Connect → ioredis tab |
+| **Paystack** | ❌ Not configured | PAYSTACK_SECRET_KEY still placeholder; needs live account |
+| **TURN Server** | ⚠️ OpenRelay | Using free openrelay.metered.ca — adequate for testing, may drop under load; upgrade for production |
+
+### Remaining Actions
 | Task | Blocker |
 |---|---|
-| Run migrations 026–028 | DATABASE_DIRECT_URL → `npm run migrate` in src/backend/ |
-| Configure UPSTASH_REDIS_URL | Redis instance needed (Upstash free tier works) |
-| Test payment flow | Live Paystack account + webhook URL |
-| Test push notifications | Firebase service account JSON (FCM) |
-| Test email delivery | SMTP credentials (Gmail app password, or SendGrid) |
-| Configure TURN server | Metered.ca or Twilio for production WebRTC |
+| Fix Redis URL | In Upstash dashboard: Connect → ioredis → copy `rediss://` URL → set as `UPSTASH_REDIS_URL` in `.env` |
+| Verify FCM path | Check `utils/fcm.js` — uses `FCM_SERVICE_ACCOUNT_JSON` env or `FCM_SERVICE_ACCOUNT_PATH` file; confirm which and set accordingly |
+| Test payment flow | Paystack live account + public webhook URL (Railway deploy needed) |
+| Configure TURN for production | Metered.ca paid plan or self-hosted coturn on Railway |
 
 ---
 
@@ -454,13 +464,11 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 
 | Issue | Location | Severity | Notes |
 |---|---|---|---|
-| Migrations 026–028 not yet run | src/backend/migrations/ | High | RLS, indexes, ai_usage table not applied to production DB |
-| Redis not configured | UPSTASH_REDIS_URL | Medium | All Redis features gracefully disabled; no caching/queuing until set |
-| FCM push notifications untested | utils/fcm.js | Medium | Requires Firebase service account JSON in .env |
-| Paystack webhook endpoint untestable | routes/credits.js | Medium | Requires live Paystack key and public webhook URL |
-| SMTP email delivery untested | services/emailService.js | Medium | Console fallback active in development; requires SMTP creds |
-| TURN server not configured | ws/signaling.js | Medium | WebRTC voice calls may fail on some networks without TURN |
-| Peer escalation uses setTimeout | routes/peer.js | Low | In-memory timer; lost on server restart; consider BullMQ delayed job in production |
+| Redis URL type mismatch | `.env` / `config/redis.js` | High | `UPSTASH_REDIS_URL` not set — REST vars present but ioredis needs TCP `rediss://` URL; all Redis features (cache, queues, rate limiting) are gracefully disabled until fixed |
+| FCM load path unclear | `utils/fcm.js` | Medium | Firebase JSON file exists at `src/backend/config/` (gitignored); verify fcm.js reads via `FCM_SERVICE_ACCOUNT_PATH` or `FCM_SERVICE_ACCOUNT_JSON` env |
+| Paystack not configured | `routes/credits.js` | Medium | Placeholder keys; purchase + webhook flow untestable |
+| TURN server is free tier | `ws/signaling.js` | Low | openrelay.metered.ca is adequate for testing; upgrade before launch |
+| Peer escalation uses setTimeout | `routes/peer.js` | Low | In-memory timer lost on server restart; consider BullMQ delayed job in production |
 
 ---
 
@@ -468,8 +476,8 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 
 | Category | Count |
 |---|---|
-| Database migrations | 28 SQL files |
-| Database tables | 22 (+ migrations_log + ai_usage) |
+| Database migrations | 30 SQL files (001–030, all applied) |
+| Database tables | 24 (22 app + migrations_log + token_blacklist; all RLS-enabled) |
 | Backend route files | 16 |
 | Backend middleware | 3 |
 | Backend utilities | 9 |
