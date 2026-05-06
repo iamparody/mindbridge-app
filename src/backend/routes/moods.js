@@ -169,6 +169,20 @@ router.get('/analytics', auth, async (req, res) => {
   return res.status(200).json(result);
 });
 
+// ─── GET /moods/arc ───────────────────────────────────────────────────────────
+// All of today's mood entries in chronological order — powers the daily arc view.
+router.get('/arc', auth, async (req, res) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const { rows } = await query(
+    'SELECT id, mood_level, tags, note, created_at FROM moods WHERE user_id = $1 AND created_at >= $2 ORDER BY created_at ASC',
+    [req.user.id, todayStart]
+  );
+
+  return res.status(200).json({ entries: rows });
+});
+
 // ─── GET /moods/history ───────────────────────────────────────────────────────
 router.get('/history', auth, async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);

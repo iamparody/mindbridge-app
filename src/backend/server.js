@@ -5,6 +5,7 @@ const app = require('./app');
 const { createSignalingServer } = require('./ws/signaling');
 const { runRiskScoreJob } = require('./jobs/riskScoreJob');
 const { runCheckinReminderJob } = require('./jobs/checkinReminderJob');
+const { runDailySummaryJob } = require('./jobs/dailySummaryJob');
 const { runDeletionJob } = require('./jobs/deletionJob');
 const { startEmailWorker } = require('./workers/emailWorker');
 const { startNotificationWorker } = require('./workers/notificationWorker');
@@ -25,6 +26,9 @@ cron.schedule('0 0 * * *', () => runRiskScoreJob().catch(console.error));
 
 // Check-in reminder — 17:00 UTC (8pm Nairobi EAT)
 cron.schedule('0 17 * * *', () => runCheckinReminderJob().catch(console.error));
+
+// Daily summary / journal prompt — 18:00 UTC (9pm Nairobi EAT)
+cron.schedule('0 18 * * *', () => runDailySummaryJob().catch(console.error));
 
 // Account deletion processing — every hour
 cron.schedule('0 * * * *', () => runDeletionJob().catch(console.error));

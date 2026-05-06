@@ -292,6 +292,32 @@ router.post('/session/:id/message', auth, async (req, res) => {
   });
 });
 
+// ─── GET /ai/sessions ─────────────────────────────────────────────────────────
+router.get('/sessions', auth, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(20, Math.max(1, parseInt(req.query.limit) || 10));
+  const offset = (page - 1) * limit;
+
+  const { rows } = await query(
+    `SELECT s.id, s.channel, s.status, s.created_at, s.ended_at,
+            (SELECT output_text FROM ai_interactions
+             WHERE session_id = s.id AND output_text IS NOT NULL
+             ORDER BY created_at ASC LIMIT 1) AS preview
+     FROM sessions s
+     WHERE s.user_id = $1 AND s.type = 'ai'
+     ORDER BY s.created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [req.user.id, limit, offset]
+  );
+  const { rows: countRows } = await query(
+    `SELECT COUNT(*) FROM sessions WHERE user_id = $1 AND type = 'ai'`,
+    [req.user.id]
+  );
+  const total = parseInt(countRows[0].count);
+
+  return res.status(200).json({ sessions: rows, total, page, pages: Math.ceil(total / limit) });
+});
+
 // ─── POST /ai/session/:id/end ─────────────────────────────────────────────────
 router.post('/session/:id/end', auth, async (req, res) => {
   const { rows } = await query(

@@ -195,4 +195,27 @@ router.get('/session/:id', auth, async (req, res) => {
   return res.status(200).json({ session, ice_servers: ICE_SERVERS });
 });
 
+// ─── GET /peer/history ────────────────────────────────────────────────────────
+router.get('/history', auth, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(20, Math.max(1, parseInt(req.query.limit) || 10));
+  const offset = (page - 1) * limit;
+
+  const { rows } = await query(
+    `SELECT s.id, s.channel, s.status, s.created_at, s.ended_at
+     FROM sessions s
+     WHERE s.user_id = $1 AND s.type = 'peer'
+     ORDER BY s.created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [req.user.id, limit, offset]
+  );
+  const { rows: countRows } = await query(
+    `SELECT COUNT(*) FROM sessions WHERE user_id = $1 AND type = 'peer'`,
+    [req.user.id]
+  );
+  const total = parseInt(countRows[0].count);
+
+  return res.status(200).json({ sessions: rows, total, page, pages: Math.ceil(total / limit) });
+});
+
 module.exports = router;

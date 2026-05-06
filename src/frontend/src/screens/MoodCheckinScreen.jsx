@@ -22,6 +22,7 @@ export default function MoodCheckinScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showLowPrompt, setShowLowPrompt] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   function toggleTag(tag) {
     setTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
@@ -36,16 +37,36 @@ export default function MoodCheckinScreen() {
       if (mood === 'very_low') {
         setShowLowPrompt(true);
       } else {
-        navigate('/dashboard', { replace: true });
+        setSaved(true);
       }
-    } catch (err) {
-      const status = err.response?.status;
-      setError(status === 409
-        ? 'You already checked in today. See you tomorrow!'
-        : 'Something went wrong saving your mood. Please try again.');
+    } catch {
+      setError('Something went wrong saving your mood. Please try again.');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (saved) {
+    return (
+      <div className="screen" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 'var(--space-xl) var(--space-lg)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
+          <div style={{ fontSize: 48, marginBottom: 'var(--space-md)' }}>✓</div>
+          <h1 style={{ fontSize: 'var(--text-h2)', marginBottom: 'var(--space-sm)' }}>Mood saved</h1>
+          <p style={{ color: 'var(--color-text-muted)' }}>You can log another whenever you need to.</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+          <button className="btn btn--primary" onClick={() => { setMood(null); setNote(''); setTags([]); setSaved(false); }}>
+            Log another
+          </button>
+          <button className="btn btn--ghost" onClick={() => navigate('/journal')}>
+            Write about it
+          </button>
+          <button className="btn btn--muted" onClick={() => navigate('/dashboard')}>
+            Back to home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (showLowPrompt) {
@@ -76,7 +97,7 @@ export default function MoodCheckinScreen() {
     <div className="screen">
       <div className="page-header">
         <button className="page-header__back" onClick={() => navigate(-1)} aria-label="Back">‹</button>
-        <h2 className="page-header__title">Daily Check-In</h2>
+        <h2 className="page-header__title">How Are You Feeling?</h2>
       </div>
 
       <div style={{ padding: 'var(--space-sm) var(--space-md)', display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>

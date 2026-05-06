@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChartLine } from '@phosphor-icons/react';
+import { ChartLine, ClockCounterClockwise } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const SCORE_COLORS = [
@@ -64,17 +64,67 @@ function BarChart({ data }) {
   );
 }
 
+const MOOD_SCORE = { very_low: 1, low: 2, neutral: 3, good: 4, great: 5 };
+
+function TodayArc({ entries }) {
+  if (!entries?.length) return null;
+
+  return (
+    <div className="card">
+      <h3 style={{ marginBottom: 'var(--space-md)', fontSize: 16 }}>Today's arc</h3>
+      {entries.length === 1 ? (
+        <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
+          Log more moods throughout the day to see your arc.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 56 }}>
+          {entries.map((e, i) => {
+            const score = MOOD_SCORE[e.mood_level] ?? 3;
+            const height = (score / 5) * 56;
+            const meta = MOOD_META[e.mood_level];
+            return (
+              <div key={e.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <div
+                  title={meta?.label}
+                  style={{
+                    width: '100%', height: Math.max(6, height),
+                    background: meta?.color ?? 'var(--color-accent)',
+                    borderRadius: '3px 3px 0 0',
+                    transition: 'height 300ms ease',
+                  }}
+                />
+                <div style={{ fontSize: 9, color: 'var(--color-text-muted)', textAlign: 'center', lineHeight: 1 }}>
+                  {new Date(e.created_at.includes('Z') ? e.created_at : e.created_at + 'Z')
+                    .toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--color-text-muted)' }}>
+        <span>😔 Very Low</span><span>😊 Great</span>
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsScreen() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [arc, setArc] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function load() {
       try {
-        const { data: res } = await client.get('/api/moods/analytics');
-        setData(res);
+        const [analyticsRes, arcRes] = await Promise.all([
+          client.get('/api/moods/analytics'),
+          client.get('/api/moods/arc'),
+        ]);
+        setData(analyticsRes.data);
+        setArc(arcRes.data.entries ?? []);
       } catch {
         setError('We couldn\'t connect. Check your internet and try again.');
       } finally {
@@ -107,6 +157,8 @@ export default function AnalyticsScreen() {
           </div>
         ) : (
           <>
+            {arc.length > 0 && <TodayArc entries={arc} />}
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
               {[
                 { label: 'Current Streak', value: `${data.current_streak ?? 0}🔥` },
@@ -151,6 +203,17 @@ export default function AnalyticsScreen() {
                 </div>
               </div>
             )}
+            <button
+              className="card"
+              onClick={() => navigate('/sessions')}
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', width: '100%', textAlign: 'left', cursor: 'pointer', border: 'none' }}
+            >
+              <ClockCounterClockwise size={28} weight="duotone" color="var(--color-accent)" aria-hidden="true" />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary)' }}>Session history</div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 2 }}>Review past AI and peer sessions</div>
+              </div>
+            </button>
           </>
         )}
       </div>

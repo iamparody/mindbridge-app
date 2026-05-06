@@ -45,6 +45,7 @@ import ResourcesScreen from './screens/ResourcesScreen';
 import ArticleScreen from './screens/ArticleScreen';
 import BreathingScreen from './screens/BreathingScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
+import SessionHistoryScreen from './screens/SessionHistoryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import AdminDashboard from './screens/admin/AdminDashboard';
 
@@ -178,6 +179,7 @@ function Layout() {
         <Route path="/sounds"      element={<ProtectedRoute><CalmingSoundsScreen /></ProtectedRoute>} />
         <Route path="/breathing"   element={<BreathingScreen />} />
         <Route path="/analytics"   element={<ProtectedRoute><AnalyticsScreen /></ProtectedRoute>} />
+        <Route path="/sessions"    element={<ProtectedRoute><SessionHistoryScreen /></ProtectedRoute>} />
         <Route path="/profile"     element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
 
         {/* Peer support */}
