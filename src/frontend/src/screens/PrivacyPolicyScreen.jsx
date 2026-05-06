@@ -119,7 +119,7 @@ export default function PrivacyPolicyScreen({ embedded = false }) {
         </SECTION>
 
         <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid rgba(245,237,228,0.10)', textAlign: 'center', fontSize: 12, color: 'rgba(245,237,228,0.35)' }}>
-          <div>© 2025 [Your Name]. All rights reserved.</div>
+          <div>© 2025 MindBridge. All rights reserved.</div>
           <div style={{ marginTop: 4 }}>MindBridge is not a medical service.</div>
         </div>
       </div>
