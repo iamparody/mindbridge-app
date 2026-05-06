@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -71,9 +71,18 @@ function VerificationBanner() {
   const { user } = useAuth();
   const { pathname } = useLocation();
   const [resendStatus, setResendStatus] = useState('idle'); // idle | sending | sent
+  const [dismissed, setDismissed] = useState(false);
+
+  // Reappear when any API call returns 403 (unverified gate hit)
+  useEffect(() => {
+    function handleVerificationRequired() { setDismissed(false); }
+    window.addEventListener('verification-required', handleVerificationRequired);
+    return () => window.removeEventListener('verification-required', handleVerificationRequired);
+  }, []);
 
   if (!user || user.email_verified) return null;
   if (BANNER_HIDE_ON.some((p) => pathname.startsWith(p))) return null;
+  if (dismissed) return null;
 
   async function handleResend() {
     if (resendStatus !== 'idle') return;
@@ -106,6 +115,18 @@ function VerificationBanner() {
         }}
       >
         {resendStatus === 'sending' ? 'Sending…' : resendStatus === 'sent' ? 'Sent!' : 'Resend email'}
+      </button>
+      <button
+        onClick={() => setDismissed(true)}
+        aria-label="Dismiss"
+        style={{
+          position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+          background: 'none', border: 'none', color: '#fff',
+          fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: '4px 6px',
+          opacity: 0.8,
+        }}
+      >
+        ×
       </button>
     </div>
   );

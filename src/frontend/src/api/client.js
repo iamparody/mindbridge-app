@@ -20,6 +20,9 @@ client.interceptors.response.use(
       localStorage.removeItem('mb_user');
       window.location.href = '/login';
     }
+    if (err.response?.status === 403) {
+      window.dispatchEvent(new Event('verification-required'));
+    }
     return Promise.reject(err);
   }
 );
