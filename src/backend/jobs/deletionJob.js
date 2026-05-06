@@ -60,11 +60,6 @@ async function runDeletionJob() {
     // Step 10: Delete the user
     await query('DELETE FROM users WHERE id = $1', [id]);
 
-    console.log(`[deletionJob] Purged user ${id}`);
-  }
-
-  if (users.length > 0) {
-    console.log(`[deletionJob] Processed ${users.length} deletions`);
   }
 }
 

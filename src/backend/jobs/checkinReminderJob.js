@@ -27,7 +27,6 @@ async function runCheckinReminderJob() {
     );
   }
 
-  console.log(`[checkinReminderJob] Sent reminders to ${users.length} users`);
 }
 
 module.exports = { runCheckinReminderJob };

@@ -8,6 +8,57 @@
 ## Current Task
 Backend is live and fully functional locally. Next: deploy to Railway (set production env vars, run seeds, test payment webhook).
 
+---
+
+### Codebase Cleanup — 2026-05-06
+
+**STEP 1 — DEPENDENCY AUDIT**
+| Package | Side | Verdict |
+|---|---|---|
+| `express-validator` | backend | Removed — installed but never imported anywhere |
+| `recharts` | frontend | Removed — installed but never imported; AnalyticsScreen uses plain CSS bars |
+| `@types/react` | frontend devDeps | Removed — TS type defs unused in a JSX-only project |
+| `@types/react-dom` | frontend devDeps | Removed — same reason |
+
+**STEP 2 — DEAD CODE (console.log)**
+Removed 7 console.log calls from production paths:
+- `workers/emailWorker.js` — "[emailWorker] Started"
+- `workers/notificationWorker.js` — "[notificationWorker] Started"
+- `jobs/checkinReminderJob.js` — reminders count
+- `jobs/deletionJob.js` — "Purged user [id]" (also a PII trace) + batch count
+- `jobs/riskScoreJob.js` — processed count
+- `server.js` — debug Resend/EMAIL_FROM diagnostics (keep: main port log)
+Retained: NODE_ENV=development-gated logs in emailService.js and db/index.js
+
+**STEP 3 — ROUTE AUDIT**
+All 16 route files have corresponding frontend callers. No orphaned endpoints found.
+`POST /api/auth/logout` — called from ProfileScreen logout button ✓
+
+**STEP 4 — FRONTEND COMPONENT AUDIT**
+All screen files have routes in App.jsx. No orphaned components. No unused CSS keyframes found.
+
+**STEP 5 — ENV VAR AUDIT**
+- `JWT_REFRESH_SECRET` — in .env.example but unused in code (no refresh token flow). Commented out with note.
+- `FCM_SERVICE_ACCOUNT_PATH` — added to .env locally but unused; code reads `FCM_SERVICE_ACCOUNT_JSON` only. Not added to .env.example. For Railway: set FCM_SERVICE_ACCOUNT_JSON as a single-line JSON string.
+- All other vars in .env.example confirmed used in source.
+
+**STEP 6 — SECURITY**
+- No hardcoded secrets in source files ✓
+- No .env files tracked by git (only .env.example) ✓
+- Firebase service account JSON file not tracked ✓
+- No TODO/FIXME security comments in source ✓
+
+**STEP 7 — MIGRATION AUDIT**
+- Migrations 001–030: sequential, no gaps ✓
+- `token_blacklist` table: created in 023_auth_recovery.sql, RLS added in 030 ✓
+- All tables referenced in source code have corresponding migrations ✓
+
+**Files modified:** server.js, workers/emailWorker.js, workers/notificationWorker.js, jobs/checkinReminderJob.js, jobs/deletionJob.js, jobs/riskScoreJob.js, src/backend/package.json, src/frontend/package.json, src/backend/.env.example
+**Packages removed:** express-validator (backend), recharts + @types/react + @types/react-dom (frontend)
+**console.log removed:** 7
+**Security flags:** 0 found
+**Orphaned components:** 0
+
 ### Bug fixes applied — 2026-05-06
 
 **BUG 1 — 10s registration lag + email not sending**

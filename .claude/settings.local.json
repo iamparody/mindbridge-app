@@ -32,7 +32,11 @@
       "Bash(curl *)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'Total articles: {len\\(d[\\\\\"articles\\\\\"]\\)}'\\)\")",
       "Bash(grep -rn \"query\\\\`\\\\|+ req\\\\.\\\\|+ user\\\\.\\\\|string.*concat.*req\\\\|'\\\\s*+\\\\s*req\\\\.\" --include=\"*.js\" src/backend/routes/ src/backend/jobs/)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)"
     ]
   }
 }

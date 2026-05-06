@@ -52,7 +52,6 @@ async function runRiskScoreJob() {
     }
   }
 
-  console.log(`[riskScoreJob] Processed ${users.length} users`);
 }
 
 module.exports = { runRiskScoreJob };

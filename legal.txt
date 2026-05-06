@@ -18,8 +18,10 @@ Resend supports SMTP — your .env values will be:
 SMTP_HOST=smtp.resend.com
 SMTP_PORT=465
 SMTP_USER=resend
-SMTP_PASS=re_your_api_key_here
-EMAIL_FROM=noreply@yourdomain.comDo that in parallel while the agent works on the next phase. Without it emails only log to console — fine for development, not for launch.
+SMTP_PASS=
+EMAIL_FROM=noreply@yourdomain.com 
+
+Do that in parallel while the agent works on the next phase. Without it emails only log to console — fine for development, not for launch.
 
 
 Resume this session with:

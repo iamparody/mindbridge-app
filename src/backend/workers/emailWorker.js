@@ -24,7 +24,6 @@ function startEmailWorker() {
     console.error(`[emailWorker] Job ${job?.id} failed (attempt ${job?.attemptsMade}):`, err.message);
   });
 
-  console.log('[emailWorker] Started');
   return worker;
 }
 

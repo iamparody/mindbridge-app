@@ -18,7 +18,6 @@ function startNotificationWorker() {
     console.error(`[notificationWorker] Job ${job?.id} failed (attempt ${job?.attemptsMade}):`, err.message);
   });
 
-  console.log('[notificationWorker] Started');
   return worker;
 }
 
