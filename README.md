@@ -55,7 +55,7 @@ Legal pages are accessible in-app at `/privacy-policy`, `/terms-of-service`, and
 
 ## Copyright
 
-© 2025 [Your Name]. All rights reserved.
+© 2025 Antony Kiriinya. All rights reserved.
 
 Unauthorized copying, modification, distribution, or use of this software, in whole or in part, without the express written permission of the copyright holder is strictly prohibited.
 
