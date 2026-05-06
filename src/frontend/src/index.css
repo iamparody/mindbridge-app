@@ -77,6 +77,14 @@ a  { color: var(--color-text-secondary); }
 }
 .btn--danger:hover:not(:disabled) { background: #C46666; }
 
+.btn--secondary {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-border);
+  height: 48px;
+}
+.btn--secondary:hover:not(:disabled) { background: rgba(194,164,138,0.08); }
+
 .btn--ghost {
   background: transparent;
   color: var(--color-text-primary);

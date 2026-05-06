@@ -31,6 +31,8 @@ cron.schedule('0 * * * *', () => runDeletionJob().catch(console.error));
 
 server.listen(PORT, () => {
   console.log(`MindBridge backend listening on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
+  console.log('Resend configured:', !!process.env.RESEND_API_KEY);
+  console.log('EMAIL_FROM:', process.env.EMAIL_FROM || '(not set — emails will be rejected)');
 });
 
 process.on('unhandledRejection', (reason) => {

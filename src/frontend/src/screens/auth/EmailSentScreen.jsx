@@ -46,35 +46,41 @@ export default function EmailSentScreen() {
         alignItems: 'center', textAlign: 'center',
         padding: 'var(--space-xl) var(--space-lg)', minHeight: '100dvh',
         background: 'var(--color-bg-deep)',
+        color: '#F5EDE4',
       }}
     >
       {/* Envelope */}
       <svg
         width="64" height="64" viewBox="0 0 256 256"
-        style={{ marginBottom: 'var(--space-lg)', color: 'var(--color-accent)' }}
+        style={{ marginBottom: 'var(--space-lg)', color: 'rgba(245,237,228,0.70)' }}
         aria-hidden="true"
       >
         <rect width="200" height="152" x="28" y="52" rx="8" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16" />
         <path d="M28 76l100 72 100-72" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16" />
       </svg>
 
-      <h1 style={{ fontSize: 'var(--text-h1)', marginBottom: 'var(--space-sm)' }}>Check your email</h1>
+      <h1 style={{ fontSize: 'var(--text-h1)', marginBottom: 'var(--space-sm)', color: '#F5EDE4' }}>Check your email</h1>
 
       <p style={{
-        fontSize: 'var(--text-body)', color: 'var(--color-text-muted)',
+        fontSize: 'var(--text-body)', color: 'rgba(245,237,228,0.65)',
         marginBottom: 'var(--space-2xl)', maxWidth: 300, lineHeight: 1.6,
       }}>
-        We sent a link to{' '}
+        We sent a verification link to{' '}
         {email
-          ? <strong style={{ color: 'var(--color-text-primary)' }}>{email}</strong>
+          ? <strong style={{ color: '#F5EDE4' }}>{email}</strong>
           : 'your email address'
         }.
         {' '}Click it to activate your account.
       </p>
 
       <button
-        className="btn btn--secondary"
-        style={{ width: 'auto', padding: '0 var(--space-xl)', marginBottom: 'var(--space-sm)' }}
+        className="btn"
+        style={{
+          width: 'auto', padding: '0 var(--space-xl)', marginBottom: 'var(--space-sm)',
+          background: 'transparent',
+          border: '1.5px solid rgba(245,237,228,0.30)',
+          color: '#F5EDE4',
+        }}
         onClick={handleResend}
         disabled={cooldown > 0 || resendStatus === 'sending'}
       >
@@ -85,14 +91,14 @@ export default function EmailSentScreen() {
       </button>
 
       {resendStatus === 'error' && (
-        <p style={{ color: 'var(--color-error)', fontSize: 13, marginBottom: 'var(--space-md)' }}>
+        <p style={{ color: 'var(--color-danger)', fontSize: 13, marginBottom: 'var(--space-md)' }}>
           Something went wrong. Please try again.
         </p>
       )}
 
       <Link
         to="/emergency-public"
-        style={{ fontSize: 13, color: 'var(--color-text-muted)', textDecoration: 'none', marginTop: 'var(--space-lg)' }}
+        style={{ fontSize: 13, color: 'rgba(245,237,228,0.50)', textDecoration: 'none', marginTop: 'var(--space-lg)' }}
       >
         Need help right now?
       </Link>

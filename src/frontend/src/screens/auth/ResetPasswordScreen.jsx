@@ -59,11 +59,11 @@ export default function ResetPasswordScreen() {
       <div className="screen screen--no-nav" style={{
         display: 'flex', flexDirection: 'column', justifyContent: 'center',
         alignItems: 'center', textAlign: 'center', padding: 'var(--space-xl)',
-        minHeight: '100dvh', background: 'var(--color-bg-deep)',
+        minHeight: '100dvh', background: 'var(--color-bg-deep)', color: '#F5EDE4',
       }}>
         <div style={{
           width: 72, height: 72, borderRadius: '50%',
-          background: 'var(--color-success, #4CAF50)',
+          background: 'var(--color-calm)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           marginBottom: 'var(--space-lg)',
         }}>
@@ -72,9 +72,9 @@ export default function ResetPasswordScreen() {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h1 style={{ marginBottom: 'var(--space-sm)' }}>Password updated.</h1>
-        <p style={{ color: 'var(--color-text-muted)' }}>Please log in with your new password.</p>
-        <p style={{ marginTop: 'var(--space-sm)', fontSize: 13, color: 'var(--color-text-muted)' }}>
+        <h1 style={{ marginBottom: 'var(--space-sm)', color: '#F5EDE4' }}>Password updated.</h1>
+        <p style={{ color: 'rgba(245,237,228,0.65)' }}>Please log in with your new password.</p>
+        <p style={{ marginTop: 'var(--space-sm)', fontSize: 13, color: 'rgba(245,237,228,0.50)' }}>
           Redirecting to login…
         </p>
       </div>

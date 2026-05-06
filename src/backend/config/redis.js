@@ -20,25 +20,35 @@ function getRestClient() {
 // Uses rediss:// port 6380 — may be blocked on some local networks.
 // Falls back gracefully: queues become null → jobs delivered synchronously.
 // family:4 forces IPv4 to avoid Node v24 AggregateError from dual-stack probes.
-// retryStrategy gives up after 3 attempts so blocked local networks stop logging.
+// retryStrategy gives up after 1 attempt so blocked networks log once and stop.
+// On local dev with port 6380 blocked: comment out UPSTASH_REDIS_URL in .env —
+// this sets queue client to null, all email/push goes direct, zero TCP noise.
 function createQueueClient() {
   if (!process.env.UPSTASH_REDIS_URL) return null;
+  let _warned = false;
   try {
     const conn = new IoRedis(process.env.UPSTASH_REDIS_URL, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
+      enableOfflineQueue: false,
       lazyConnect: true,
+      connectTimeout: 4000,
       family: 4,
       retryStrategy: (times) => {
-        if (times >= 3) {
-          console.warn('[redis:queue] TCP unavailable after 3 attempts — BullMQ falling back to sync delivery');
+        if (times >= 1) {
+          if (!_warned) {
+            _warned = true;
+            console.warn('[redis:queue] TCP port 6380 unreachable — BullMQ disabled, using direct delivery');
+          }
           return null;
         }
-        return Math.min(times * 500, 2000);
+        return 1000;
       },
     });
     conn.on('error', (err) => {
-      console.warn('[redis:queue] TCP error (BullMQ fallback to sync):', err.code || err.message);
+      // ETIMEDOUT/ECONNREFUSED are expected when port 6380 is blocked — log once via retryStrategy
+      if (err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED' || err.message === 'Connection is closed.') return;
+      console.warn('[redis:queue] TCP error:', err.code || err.message);
     });
     return conn;
   } catch (err) {

@@ -24,48 +24,52 @@ function hashToken(token) {
 
 // ─── POST /auth/register ──────────────────────────────────────────────────────
 router.post('/register', authLimiter, async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !EMAIL_RE.test(email)) {
-    return res.status(400).json({ error: 'Valid email is required', code: 'INVALID_EMAIL' });
-  }
-  if (!password || password.length < 8) {
-    return res.status(400).json({ error: 'Password must be at least 8 characters', code: 'INVALID_PASSWORD' });
-  }
-
-  const emailLower = email.toLowerCase().trim();
-
-  const { rows: existing } = await query('SELECT 1 FROM users WHERE email = $1', [emailLower]);
-  if (existing.length > 0) {
-    return res.status(409).json({ error: 'Email already registered', code: 'EMAIL_TAKEN' });
-  }
-
-  const password_hash = await bcrypt.hash(password, 12);
-  const alias = await generateAlias();
-
-  const verifyToken = crypto.randomBytes(32).toString('hex');
-  const verifyHash = hashToken(verifyToken);
-
-  const { rows } = await query(
-    `INSERT INTO users (alias, email, password_hash, role, email_verify_token_hash, email_verify_expires)
-     VALUES ($1, $2, $3, 'member', $4, NOW() + INTERVAL '24 hours')
-     RETURNING id, alias, role`,
-    [alias, emailLower, password_hash, verifyHash]
-  );
-  const user = rows[0];
-
-  await query('INSERT INTO credits (user_id, balance) VALUES ($1, 0)', [user.id]);
-
-  // Non-blocking — registration succeeds even if email send fails
   try {
-    await sendVerificationEmail(emailLower, alias, verifyToken);
+    const { email, password } = req.body;
+
+    if (!email || !EMAIL_RE.test(email)) {
+      return res.status(400).json({ error: 'Valid email is required', code: 'INVALID_EMAIL' });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters', code: 'INVALID_PASSWORD' });
+    }
+
+    const emailLower = email.toLowerCase().trim();
+
+    const { rows: existing } = await query('SELECT 1 FROM users WHERE email = $1', [emailLower]);
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Email already registered', code: 'EMAIL_TAKEN' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 12);
+    const alias = await generateAlias();
+
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verifyHash = hashToken(verifyToken);
+
+    const { rows } = await query(
+      `INSERT INTO users (alias, email, password_hash, role, email_verify_token_hash, email_verify_expires)
+       VALUES ($1, $2, $3, 'member', $4, NOW() + INTERVAL '24 hours')
+       RETURNING id, alias, role`,
+      [alias, emailLower, password_hash, verifyHash]
+    );
+    const user = rows[0];
+
+    await query('INSERT INTO credits (user_id, balance) VALUES ($1, 0)', [user.id]);
+
+    // Fire-and-forget — enqueueEmail returns immediately; email delivers in background
+    sendVerificationEmail(emailLower, alias, verifyToken);
+
+    const token = generateAccessToken(user);
+
+    return res.status(201).json({ token, alias: user.alias, userId: user.id, email_verified: false });
   } catch (err) {
-    console.error('Verification email failed:', err.message);
+    console.error('Registration error:', err);
+    if (process.env.NODE_ENV === 'development') {
+      return res.status(500).json({ error: err.message, stack: err.stack });
+    }
+    return res.status(500).json({ error: 'Registration failed', code: 'REGISTRATION_ERROR' });
   }
-
-  const token = generateAccessToken(user);
-
-  return res.status(201).json({ token, alias: user.alias, userId: user.id, email_verified: false });
 });
 
 // ─── GET /auth/verify-email?token= ───────────────────────────────────────────
@@ -182,6 +186,19 @@ router.post('/login', loginCooldownMiddleware, async (req, res) => {
     await query('UPDATE users SET fcm_token = $1 WHERE id = $2', [req.body.fcm_token, user.id]);
   }
 
+  // Send a fresh verification email if account is unverified — user is about to be redirected
+  // to /email-sent so the email should actually arrive in their inbox.
+  if (!user.email_verified) {
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verifyHash = hashToken(verifyToken);
+    await query(
+      `UPDATE users SET email_verify_token_hash = $1, email_verify_expires = NOW() + INTERVAL '24 hours'
+       WHERE id = $2`,
+      [verifyHash, user.id]
+    );
+    sendVerificationEmail(email.toLowerCase().trim(), user.alias, verifyToken);
+  }
+
   const token = generateAccessToken({ id: user.id, alias: user.alias, role: user.role });
 
   return res.status(200).json({
@@ -222,7 +239,7 @@ router.post('/recover', authLimiter, async (req, res) => {
     const resetHash = hashToken(resetToken);
 
     await query(
-      `UPDATE users SET reset_token_hash = $1, reset_token_expires = NOW() + INTERVAL '15 minutes'
+      `UPDATE users SET reset_token_hash = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
        WHERE id = $2`,
       [resetHash, userId]
     );

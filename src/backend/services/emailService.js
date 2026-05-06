@@ -81,18 +81,27 @@ async function deliverEmail(to, subject, html) {
   });
 }
 
-// Enqueue for async delivery — falls back to direct send if queue is down.
-async function enqueueEmail(to, subject, html) {
+// Enqueue for async delivery — fire-and-forget. Returns immediately; email sends in background.
+function enqueueEmail(to, subject, html) {
   const { emailQueue } = require('../queues');
-  if (emailQueue) {
-    try {
-      await emailQueue.add('send', { to, subject, html });
-      return;
-    } catch (err) {
-      console.warn('[email] Queue unavailable, falling back to direct send:', err.message);
+
+  (async () => {
+    if (emailQueue) {
+      try {
+        await Promise.race([
+          emailQueue.add('send', { to, subject, html }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('queue timeout after 2s')), 2000)
+          ),
+        ]);
+        return;
+      } catch (err) {
+        console.warn('[email] Queue unavailable, falling back to direct send:', err.message);
+      }
     }
-  }
-  await deliverEmail(to, subject, html);
+    await deliverEmail(to, subject, html);
+  })().catch(err => console.error('[email] Delivery failed:', err.message));
+  // Caller returns immediately — no await needed
 }
 
 async function sendVerificationEmail(email, alias, token) {

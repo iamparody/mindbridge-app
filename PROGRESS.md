@@ -8,6 +8,20 @@
 ## Current Task
 Backend is live and fully functional locally. Next: deploy to Railway (set production env vars, run seeds, test payment webhook).
 
+### Bug fixes applied — 2026-05-06
+
+**BUG 1 — 10s registration lag + email not sending**
+
+Root cause: `enqueueEmail()` was `async` and `await`-ed `emailQueue.add()`. BullMQ uses `maxRetriesPerRequest: null` on the ioredis TCP connection — on networks where port 6380 is blocked, the first `.add()` call blocks until all 3 TCP retries time out (~3–10s) before throwing. The try/catch in the auth route caught the error but only after the full timeout had elapsed, making registration take 10s before returning.
+
+Fix (`services/emailService.js`): `enqueueEmail` is now a regular (non-async) function. It spawns an internal async IIFE and returns immediately. The IIFE uses `Promise.race([queue.add(...), timeout(2000)])` — queue gets 2s max; if it misses, direct Resend delivery is used instead. All callers return in <1ms.
+
+**BUG 2 — "Something went wrong" 500 on registration**
+
+Root cause: `POST /auth/register` had no top-level try/catch. Any unexpected throw (DB error, alias collision, etc.) in Express 4 propagates as an unhandled rejection with no response sent — the frontend times out and shows its generic error message.
+
+Fix (`routes/auth.js`): Entire handler body wrapped in try/catch. On error: `console.error('Registration error:', err)` + dev mode returns `{ error: err.message, stack }` so the exact cause is visible in the terminal.
+
 ---
 
 ## Completed
@@ -528,3 +542,4 @@ to their support system — a direct safety risk.
 | 2026-05-04 | 7 | RLS fix: 026 bug (token_blacklist not in migrations) fixed; migrations 029 + 030 applied — all 24 tables fully RLS-enabled with deny-anon policies |
 | 2026-05-04 | 8 | Email: nodemailer → Resend SDK; SMTP vars removed; lazy client init; RESEND_API_KEY + EMAIL_FROM configured |
 | 2026-05-04 | 9 | Redis: cache + rate limiting switched to @upstash/redis REST client (HTTPS 443, works locally); BullMQ keeps ioredis TCP with family:4 + retryStrategy(3) to suppress Node v24 AggregateError flood on blocked networks; server starts clean, cache round-trip verified |
+| 2026-05-06 | 10 | Bug fixes: enqueueEmail made fire-and-forget (2s race timeout on queue.add); registration handler wrapped in try/catch with dev error logging; startup diagnostics for RESEND_API_KEY + EMAIL_FROM |
