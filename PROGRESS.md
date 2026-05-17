@@ -3,10 +3,12 @@
 ---
 
 ## Current Phase
-**Phase 17 — New Feature Pass — PENDING**
+**Phase 18 — Standalone Admin Panel — COMPLETE**
 
 ## Current Task
-Phase 17 complete (17.1–17.7). All new feature items shipped.
+Phase 18 complete. Standalone admin panel built at src/admin/, /admin removed from user app.
+
+**Deployment needed:** src/admin/ must be deployed separately to admin.mindbridge.app (Railway or Netlify). Set VITE_API_URL to the backend Railway URL.
 
 **Migrations applied:** 031, 032, 033, 034 — all live in Supabase.
 

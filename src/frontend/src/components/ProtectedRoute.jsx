@@ -11,8 +11,8 @@ const ONBOARDING_STEPS = [
   { key: 'first_mood',         path: '/onboarding/first-mood' },
 ];
 
-export default function ProtectedRoute({ children, adminOnly = false }) {
-  const { user, token, loading } = useAuth();
+export default function ProtectedRoute({ children }) {
+  const { token, loading } = useAuth();
   const location = useLocation();
   const [onboardingCheck, setOnboardingCheck] = useState({ done: false, redirect: null });
 
@@ -39,7 +39,6 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
   if (loading) return <div className="loading-full"><div className="spinner" /></div>;
   if (!token) return <Navigate to="/login" state={{ from: location }} replace />;
   if (!onboardingCheck.done) return <div className="loading-full"><div className="spinner" /></div>;
-  if (adminOnly && user?.role !== 'admin') return <Navigate to="/dashboard" replace />;
   if (onboardingCheck.redirect) return <Navigate to={onboardingCheck.redirect} replace />;
 
   return children;

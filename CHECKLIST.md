@@ -760,3 +760,73 @@ b/index.js — pg Pool with DATABASE_URL, exported query function
 - [x] Add Sentry SDK to frontend (vite plugin) and backend (node SDK) — DSN from SENTRY_DSN env var; capture unhandled exceptions + promise rejections
 - [x] Add basic event tracking: session_start, peer_request_created, peer_session_completed, ai_session_completed (fire-and-forget POST to a /analytics/event endpoint that INSERTs to an events table)
 - [x] Migration for events table (user_id nullable, event_name, properties JSONB, created_at)
+
+---
+
+## Phase 18 — Standalone Admin Panel (src/admin/)
+
+**Architecture decision:** Admin panel is a completely separate React app from the user PWA.
+- User app:    app.mindbridge.app  (src/frontend/)
+- Admin panel: admin.mindbridge.app (src/admin/)  ← new
+- Backend API: shared (same Railway deployment)
+- Database:    shared (same Supabase instance)
+- All /admin/* API endpoints already exist — this phase is frontend only.
+- Once complete: remove /admin route from src/frontend/
+
+### 18.1 App Shell + Auth Guard ✅
+- [x] Scaffold src/admin/ as a standalone Vite + React project (not PWA)
+- [x] Admin-specific login screen: POST /api/auth/login → reject if role !== 'admin'
+- [x] Store admin JWT separately (adminToken in localStorage, key: mb_admin_token)
+- [x] Sidebar navigation: 7 tabs (Emergency, Escalations, Referrals, Reports, Risk, Resources, Stats)
+- [x] Top bar: "MindBridge Admin" + admin alias + logout button
+- [x] Auth guard: redirect unauthenticated to login; 401/403 interceptor clears token + reloads
+
+### 18.2 Emergency Queue (Tab 1 — highest priority) ✅
+- [x] GET /api/admin/emergency-queue — live list sorted by triggered_at ASC
+- [x] Show: alias, trigger_type, time elapsed since triggered_at, status badge
+- [x] Acknowledge button → PATCH /api/admin/emergency/:id/acknowledge
+- [x] Resolve button → PATCH /api/admin/emergency/:id/resolve
+- [x] In-app message composer → POST /api/admin/users/:alias/message
+- [x] Auto-refresh every 30 seconds; count badge on sidebar tab
+
+### 18.3 Group Reports (Tab 4) ✅
+- [x] GET /api/admin/reports — pending reports
+- [x] Show: group name, reported alias, reporter alias, reason, message preview, timestamp
+- [x] Actions: Dismiss / Warn / Ban → PATCH /api/admin/reports/:id/action
+- [x] Warn/Ban show a notes input before confirming
+
+### 18.4 Referral Inbox (Tab 3) ✅
+- [x] GET /api/admin/referrals — with status filter (pending/in_review/arranged/escalated)
+- [x] Show: alias, struggles, preferred_time, contact_method, created_at, current status
+- [x] Update status + add notes → PATCH /api/admin/referrals/:id
+- [x] Message user → POST /api/admin/users/:alias/message
+
+### 18.5 Peer Escalations (Tab 2) ✅
+- [x] GET /api/admin/escalations — PeerRequests with status = escalated
+- [x] Show: alias, channel_preference, escalated_at, time elapsed
+- [x] Message user action → POST /api/admin/users/:alias/message
+
+### 18.6 Risk Flags (Tab 5) ✅
+- [x] GET /api/admin/risk-flags — users with risk_level high or critical
+- [x] Show: alias, risk_level (colour-coded badge), updated_at
+- [x] Message user action → POST /api/admin/users/:alias/message
+
+### 18.7 Content Management (Tab 6) ✅
+- [x] GET /api/admin/resources — all articles (all statuses)
+- [x] Status filter: published / draft / archived
+- [x] Create article form → POST /api/admin/resources
+- [x] Edit article → PATCH /api/admin/resources/:id
+- [x] Publish → PATCH /api/admin/resources/:id/publish
+- [x] Archive → PATCH /api/admin/resources/:id/archive
+
+### 18.8 System Stats (Tab 7) ✅
+- [x] GET /api/admin/stats — anonymized aggregate counts
+- [x] Show: DAU, check-ins today, peer sessions today, AI sessions today, credits purchased today
+- [x] GET /api/admin/feedback — avg ratings by type + recent comments
+- [x] Static display, no actions
+
+### 18.9 Cleanup ✅
+- [x] Remove /admin route from src/frontend/src/App.jsx
+- [x] Remove AdminDashboard import from user app
+- [x] Remove adminOnly prop from ProtectedRoute (no longer needed)
+- [x] src/backend/routes/admin.js and adminAuth middleware unchanged

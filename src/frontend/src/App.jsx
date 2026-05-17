@@ -48,7 +48,6 @@ import BreathingScreen from './screens/BreathingScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
 import SessionHistoryScreen from './screens/SessionHistoryScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import AdminDashboard from './screens/admin/AdminDashboard';
 
 // Peer
 import PeerRequestScreen from './screens/peer/PeerRequestScreen';
@@ -191,7 +190,6 @@ function Layout() {
         <Route path="/peer/session/:id/voice" element={<ProtectedRoute><PeerVoiceCallScreen /></ProtectedRoute>} />
 
         {/* Admin */}
-        <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
 
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/welcome" replace />} />
