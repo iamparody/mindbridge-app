@@ -158,6 +158,10 @@ router.get('/:id/messages', auth, async (req, res) => {
 
 // ─── POST /groups/:id/messages ────────────────────────────────────────────────
 router.post('/:id/messages', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Only admins can post in groups', code: 'ADMIN_ONLY' });
+  }
+
   if (!(await getActiveMembership(req.params.id, req.user.id))) {
     return res.status(403).json({ error: 'Not a member of this group', code: 'NOT_MEMBER' });
   }

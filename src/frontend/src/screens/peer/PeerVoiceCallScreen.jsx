@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import client from '../../api/client';
+import { trackEvent } from '../../utils/analytics';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
 const VOICE_CREDIT_INTERVAL = 5 * 60 * 1000; // 1 credit per 5 min
@@ -41,6 +42,7 @@ export default function PeerVoiceCallScreen() {
     if (reqId) {
       try { await client.patch(`/api/peer/request/${reqId}/close`); } catch { /* best-effort */ }
     }
+    trackEvent('peer_session_completed', { channel: 'voice' });
     navigate('/peer', { replace: true });
   }, [navigate]);
 

@@ -3,10 +3,68 @@
 ---
 
 ## Current Phase
-**Phase 16 — Performance, Security & Scale — COMPLETE**
+**Phase 17 — New Feature Pass — PENDING**
 
 ## Current Task
-Backend is live and fully functional locally. Next: deploy to Railway (set production env vars, run seeds, test payment webhook).
+Phase 17 complete (17.1–17.7). All new feature items shipped.
+
+**Migrations applied:** 031, 032, 033, 034 — all live in Supabase.
+
+---
+
+### Phase 17 — Feature Triage — 2026-05-15
+
+**Already done (removed from new_checks.md list):**
+- API key audit, rate limiting, privacy/ToS pages, consent screen, data deletion — all done
+- Group chat, historical messages, group notifications, pre-created groups, join flow — all done
+- Calming sounds, articles library, check-in reminders — all done
+- Admin dashboard + all alert types — done
+- AI guardrails, crisis keyword detection, safety tests — all passed (Phase 12)
+- Peer broadcast/accept/room UI/report mechanism — all done
+
+**New code → Phase 17 CHECKLIST.md (17.1–17.6):**
+- 17.1 Peer waiting: 5-min hotline auto-surface + "Talk to AI" fallback + offline hotline page + admin as secondary
+- 17.2 Peer incentive: credits for acceptors + stats endpoint + leaderboard tab
+- 17.3 Onboarding: condition selection step → auto-join matching group
+- 17.4 Peer volunteer quiz gate
+- 17.5 Group profile/icon UI
+- 17.6 Sentry crash reporting + basic event analytics
+
+**Decision made:**
+- Groups are admin-broadcast only (members read, cannot post). Rationale: open posting removes the incentive to use peer request. Added as 17.7 in CHECKLIST.md.
+
+**User-action items (no code needed):**
+- Rotate Groq API key (security hygiene)
+- Load test 30,000 concurrent (external tooling)
+- App store submission + Google Play health app registration
+- Internal beta test (20 users)
+- Test on low-end Android/3G
+
+---
+
+### Landing Site Work — 2026-05-14
+
+Created a standalone `landing-site/` Vite React project for the MindBridge competition entry.
+
+Scope:
+- Isolated from the main app source tree
+- Uses MindBridge brand name
+- No CTA, founder details, signup form, or old mockup screenshots
+- Competition-facing single-page landing page
+- Custom animated product visuals, scroll reveals, count-up stats, FAQ motion, ambient hero animation
+- Vercel-ready config added
+- `LANDING_CHECKLIST.md` added inside the landing project
+
+Verification:
+- `npm install` completed with 0 vulnerabilities
+- `npm run build` passed
+- Desktop browser preview completed
+- Mobile visual viewport check still pending because the browser test surface did not expose viewport resizing in this session
+
+Copy refinement:
+- Removed public-facing stack details from the Kenya/Africa readiness section
+- Removed `M-Pesa ready`, `Low-cost infrastructure`, and `Africa health-tech entry` from the landing page surface
+- Reworded the scale/readiness language around privacy, affordability, familiar access, and non-paywalled distress support
 
 ---
 

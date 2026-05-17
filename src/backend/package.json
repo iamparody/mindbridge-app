@@ -12,6 +12,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@sentry/node": "^10.53.1",
     "@upstash/redis": "^1.37.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.76.5",

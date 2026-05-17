@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
 import './index.css';
 import App from './App.jsx';
+import { initSentry } from './services/sentry';
+
+initSentry();
 
 // Register FCM on first authenticated load
 if ('Notification' in window && 'serviceWorker' in navigator) {

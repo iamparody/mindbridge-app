@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UsersThree } from '@phosphor-icons/react';
 import client from '../api/client';
+import { groupMeta } from '../utils/groupMeta';
 
 function GroupsSkeleton() {
   return (
@@ -31,7 +32,7 @@ export default function GroupsScreen() {
         const { data } = await client.get('/api/groups');
         setGroups(data.groups ?? data ?? []);
       } catch {
-        setError('We couldn\'t connect. Check your internet and try again.');
+        setError("We couldn't connect. Check your internet and try again.");
       } finally {
         setLoading(false);
       }
@@ -68,29 +69,40 @@ export default function GroupsScreen() {
             <div className="empty-state__body">Join a group to connect with others who understand.</div>
           </div>
         ) : (
-          groups.map((g) => (
-            <div
-              key={g.id}
-              className="card card--interactive"
-              style={{ marginBottom: 'var(--space-sm)' }}
-              onClick={() => navigate(`/groups/${g.id}`)}
-            >
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--space-sm)' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 4 }}>
-                    <h3 style={{ fontSize: 16 }}>{g.name}</h3>
-                    {g.is_member && <span className="pill pill--active" style={{ fontSize: 10, padding: '2px 8px' }}>Joined</span>}
+          groups.map((g) => {
+            const meta = groupMeta(g.condition_category);
+            return (
+              <div
+                key={g.id}
+                className="card card--interactive"
+                style={{ marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 14 }}
+                onClick={() => navigate(`/groups/${g.id}`)}
+              >
+                {/* Category icon */}
+                <div style={{
+                  width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                  background: meta.bg,
+                  border: `1.5px solid ${meta.color}44`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22,
+                }}>
+                  {meta.emoji}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <h3 style={{ fontSize: 15, lineHeight: 1.2 }}>{g.name}</h3>
+                    {g.is_member && <span className="pill pill--active" style={{ fontSize: 10, padding: '2px 7px' }}>Joined</span>}
                   </div>
-                  {g.category && <span className="pill" style={{ fontSize: 10, marginBottom: 6, display: 'inline-block' }}>{g.category}</span>}
-                  {g.description && <p style={{ fontSize: 13, lineHeight: 1.5, marginTop: 4 }}>{g.description}</p>}
+                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                    {meta.label} · {g.member_count ?? 0} {Number(g.member_count) === 1 ? 'member' : 'members'}
+                  </div>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--color-text-primary)' }}>{g.member_count ?? 0}</div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>members</div>
-                </div>
+
+                <span style={{ color: 'var(--color-text-muted)', fontSize: 18, flexShrink: 0 }}>›</span>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

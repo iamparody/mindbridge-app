@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import client from '../api/client';
+import { trackEvent } from '../utils/analytics';
 
 const AuthContext = createContext(null);
 
@@ -15,6 +16,7 @@ export function AuthProvider({ children }) {
       try {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+        trackEvent('session_start');
       } catch {
         localStorage.removeItem('mb_token');
         localStorage.removeItem('mb_user');
@@ -28,6 +30,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('mb_user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
+    trackEvent('session_start');
   }
 
   function logout() {

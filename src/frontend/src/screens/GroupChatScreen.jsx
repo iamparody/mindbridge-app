@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import client from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 const REPORT_REASONS = [
   { value: 'harmful_content', label: 'Harmful content' },
@@ -12,6 +13,8 @@ const REPORT_REASONS = [
 export default function GroupChatScreen() {
   const { id: groupId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [group, setGroup] = useState(null);
   const [pinned, setPinned] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -165,20 +168,26 @@ export default function GroupChatScreen() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div style={{ padding: '12px 16px', background: 'var(--color-surface-card)', borderTop: '1px solid rgba(194,164,138,0.20)', display: 'flex', gap: 8, flexShrink: 0 }}>
-        <input
-          type="text"
-          className="input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Message group…"
-          disabled={sending}
-          style={{ flex: 1 }}
-        />
-        <button onClick={handleSend} disabled={!input.trim() || sending} className="btn btn--primary" style={{ width: 'auto', padding: '0 16px', flexShrink: 0 }}>➤</button>
-      </div>
+      {/* Input — admin only */}
+      {isAdmin ? (
+        <div style={{ padding: '12px 16px', background: 'var(--color-surface-card)', borderTop: '1px solid rgba(194,164,138,0.20)', display: 'flex', gap: 8, flexShrink: 0 }}>
+          <input
+            type="text"
+            className="input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Broadcast to group…"
+            disabled={sending}
+            style={{ flex: 1 }}
+          />
+          <button onClick={handleSend} disabled={!input.trim() || sending} className="btn btn--primary" style={{ width: 'auto', padding: '0 16px', flexShrink: 0 }}>➤</button>
+        </div>
+      ) : (
+        <div style={{ padding: '14px 16px', background: 'var(--color-surface-card)', borderTop: '1px solid rgba(194,164,138,0.20)', textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)', flexShrink: 0 }}>
+          Only admins can post here · Use <strong>Peer Support</strong> to connect with others
+        </div>
+      )}
 
       {/* Report sheet */}
       {reportTarget && (

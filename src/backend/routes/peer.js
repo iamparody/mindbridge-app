@@ -3,6 +3,7 @@ const { query } = require('../db');
 const auth = require('../middleware/auth');
 const { escalatePeerRequest } = require('../jobs/peerEscalation');
 const { ICE_SERVERS } = require('../ws/signaling');
+const cache = require('../services/cache');
 
 const router = express.Router();
 
@@ -81,8 +82,26 @@ router.get('/requests/open', auth, async (req, res) => {
   return res.status(200).json({ requests: rows });
 });
 
+// ─── GET /peer/quiz/status ────────────────────────────────────────────────────
+router.get('/quiz/status', auth, async (req, res) => {
+  const { rows } = await query('SELECT peer_quiz_done FROM users WHERE id = $1', [req.user.id]);
+  return res.status(200).json({ peer_quiz_done: rows[0]?.peer_quiz_done ?? false });
+});
+
+// ─── POST /peer/quiz/complete ─────────────────────────────────────────────────
+router.post('/quiz/complete', auth, async (req, res) => {
+  await query('UPDATE users SET peer_quiz_done = true, updated_at = NOW() WHERE id = $1', [req.user.id]);
+  return res.status(200).json({ peer_quiz_done: true });
+});
+
 // ─── PATCH /peer/request/:id/accept ──────────────────────────────────────────
 router.patch('/request/:id/accept', auth, async (req, res) => {
+  // Quiz gate — must complete readiness check before first accept
+  const { rows: quizRows } = await query('SELECT peer_quiz_done FROM users WHERE id = $1', [req.user.id]);
+  if (!quizRows[0]?.peer_quiz_done) {
+    return res.status(403).json({ error: 'Complete the peer readiness check first', code: 'QUIZ_REQUIRED' });
+  }
+
   // Atomic lock — only succeeds if status is still 'open'
   const { rows: locked, rowCount } = await query(
     `UPDATE peer_requests
@@ -175,6 +194,26 @@ router.patch('/request/:id/close', auth, async (req, res) => {
     [req.params.id]
   );
 
+  // Award 1 credit to the peer who accepted the session
+  if (responderId) {
+    await query(
+      'UPDATE credits SET balance = balance + 1, updated_at = NOW() WHERE user_id = $1',
+      [responderId]
+    );
+    await query(
+      `INSERT INTO credit_transactions
+         (user_id, type, amount_credits, payment_method, session_id, channel, status)
+       VALUES ($1, 'bonus', 1, 'bonus', $2, 'purchase', 'confirmed')`,
+      [responderId, session_id]
+    );
+    await cache.del(`credits:${responderId}`);
+    await query(
+      `INSERT INTO notifications (user_id, type, payload, channel)
+       VALUES ($1, 'milestone', $2, 'in_app')`,
+      [responderId, JSON.stringify({ message: 'You earned 1 credit for completing a peer session.' })]
+    );
+  }
+
   return res.status(200).json({ ended_at: sessionRows[0]?.ended_at });
 });
 
@@ -216,6 +255,56 @@ router.get('/history', auth, async (req, res) => {
   const total = parseInt(countRows[0].count);
 
   return res.status(200).json({ sessions: rows, total, page, pages: Math.ceil(total / limit) });
+});
+
+// ─── GET /peer/stats ─────────────────────────────────────────────────────────
+router.get('/stats', auth, async (req, res) => {
+  const { rows: completedRows } = await query(
+    `SELECT COUNT(*) AS sessions_completed
+     FROM peer_requests WHERE accepted_by = $1 AND status = 'closed'`,
+    [req.user.id]
+  );
+  const sessionsCompleted = parseInt(completedRows[0].sessions_completed);
+
+  // Credits earned specifically from peer sessions (session_id IS NOT NULL excludes signup bonus)
+  const { rows: creditRows } = await query(
+    `SELECT COALESCE(SUM(amount_credits), 0) AS credits_earned
+     FROM credit_transactions
+     WHERE user_id = $1 AND type = 'bonus' AND session_id IS NOT NULL`,
+    [req.user.id]
+  );
+
+  // Rank: how many other peers have more completed sessions + 1
+  const { rows: rankRows } = await query(
+    `SELECT COUNT(*) + 1 AS rank
+     FROM (
+       SELECT accepted_by, COUNT(*) AS cnt
+       FROM peer_requests WHERE status = 'closed' AND accepted_by IS NOT NULL
+       GROUP BY accepted_by
+     ) sub
+     WHERE sub.cnt > $1`,
+    [sessionsCompleted]
+  );
+
+  return res.status(200).json({
+    sessions_completed: sessionsCompleted,
+    credits_earned: parseInt(creditRows[0].credits_earned),
+    rank: parseInt(rankRows[0].rank),
+  });
+});
+
+// ─── GET /peer/leaderboard ────────────────────────────────────────────────────
+router.get('/leaderboard', auth, async (req, res) => {
+  const { rows } = await query(
+    `SELECT u.alias, COUNT(pr.id) AS sessions_completed
+     FROM peer_requests pr
+     JOIN users u ON u.id = pr.accepted_by
+     WHERE pr.status = 'closed' AND pr.accepted_by IS NOT NULL
+     GROUP BY u.alias
+     ORDER BY sessions_completed DESC
+     LIMIT 10`
+  );
+  return res.status(200).json({ leaderboard: rows });
 });
 
 module.exports = router;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import client from '../../api/client';
+import { trackEvent } from '../../utils/analytics';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
 const TEXT_CREDIT_INTERVAL = 15 * 60 * 1000; // 1 credit per 15 min
@@ -38,6 +39,7 @@ export default function PeerTextChatScreen() {
     if (reqId) {
       try { await client.patch(`/api/peer/request/${reqId}/close`); } catch { /* best-effort */ }
     }
+    trackEvent('peer_session_completed', { channel: 'text' });
     navigate('/peer', { replace: true });
   }, [navigate]);
 

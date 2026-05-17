@@ -723,3 +723,40 @@ b/index.js — pg Pool with DATABASE_URL, exported query function
 - [x] Consent version locked at '1.0' as CURRENT_CONSENT_VERSION constant in onboarding.js
 - [x] Railway deployment: Dockerfile written, railway.json configured, GET /health endpoint verified
 - [x] Final smoke test: register → consent → persona → first mood (bonus_credited:true) → AI normal message (response_text) → AI emergency trigger (action:emergency) → onboarding status all true — **PASS**
+
+---
+
+## Phase 17 — New Feature Pass (from new_checks.md)
+
+### 17.1 Crisis / Peer Waiting Upgrades
+- [x] PeerWaitingScreen: after 5 min no peer match, show Befrienders (0800 723 253) + Niskize (0900 620 800) prominently + "Talk to AI while you wait" button that starts an AI session
+- [x] Offline fallback: service worker caches a `/offline` page showing both hotline numbers (no API call required)
+- [x] Decouple crisis escalation from admin-primary: system shows resources + AI fallback autonomously; admin receives notification as secondary (not gatekeeper)
+
+### 17.2 Peer Incentive System
+- [x] On PATCH /peer/request/:id/close: award 1 credit to the acceptor (accepted_by) — INSERT credit_transaction (type=bonus, source=peer_session)
+- [x] Add peer stats endpoint GET /peer/stats — sessions_completed, credits_earned, rank
+- [x] Add peer leaderboard tab to peer section (top 10 by sessions_completed, alias only)
+
+### 17.3 Onboarding — Condition Selection
+- [x] Add condition selection step after persona: single-select from 8 group categories; POST /onboarding/condition → UPDATE users SET condition_category; auto-join matching group (INSERT group_memberships)
+- [x] Migration for users.condition_category column (032_users_condition_category.sql)
+- [x] Add onboarding/status response field: condition_selected
+
+### 17.4 Peer Volunteer Quiz Gate
+- [x] Before a user can accept their first peer request, show a 3-question readiness quiz (answers stored, not scored as pass/fail — just commitment acknowledgment); mark users.peer_quiz_done=true
+- [x] Migration for users.peer_quiz_done boolean (033_peer_quiz_done.sql)
+
+### 17.5 Group Profile & Icon
+- [x] GroupDetailScreen: add group icon (emoji or colour swatch per category) + member count display + short description card at top
+- [x] No backend change needed — member_count already returned by GET /groups/:id
+
+### 17.7 Groups — Admin-Only Posting ✅
+- [x] Backend: POST /groups/:id/messages — return 403 if req.user.role !== 'admin'
+- [x] Frontend GroupChatScreen: hide message input entirely for non-admin users; show "Only admins can post here" label
+- [x] This preserves peer request as the only peer-to-peer channel (groups = admin broadcast only)
+
+### 17.6 Observability ✅
+- [x] Add Sentry SDK to frontend (vite plugin) and backend (node SDK) — DSN from SENTRY_DSN env var; capture unhandled exceptions + promise rejections
+- [x] Add basic event tracking: session_start, peer_request_created, peer_session_completed, ai_session_completed (fire-and-forget POST to a /analytics/event endpoint that INSERTs to an events table)
+- [x] Migration for events table (user_id nullable, event_name, properties JSONB, created_at)

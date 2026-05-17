@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PaperPlaneRight, Robot } from '@phosphor-icons/react';
 import client from '../api/client';
+import { trackEvent } from '../utils/analytics';
 
 function AIChatSkeleton() {
   return (
@@ -85,6 +86,7 @@ export default function AIChatScreen() {
     try {
       await client.post(`/api/ai/session/${sessionId}/end`, { rating: rating || undefined, feedback: feedback.trim() || undefined });
     } catch { /* non-fatal */ }
+    trackEvent('ai_session_completed');
     navigate('/dashboard', { replace: true });
   }
 

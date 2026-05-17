@@ -3,6 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const { apiLimiter } = require('./middleware/rateLimit');
+const { Sentry } = require('./services/sentry');
 
 const app = express();
 
@@ -50,6 +51,12 @@ app.use('/api/feedback',      require('./routes/feedback'));
 app.use('/api/resources',     require('./routes/resources'));
 app.use('/api/referrals',     require('./routes/referrals'));
 app.use('/api/profile',       require('./routes/profile'));
+app.use('/api/analytics',     require('./routes/analytics'));
+
+// ─── Sentry error handler (must be before custom error handler) ───────────────
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.expressErrorHandler());
+}
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars

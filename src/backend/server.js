@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { initSentry } = require('./services/sentry');
+initSentry(); // must be before any other require that might throw
 const http = require('http');
 const cron = require('node-cron');
 const app = require('./app');

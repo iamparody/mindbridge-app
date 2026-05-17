@@ -54,24 +54,26 @@ export default function EmergencyScreen() {
           You're not alone
         </h1>
 
-        {/* Crisis line — always first, always visible */}
+        {/* Crisis lines — always first, always visible, no interaction required */}
         <a
           href="tel:0800723253"
-          style={{
-            display: 'block',
-            fontSize: 28,
-            fontWeight: 600,
-            color: 'var(--color-accent)',
-            textDecoration: 'none',
-            marginBottom: 'var(--space-xs)',
-            fontFamily: 'var(--font-ui)',
-          }}
+          style={{ display: 'block', fontSize: 26, fontWeight: 600, color: 'var(--color-accent)', textDecoration: 'none', marginBottom: 2, fontFamily: 'var(--font-ui)' }}
           aria-label="Call Befrienders Kenya: 0800 723 253"
         >
           0800 723 253
         </a>
+        <p style={{ fontSize: 'var(--text-caption)', color: 'rgba(245,237,228,0.60)', marginBottom: 'var(--space-sm)' }}>
+          Befrienders Kenya · Free · 24/7
+        </p>
+        <a
+          href="tel:0900620800"
+          style={{ display: 'block', fontSize: 26, fontWeight: 600, color: 'var(--color-accent)', textDecoration: 'none', marginBottom: 2, fontFamily: 'var(--font-ui)' }}
+          aria-label="Call Niskize: 0900 620 800"
+        >
+          0900 620 800
+        </a>
         <p style={{ fontSize: 'var(--text-caption)', color: 'rgba(245,237,228,0.60)' }}>
-          Befrienders Kenya · Free · 24/7 · Confidential
+          Niskize · Free · 24/7
         </p>
       </div>
 
@@ -94,10 +96,16 @@ export default function EmergencyScreen() {
             }}
           >
             <CheckCircle size={20} weight="duotone" aria-hidden="true" />
-            <span>Help is coming. An admin has been alerted.</span>
+            <span>We've logged your request. Here's immediate support:</span>
           </div>
 
-          <button className="btn btn--primary" onClick={() => navigate('/breathing')}>
+          <button className="btn btn--primary" onClick={() => navigate('/ai-chat')}>
+            Talk to AI right now
+          </button>
+
+          <button className="btn btn--primary" onClick={() => navigate('/breathing')}
+            style={{ background: 'rgba(143,175,154,0.20)', borderColor: 'rgba(143,175,154,0.30)', color: 'var(--color-calm)' }}
+          >
             <Wind size={20} weight="duotone" aria-hidden="true" />
             Try a breathing exercise
           </button>
@@ -128,7 +136,7 @@ export default function EmergencyScreen() {
             style={{ fontSize: 'var(--text-body)' }}
           >
             <Siren size={20} weight="duotone" aria-hidden="true" />
-            {loading ? 'Alerting…' : 'I need to talk to someone now'}
+            {loading ? 'Connecting…' : 'I need support right now'}
           </button>
 
           <button

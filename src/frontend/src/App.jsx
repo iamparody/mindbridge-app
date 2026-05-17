@@ -17,6 +17,7 @@ import ResetPasswordScreen from './screens/auth/ResetPasswordScreen';
 // Onboarding
 import ConsentScreen from './screens/onboarding/ConsentScreen';
 import PersonaScreen from './screens/onboarding/PersonaScreen';
+import ConditionScreen from './screens/onboarding/ConditionScreen';
 import FirstMoodScreen from './screens/onboarding/FirstMoodScreen';
 
 // Welcome
@@ -57,7 +58,7 @@ import PeerVoiceCallScreen from './screens/peer/PeerVoiceCallScreen';
 
 const HIDE_NAV_ON = [
   '/login', '/register', '/recover', '/email-sent', '/verify-email', '/reset-password',
-  '/onboarding', '/welcome', '/ai-chat', '/peer/session',
+  '/onboarding', '/welcome', '/ai-chat', '/peer/session', '/peer/waiting',
   '/emergency', '/emergency-public',
   '/privacy-policy', '/terms-of-service', '/data-compliance',
 ];
@@ -157,6 +158,7 @@ function Layout() {
         {/* Onboarding */}
         <Route path="/onboarding/consent"    element={<ProtectedRoute><ConsentScreen /></ProtectedRoute>} />
         <Route path="/onboarding/persona"    element={<ProtectedRoute><PersonaScreen /></ProtectedRoute>} />
+        <Route path="/onboarding/condition"  element={<ProtectedRoute><ConditionScreen /></ProtectedRoute>} />
         <Route path="/onboarding/first-mood" element={<ProtectedRoute><FirstMoodScreen /></ProtectedRoute>} />
 
         {/* Welcome */}

@@ -110,7 +110,7 @@ export default function PersonaScreen() {
         uses_alias: usesAlias,
       });
       setShowConfirmation(true);
-      setTimeout(() => navigate('/onboarding/first-mood', { replace: true }), 2500);
+      setTimeout(() => navigate('/onboarding/condition', { replace: true }), 2500);
     } catch (err) {
       const status = err.response?.status;
       setError(status === 403

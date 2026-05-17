@@ -5,9 +5,10 @@ import client from '../api/client';
 
 // Onboarding step order — redirects to first incomplete step
 const ONBOARDING_STEPS = [
-  { key: 'consent',    path: '/onboarding/consent' },
-  { key: 'persona',    path: '/onboarding/persona' },
-  { key: 'first_mood', path: '/onboarding/first-mood' },
+  { key: 'consent',            path: '/onboarding/consent' },
+  { key: 'persona',            path: '/onboarding/persona' },
+  { key: 'condition_selected', path: '/onboarding/condition' },
+  { key: 'first_mood',         path: '/onboarding/first-mood' },
 ];
 
 export default function ProtectedRoute({ children, adminOnly = false }) {
@@ -25,9 +26,10 @@ export default function ProtectedRoute({ children, adminOnly = false }) {
     }
     client.get('/api/onboarding/status')
       .then(({ data }) => {
-        const { consent, persona, first_mood } = data;
+        const { consent, persona, condition_selected, first_mood } = data;
         if (!consent) return setOnboardingCheck({ done: true, redirect: '/onboarding/consent' });
         if (!persona) return setOnboardingCheck({ done: true, redirect: '/onboarding/persona' });
+        if (!condition_selected) return setOnboardingCheck({ done: true, redirect: '/onboarding/condition' });
         if (!first_mood) return setOnboardingCheck({ done: true, redirect: '/onboarding/first-mood' });
         setOnboardingCheck({ done: true, redirect: null });
       })

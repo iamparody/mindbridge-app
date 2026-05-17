@@ -7,6 +7,7 @@ const router = express.Router();
 const VALID_TONES = ['warm', 'motivational', 'clinical', 'casual'];
 const VALID_STYLES = ['brief', 'elaborate'];
 const VALID_FORMALITY = ['formal', 'neutral', 'informal'];
+const VALID_CONDITIONS = ['anxiety', 'depression', 'ocd', 'adhd', 'grief', 'loneliness', 'stress', 'general_support'];
 
 const CURRENT_CONSENT_VERSION = '1.0';
 
@@ -74,10 +75,46 @@ router.post('/persona', auth, async (req, res) => {
   return res.status(201).json({ persona_id: personaRows[0].id });
 });
 
+// ─── POST /onboarding/condition ──────────────────────────────────────────────
+router.post('/condition', auth, async (req, res) => {
+  const { condition_category } = req.body;
+
+  if (!VALID_CONDITIONS.includes(condition_category)) {
+    return res.status(400).json({
+      error: `condition_category must be one of: ${VALID_CONDITIONS.join(', ')}`,
+      code: 'INVALID_CONDITION',
+    });
+  }
+
+  await query(
+    'UPDATE users SET condition_category = $1, updated_at = NOW() WHERE id = $2',
+    [condition_category, req.user.id]
+  );
+
+  // Auto-join the matching group
+  const { rows: groupRows } = await query(
+    'SELECT id FROM groups WHERE condition_category = $1 AND is_active = true LIMIT 1',
+    [condition_category]
+  );
+
+  let group_id = null;
+  if (groupRows.length) {
+    group_id = groupRows[0].id;
+    await query(
+      `INSERT INTO group_memberships (group_id, user_id, status, agreed_at)
+       VALUES ($1, $2, 'active', NOW())
+       ON CONFLICT (group_id, user_id) DO UPDATE SET status = 'active', agreed_at = NOW()`,
+      [group_id, req.user.id]
+    );
+  }
+
+  return res.status(200).json({ condition_category, group_id });
+});
+
 // ─── GET /onboarding/status ───────────────────────────────────────────────────
 router.get('/status', auth, async (req, res) => {
   const { rows: userRows } = await query(
-    'SELECT consent_version, persona_created, signup_bonus_credited, welcome_seen FROM users WHERE id = $1',
+    'SELECT consent_version, persona_created, signup_bonus_credited, welcome_seen, condition_category FROM users WHERE id = $1',
     [req.user.id]
   );
 
@@ -93,6 +130,7 @@ router.get('/status', auth, async (req, res) => {
   return res.status(200).json({
     consent: Boolean(user.consent_version),
     persona: user.persona_created,
+    condition_selected: Boolean(user.condition_category),
     first_mood: moodRows.length > 0,
     signup_bonus: user.signup_bonus_credited,
     welcome_seen: user.welcome_seen,
