@@ -6,18 +6,17 @@ const STATUSES   = ['', 'published', 'draft', 'archived'];
 
 export default function ContentTab() {
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
-  const [filter, setFilter]     = useState('');
-  const [editing, setEditing]   = useState(null);
-  const [creating, setCreating] = useState(false);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState('');
+  const [filter,   setFilter]   = useState('');
+  const [panel,    setPanel]    = useState(null); // null | { article } | { isNew: true }
 
   const load = useCallback(async () => {
     try {
       const { data } = await client.get('/api/admin/resources');
       setArticles(data.articles ?? []);
     } catch { setError('Failed to load articles.'); }
-    finally { setLoading(false); }
+    finally   { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -34,28 +33,35 @@ export default function ContentTab() {
     catch (err) { setError(err.response?.data?.error || 'Failed to archive.'); }
   }
 
-  const statusBadge = (s) => <span className={`badge badge--${s}`}>{s}</span>;
-
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Content Library</h1>
-        <div className="filters">
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Content Library</h1>
+          <p className="page-subtitle">Manage educational articles and resources</p>
+        </div>
+        <div className="filter-row">
+          <select style={{ width: 'auto' }} value={filter} onChange={(e) => setFilter(e.target.value)}>
             {STATUSES.map((s) => <option key={s} value={s}>{s || 'All statuses'}</option>)}
           </select>
-          <button className="btn btn--primary btn--sm" onClick={() => setCreating(true)}>+ New Article</button>
+          <button className="btn btn--primary btn--sm" onClick={() => setPanel({ isNew: true })}>
+            + New Article
+          </button>
           <button className="refresh-btn" onClick={load} title="Refresh">↻</button>
         </div>
       </div>
+
       {error && <p className="error-text">{error}</p>}
 
       <div className="card">
-        <div className="card-body table-wrap">
+        <div className="table-wrap">
           {loading ? (
             <div className="loading">Loading…</div>
           ) : filtered.length === 0 ? (
-            <div className="empty"><div className="empty-icon">📚</div>No articles found</div>
+            <div className="empty">
+              <div className="empty-icon">📚</div>
+              <p className="empty-text">No articles found</p>
+            </div>
           ) : (
             <table>
               <thead>
@@ -71,14 +77,18 @@ export default function ContentTab() {
               <tbody>
                 {filtered.map((a) => (
                   <tr key={a.id}>
-                    <td style={{ maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</td>
-                    <td>{a.category}</td>
-                    <td>{statusBadge(a.status)}</td>
+                    <td style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {a.title}
+                    </td>
+                    <td>{a.category.replace('_', ' ')}</td>
+                    <td>
+                      <span className={`badge badge--${a.status}`}>{a.status}</span>
+                    </td>
                     <td>{a.estimated_read_minutes} min</td>
                     <td><span className="elapsed">{new Date(a.updated_at).toLocaleDateString()}</span></td>
                     <td>
                       <div className="btn-group">
-                        <button className="btn btn--ghost btn--sm" onClick={() => setEditing(a)}>Edit</button>
+                        <button className="btn btn--ghost btn--sm" onClick={() => setPanel({ article: a })}>Edit</button>
                         {a.status !== 'published' && (
                           <button className="btn btn--success btn--sm" onClick={() => handlePublish(a.id)}>Publish</button>
                         )}
@@ -95,26 +105,26 @@ export default function ContentTab() {
         </div>
       </div>
 
-      {(editing || creating) && (
-        <ArticleModal
-          article={editing}
-          onClose={() => { setEditing(null); setCreating(false); }}
-          onSaved={() => { setEditing(null); setCreating(false); load(); }}
+      {panel && (
+        <ArticlePanel
+          article={panel.article ?? null}
+          onClose={() => setPanel(null)}
+          onSaved={() => { setPanel(null); load(); }}
         />
       )}
     </div>
   );
 }
 
-function ArticleModal({ article, onClose, onSaved }) {
+function ArticlePanel({ article, onClose, onSaved }) {
   const isNew = !article;
-  const [title, setTitle]     = useState(article?.title ?? '');
+  const [title,    setTitle]    = useState(article?.title ?? '');
   const [category, setCategory] = useState(article?.category ?? CATEGORIES[0]);
-  const [content, setContent] = useState(article?.content ?? '');
+  const [content,  setContent]  = useState(article?.content ?? '');
   const [readMins, setReadMins] = useState(article?.estimated_read_minutes ?? 5);
-  const [tags, setTags]       = useState(article?.tags ? article.tags.join(', ') : '');
-  const [saving, setSaving]   = useState(false);
-  const [error, setError]     = useState('');
+  const [tags,     setTags]     = useState(article?.tags ? article.tags.join(', ') : '');
+  const [saving,   setSaving]   = useState(false);
+  const [error,    setError]    = useState('');
 
   async function handleSave() {
     if (!title.trim() || !content.trim()) { setError('Title and content are required.'); return; }
@@ -125,7 +135,7 @@ function ArticleModal({ article, onClose, onSaved }) {
       category,
       content:                content.trim(),
       estimated_read_minutes: parseInt(readMins) || 5,
-      tags:                   tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
+      tags: tags.trim() ? tags.split(',').map((t) => t.trim()).filter(Boolean) : null,
     };
     try {
       if (isNew) {
@@ -142,41 +152,69 @@ function ArticleModal({ article, onClose, onSaved }) {
   }
 
   return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
-        <h3>{isNew ? 'New Article' : 'Edit Article'}</h3>
-        <div className="form-group">
-          <label className="form-label">Title</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Article title…" autoFocus />
+    <>
+      <div className="panel-overlay" onClick={onClose} />
+      <div className="slide-panel">
+        <div className="slide-panel__header">
+          <span className="slide-panel__title">{isNew ? 'New Article' : 'Edit Article'}</span>
+          <button className="btn btn--ghost btn--sm" onClick={onClose}>✕</button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+
+        <div className="slide-panel__body">
           <div className="form-group">
-            <label className="form-label">Category</label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c.replace('_', ' ')}</option>)}
-            </select>
+            <label className="form-label">Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Article title…"
+              autoFocus
+            />
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c.replace('_', ' ')}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Read time (min)</label>
+              <input type="number" value={readMins} onChange={(e) => setReadMins(e.target.value)} min={1} max={60} />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label className="form-label">Read time (min)</label>
-            <input type="number" value={readMins} onChange={(e) => setReadMins(e.target.value)} min={1} max={60} />
+            <label className="form-label">Content</label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={12}
+              placeholder="Article body…"
+            />
           </div>
+
+          <div className="form-group">
+            <label className="form-label">Tags (comma-separated, optional)</label>
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="anxiety, breathing, tips"
+            />
+          </div>
+
+          {error && <p className="error-text">{error}</p>}
         </div>
-        <div className="form-group">
-          <label className="form-label">Content</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} placeholder="Article body…" />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Tags (comma-separated, optional)</label>
-          <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="anxiety, breathing, tips" />
-        </div>
-        {error && <p className="error-text">{error}</p>}
-        <div className="modal-footer">
+
+        <div className="slide-panel__footer">
           <button className="btn btn--ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn--primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : isNew ? 'Create Article' : 'Save Changes'}
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,36 +1,71 @@
 import { useEffect, useState, useCallback } from 'react';
 import client from '../api/client';
 
-export default function ReportsTab() {
-  const [items, setItems]     = useState([]);
+const FILTER_TABS = [
+  { key: '',         label: 'All' },
+  { key: 'pending',  label: 'Pending' },
+  { key: 'reviewed', label: 'Reviewed' },
+];
+
+export default function ReportsTab({ onCountChange }) {
+  const [items,   setItems]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [acting, setActing]   = useState(null);
+  const [error,   setError]   = useState('');
+  const [filter,  setFilter]  = useState('');
+  const [acting,  setActing]  = useState(null);
 
   const load = useCallback(async () => {
     try {
       const { data } = await client.get('/api/admin/reports');
-      setItems(data.reports ?? []);
+      const list = data.reports ?? [];
+      setItems(list);
+      onCountChange?.(list.filter((r) => !r.reviewed_at).length);
     } catch { setError('Failed to load reports.'); }
-    finally { setLoading(false); }
-  }, []);
+    finally   { setLoading(false); }
+  }, [onCountChange]);
 
   useEffect(() => { load(); }, [load]);
 
+  const filtered = filter === 'pending'
+    ? items.filter((r) => !r.reviewed_at)
+    : filter === 'reviewed'
+    ? items.filter((r) =>  r.reviewed_at)
+    : items;
+
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Group Reports Queue</h1>
-        <button className="refresh-btn" onClick={load} title="Refresh">↻</button>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Group Reports Queue</h1>
+          <p className="page-subtitle">Flagged messages from group chats</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="status-tabs">
+            {FILTER_TABS.map((t) => (
+              <button
+                key={t.key}
+                className={`status-tab${filter === t.key ? ' active' : ''}`}
+                onClick={() => setFilter(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button className="refresh-btn" onClick={load} title="Refresh">↻</button>
+        </div>
       </div>
+
       {error && <p className="error-text">{error}</p>}
 
       <div className="card">
-        <div className="card-body table-wrap">
+        <div className="table-wrap">
           {loading ? (
             <div className="loading">Loading…</div>
-          ) : items.length === 0 ? (
-            <div className="empty"><div className="empty-icon">🛡️</div>No pending reports</div>
+          ) : filtered.length === 0 ? (
+            <div className="empty">
+              <div className="empty-icon">🛡️</div>
+              <p className="empty-text">No reports found</p>
+            </div>
           ) : (
             <table>
               <thead>
@@ -39,27 +74,27 @@ export default function ReportsTab() {
                   <th>Reported</th>
                   <th>Reporter</th>
                   <th>Reason</th>
-                  <th>Message Preview</th>
+                  <th>Message</th>
                   <th>Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((r) => (
+                {filtered.map((r) => (
                   <tr key={r.id}>
                     <td>{r.group_name}</td>
                     <td><span className="alias">{r.reported_alias}</span></td>
-                    <td><span className="alias" style={{ color: 'var(--color-text-muted)' }}>{r.reporter_alias}</span></td>
+                    <td><span className="alias" style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>{r.reporter_alias}</span></td>
                     <td><span className="badge badge--pending">{r.reason}</span></td>
-                    <td style={{ maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>
+                    <td style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic', color: 'var(--color-text-muted)' }}>
                       "{r.message_preview}"
                     </td>
                     <td><span className="elapsed">{new Date(r.created_at).toLocaleDateString()}</span></td>
                     <td>
                       <div className="btn-group">
-                        <button className="btn btn--ghost btn--sm" onClick={() => setActing({ report: r, action: 'dismiss' })}>Dismiss</button>
+                        <button className="btn btn--ghost btn--sm"   onClick={() => setActing({ report: r, action: 'dismiss' })}>Dismiss</button>
                         <button className="btn btn--warning btn--sm" onClick={() => setActing({ report: r, action: 'warn' })}>Warn</button>
-                        <button className="btn btn--danger btn--sm" onClick={() => setActing({ report: r, action: 'ban' })}>Ban</button>
+                        <button className="btn btn--danger btn--sm"  onClick={() => setActing({ report: r, action: 'ban' })}>Ban</button>
                       </div>
                     </td>
                   </tr>
@@ -83,12 +118,12 @@ export default function ReportsTab() {
 }
 
 function ActionModal({ report, action, onClose, onDone }) {
-  const [notes, setNotes]   = useState('');
+  const [notes,  setNotes]  = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
+  const [error,  setError]  = useState('');
 
-  const labels = { dismiss: 'Dismiss Report', warn: 'Warn User', ban: 'Ban User' };
-  const btnClass = { dismiss: 'btn--ghost', warn: 'btn--warning', ban: 'btn--danger' };
+  const labels   = { dismiss: 'Dismiss Report', warn: 'Warn User', ban: 'Ban User' };
+  const btnClass = { dismiss: 'btn--ghost',      warn: 'btn--warning', ban: 'btn--danger' };
 
   async function handleConfirm() {
     setSaving(true);
@@ -109,20 +144,22 @@ function ActionModal({ report, action, onClose, onDone }) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>{labels[action]}</h3>
-        <div style={{ background: '#f8fafc', borderRadius: 6, padding: '12px 14px', marginBottom: 16, fontSize: 13 }}>
+        <p className="modal__title">{labels[action]}</p>
+        <div className="modal__preview">
           <strong>Group:</strong> {report.group_name}<br />
-          <strong>Reported user:</strong> <span style={{ fontFamily: 'monospace' }}>{report.reported_alias}</span><br />
-          <strong>Reason:</strong> {report.reason}<br />
-          {report.message_preview && <><strong>Message:</strong> <em>"{report.message_preview}"</em></>}
+          <strong>Reported user:</strong> <span className="alias">{report.reported_alias}</span><br />
+          <strong>Reason:</strong> {report.reason}
+          {report.message_preview && <><br /><strong>Message:</strong> <em>"{report.message_preview}"</em></>}
         </div>
         {action !== 'dismiss' && (
           <div className="form-group">
-            <label className="form-label">Notes {action === 'warn' ? '(sent to user)' : '(reason)'}</label>
+            <label className="form-label">
+              {action === 'warn' ? 'Warning message (sent to user)' : 'Reason for ban'}
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={action === 'warn' ? 'Warning message to the user…' : 'Reason for ban…'}
+              placeholder={action === 'warn' ? 'Warning message…' : 'Reason for ban…'}
               rows={3}
               autoFocus
             />

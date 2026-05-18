@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const { login }                   = useAuth();
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [error, setError]           = useState('');
+  const [loading, setLoading]       = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,11 +24,17 @@ export default function LoginScreen() {
   return (
     <div className="login-wrap">
       <div className="login-box">
-        <h1>🧠 MindBridge Admin</h1>
-        <p>Sign in with your admin account</p>
+        <div className="login-brand">
+          <div className="login-brand-icon">🧠</div>
+          <div>
+            <div className="login-title">MindBridge Admin</div>
+            <div className="login-sub">Control panel — authorised access only</div>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label className="form-label">Email address</label>
             <input
               type="email"
               value={email}
@@ -38,7 +44,7 @@ export default function LoginScreen() {
               autoFocus
             />
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ marginBottom: error ? 8 : 20 }}>
             <label className="form-label">Password</label>
             <input
               type="password"
@@ -48,16 +54,34 @@ export default function LoginScreen() {
               required
             />
           </div>
-          {error && <p className="error-text">{error}</p>}
+
+          {error && (
+            <div style={{
+              background: 'rgba(179,92,92,0.08)',
+              border: '1px solid rgba(179,92,92,0.25)',
+              borderRadius: 6,
+              padding: '9px 12px',
+              fontSize: 13,
+              color: 'var(--color-status-open)',
+              marginBottom: 16,
+            }}>
+              {error}
+            </div>
+          )}
+
           <button
             type="submit"
             className="btn btn--primary"
             disabled={loading}
-            style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
+            style={{ width: '100%', justifyContent: 'center', padding: '11px 14px', fontSize: 14 }}
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <p style={{ marginTop: 20, fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center' }}>
+          This panel is for authorised MindBridge administrators only.
+        </p>
       </div>
     </div>
   );

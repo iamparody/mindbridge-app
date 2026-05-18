@@ -4,32 +4,38 @@ import MessageModal from '../components/MessageModal';
 
 function elapsed(ts) {
   const s = Math.floor((Date.now() - new Date(ts)) / 1000);
-  if (s < 60) return `${s}s ago`;
+  if (s < 60)   return `${s}s ago`;
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   return `${Math.floor(s / 3600)}h ago`;
 }
 
+const STATUS_BADGE = {
+  open:         'badge--open',
+  acknowledged: 'badge--ack',
+  resolved:     'badge--resolved',
+};
+
 export default function EmergencyTab({ onCountChange }) {
-  const [items, setItems]           = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
-  const [msgTarget, setMsgTarget]   = useState(null);
-  const [acting, setActing]         = useState({});
+  const [items,     setItems]     = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
+  const [msgTarget, setMsgTarget] = useState(null);
+  const [acting,    setActing]    = useState({});
 
   const load = useCallback(async () => {
     try {
       const { data } = await client.get('/api/admin/emergency-queue');
       const queue = data.queue ?? [];
       setItems(queue);
-      onCountChange?.(queue.length);
+      onCountChange?.(queue.filter((e) => e.status === 'open').length);
     } catch { setError('Failed to load emergency queue.'); }
-    finally { setLoading(false); }
+    finally   { setLoading(false); }
   }, [onCountChange]);
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    const iv = setInterval(load, 30000);
+    return () => clearInterval(iv);
   }, [load]);
 
   async function act(id, action) {
@@ -44,27 +50,26 @@ export default function EmergencyTab({ onCountChange }) {
     }
   }
 
-  const statusBadge = (s) => {
-    const map = { open: 'badge--open', acknowledged: 'badge--ack', resolved: 'badge--resolved' };
-    return <span className={`badge ${map[s] ?? ''}`}>{s}</span>;
-  };
-
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <h1 className="page-title" style={{ marginBottom: 0 }}>Emergency Queue</h1>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Emergency Queue</h1>
+          <p className="page-subtitle">Auto-refreshes every 30 seconds</p>
+        </div>
         <button className="refresh-btn" onClick={load} title="Refresh">↻</button>
       </div>
+
       {error && <p className="error-text">{error}</p>}
 
       <div className="card">
-        <div className="card-body table-wrap">
+        <div className="table-wrap">
           {loading ? (
             <div className="loading">Loading…</div>
           ) : items.length === 0 ? (
             <div className="empty">
               <div className="empty-icon">✅</div>
-              No active emergencies
+              <p className="empty-text">No active emergencies</p>
             </div>
           ) : (
             <table>
@@ -79,11 +84,20 @@ export default function EmergencyTab({ onCountChange }) {
               </thead>
               <tbody>
                 {items.map((e) => (
-                  <tr key={e.id}>
+                  <tr
+                    key={e.id}
+                    className={e.status === 'open' ? 'row--open' : e.status === 'acknowledged' ? 'row--ack' : ''}
+                  >
                     <td><span className="alias">{e.alias}</span></td>
                     <td>{e.trigger_type}</td>
-                    <td>{statusBadge(e.status)}</td>
-                    <td><span className="elapsed">{elapsed(e.triggered_at)}</span></td>
+                    <td>
+                      <span className={`badge ${STATUS_BADGE[e.status] ?? ''}`}>{e.status}</span>
+                    </td>
+                    <td>
+                      <span className={`elapsed${e.status === 'open' ? ' elapsed--urgent' : ''}`}>
+                        {elapsed(e.triggered_at)}
+                      </span>
+                    </td>
                     <td>
                       <div className="btn-group">
                         {e.status === 'open' && (
@@ -104,10 +118,7 @@ export default function EmergencyTab({ onCountChange }) {
                             {acting[e.id] === 'resolve' ? '…' : 'Resolve'}
                           </button>
                         )}
-                        <button
-                          className="btn btn--ghost btn--sm"
-                          onClick={() => setMsgTarget(e.alias)}
-                        >
+                        <button className="btn btn--ghost btn--sm" onClick={() => setMsgTarget(e.alias)}>
                           Message
                         </button>
                       </div>

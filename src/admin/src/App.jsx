@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginScreen    from './components/LoginScreen';
+import OverviewTab    from './tabs/OverviewTab';
 import EmergencyTab   from './tabs/EmergencyTab';
 import EscalationsTab from './tabs/EscalationsTab';
 import ReferralsTab   from './tabs/ReferralsTab';
@@ -8,76 +9,152 @@ import ReportsTab     from './tabs/ReportsTab';
 import RiskTab        from './tabs/RiskTab';
 import ContentTab     from './tabs/ContentTab';
 import StatsTab       from './tabs/StatsTab';
+import {
+  House, Siren, Handshake, Stethoscope,
+  Flag, Warning, BookOpen, ChartBar,
+  CaretLeft, CaretRight, List,
+} from '@phosphor-icons/react';
 
 const TABS = [
-  { id: 'emergency',   label: 'Emergency',    icon: '🚨' },
-  { id: 'escalations', label: 'Escalations',  icon: '⚡' },
-  { id: 'referrals',   label: 'Referrals',    icon: '📋' },
-  { id: 'reports',     label: 'Reports',      icon: '🛡️' },
-  { id: 'risk',        label: 'Risk Flags',   icon: '⚠️' },
-  { id: 'content',     label: 'Content',      icon: '📚' },
-  { id: 'stats',       label: 'Stats',        icon: '📊' },
+  { id: 'overview',    label: 'Overview',    Icon: House },
+  { id: 'emergency',   label: 'Emergency',   Icon: Siren,       badgeKey: 'emergency' },
+  { id: 'escalations', label: 'Escalations', Icon: Handshake,   badgeKey: 'escalations' },
+  { id: 'referrals',   label: 'Referrals',   Icon: Stethoscope },
+  { id: 'reports',     label: 'Reports',     Icon: Flag,        badgeKey: 'reports' },
+  { id: 'risk',        label: 'Risk Flags',  Icon: Warning,     badgeKey: 'risk' },
+  { id: 'content',     label: 'Content',     Icon: BookOpen },
+  { id: 'stats',       label: 'Stats',       Icon: ChartBar },
 ];
 
 function AdminShell() {
   const { admin, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('emergency');
-  const [emergencyCount, setEmergencyCount] = useState(0);
+  const [activeTab,      setActiveTab]      = useState('overview');
+  const [collapsed,      setCollapsed]      = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [badges, setBadges] = useState({ emergency: 0, escalations: 0, reports: 0, risk: 0 });
+
+  const setBadge = useCallback(
+    (key) => (count) => setBadges((prev) => ({ ...prev, [key]: count })),
+    [],
+  );
+
+  const updateAllBadges = useCallback(
+    (next) => setBadges((prev) => ({ ...prev, ...next })),
+    [],
+  );
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'emergency':   return <EmergencyTab onCountChange={setEmergencyCount} />;
-      case 'escalations': return <EscalationsTab />;
+      case 'overview':    return <OverviewTab onNavigate={setActiveTab} onBadgesUpdate={updateAllBadges} />;
+      case 'emergency':   return <EmergencyTab   onCountChange={setBadge('emergency')} />;
+      case 'escalations': return <EscalationsTab onCountChange={setBadge('escalations')} />;
       case 'referrals':   return <ReferralsTab />;
-      case 'reports':     return <ReportsTab />;
-      case 'risk':        return <RiskTab />;
+      case 'reports':     return <ReportsTab     onCountChange={setBadge('reports')} />;
+      case 'risk':        return <RiskTab        onCountChange={setBadge('risk')} />;
       case 'content':     return <ContentTab />;
       case 'stats':       return <StatsTab />;
       default:            return null;
     }
   };
 
+  const active   = TABS.find((t) => t.id === activeTab);
+  const initials = admin?.alias ? admin.alias.slice(0, 2).toUpperCase() : 'AD';
+
   return (
     <div className="admin-layout">
-      {/* Sidebar */}
-      <aside className="sidebar">
+      {/* ── Mobile backdrop ─────────────────────────────────────── */}
+      {mobileMenuOpen && (
+        <div className="mobile-backdrop" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* ── Sidebar ─────────────────────────────────────────────── */}
+      <aside className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}${mobileMenuOpen ? ' sidebar--mobile-open' : ''}`}>
         <div className="sidebar__brand">
-          <div className="sidebar__brand-title">🧠 MindBridge</div>
-          <div className="sidebar__brand-sub">Admin Panel</div>
+          <div className="sidebar__brand-icon">🧠</div>
+          {!collapsed && (
+            <div className="sidebar__brand-text">
+              <div className="sidebar__brand-title">MindBridge</div>
+              <div className="sidebar__brand-sub">Admin Panel</div>
+            </div>
+          )}
         </div>
+
         <nav className="sidebar__nav">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`sidebar__item${activeTab === tab.id ? ' active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className="sidebar__item-icon">{tab.icon}</span>
-              {tab.label}
-              {tab.id === 'emergency' && emergencyCount > 0 && (
-                <span className="sidebar__badge">{emergencyCount}</span>
-              )}
-            </button>
-          ))}
+          {TABS.map(({ id, label, Icon, badgeKey }) => {
+            const count    = badgeKey ? badges[badgeKey] : 0;
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                title={collapsed ? label : undefined}
+                className={`sidebar__item${isActive ? ' active' : ''}`}
+                onClick={() => { setActiveTab(id); setMobileMenuOpen(false); }}
+              >
+                <Icon
+                  size={18}
+                  weight={isActive ? 'fill' : 'regular'}
+                  className="sidebar__item-icon"
+                />
+                {!collapsed && <span className="sidebar__item-label">{label}</span>}
+                {count > 0 && (
+                  <span className={`sidebar__item-badge${badgeKey === 'escalations' ? ' sidebar__item-badge--warn' : ''}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          <button
+            className="sidebar__collapse-btn"
+            onClick={() => setCollapsed((c) => !c)}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed
+              ? <CaretRight size={15} weight="bold" />
+              : <><CaretLeft size={15} weight="bold" /><span className="sidebar__item-label" style={{ fontSize: 13 }}>Collapse</span></>
+            }
+          </button>
         </nav>
+
         <div className="sidebar__footer">
-          Signed in as <strong>{admin?.alias}</strong>
+          {!collapsed && <span className="sidebar__alias">{admin?.alias}</span>}
+          <button className="sidebar__logout" onClick={logout} title={collapsed ? 'Sign out' : undefined}>
+            {collapsed ? '→' : 'Sign out'}
+          </button>
         </div>
       </aside>
 
-      {/* Main */}
+      {/* ── Main ────────────────────────────────────────────────── */}
       <div className="main">
         <header className="topbar">
-          <span className="topbar__title">
-            {TABS.find((t) => t.id === activeTab)?.icon}&nbsp;
-            {TABS.find((t) => t.id === activeTab)?.label}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <List size={22} />
+            </button>
+            <div className="topbar__breadcrumb">
+              <span>MindBridge</span>
+              <span style={{ color: 'var(--color-card-border)', margin: '0 2px' }}>›</span>
+              <span className="topbar__breadcrumb-current">{active?.label}</span>
+            </div>
+          </div>
           <div className="topbar__right">
-            <span>{admin?.alias}</span>
-            <button className="btn btn--ghost btn--sm" onClick={logout}>Sign out</button>
+            <div className="topbar__alias-chip">
+              <div className="topbar__avatar">{initials}</div>
+              {admin?.alias}
+            </div>
           </div>
         </header>
-        <main className="content">{renderTab()}</main>
+
+        <main className="content">
+          <div className="content-inner">
+            {renderTab()}
+          </div>
+        </main>
       </div>
     </div>
   );
@@ -85,7 +162,11 @@ function AdminShell() {
 
 function AppInner() {
   const { admin, loading } = useAuth();
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#64748b' }}>Loading…</div>;
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--color-text-muted)', fontSize: 14 }}>
+      Loading…
+    </div>
+  );
   return admin ? <AdminShell /> : <LoginScreen />;
 }
 
