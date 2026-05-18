@@ -13,7 +13,7 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 // CORS — explicit allowlist; no wildcard in production
 const ALLOWED_ORIGINS = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map((o) => o.trim())
-  : ['http://localhost:5173', 'http://localhost:4173'];
+  : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5174', 'http://localhost:5175'];
 
 app.use(cors({
   origin: (origin, cb) => {

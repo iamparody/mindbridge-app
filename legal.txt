@@ -11,18 +11,40 @@ g sensitive health data at scale — your lawyer can help with this
 
 
 
-Before sending the next prompt, one real-world action needed from you:Set up your SMTP credentials. The agent used Nodemailer which needs an SMTP server. Easiest free option:
-Go to resend.com → create account → get API key
-Resend supports SMTP — your .env values will be:
+All 16 phases are complete. The project is fully built and locally tested. The logical next step is      
+  Railway deployment. Here's what's needed, in order:
+                                                                                                             ---                                                                                                        1. Deploy backend to Railway                                                                             
+  - Create a Railway project, connect the GitHub repo                                                      
+  - Set all production env vars (copy from .env, replace placeholders):
+    - DATABASE_URL → your Supabase connection string
+    - JWT_SECRET, JWT_REFRESH_SECRET, ENCRYPTION_KEY → already generated
+    - GROQ_API_KEY → already set
+    - RESEND_API_KEY + EMAIL_FROM → already set
+    - UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN → already set
+    - UPSTASH_REDIS_URL → re-enable this on Railway (port 6380 works there)
+    - FRONTEND_URL → your Vite/Vercel URL (once deployed)
+    - NODE_ENV=production
+  - Set root directory to src/backend
 
-SMTP_HOST=smtp.resend.com
-SMTP_PORT=465
-SMTP_USER=resend
-SMTP_PASS=
-EMAIL_FROM=noreply@yourdomain.com 
+  2. Run seeds against production DB (one-time)
+  node src/backend/scripts/seed_admin.js admin@yourdomain.com StrongPassword123!
+  node src/backend/scripts/seed_groups.js admin@yourdomain.com
+  node src/backend/scripts/seed_articles.js admin@yourdomain.com
 
-Do that in parallel while the agent works on the next phase. Without it emails only log to console — fine for development, not for launch.
+  3. Deploy frontend to Vercel/Netlify
+  - Set VITE_API_URL to your Railway backend URL
+  - Build command: npm run build in src/frontend
+
+  4. After deploy — smoke test
+  - Register → verify email → consent → persona → first mood → dashboard
+  - Password reset end-to-end
+  - Paystack purchase (needs live key — PAYSTACK_SECRET_KEY)
+
+  5. Still pending credentials
+  - Paystack live key (purchase flow)
+  - Firebase FCM service account JSON (push notifications)
+  - Replace [Your Name] placeholder in legal pages before going public
+
+  Want to start the Railway deployment, or tackle one of the pending credentials first?
 
 
-Resume this session with:
-claude --resume 0c2f098e-baa7-4610-8e4e-d85f080a4c1b

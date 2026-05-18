@@ -3,14 +3,36 @@
 ---
 
 ## Current Phase
-**Phase 18 — Standalone Admin Panel — COMPLETE**
+**Phase 18 — Standalone Admin Panel — UI COMPLETE**
 
 ## Current Task
-Phase 18 complete. Standalone admin panel built at src/admin/, /admin removed from user app.
+Phase 18 UI polish complete. All 8 tabs built, collapsible sidebar, mobile responsive, production-level animated stat cards.
 
-**Deployment needed:** src/admin/ must be deployed separately to admin.mindbridge.app (Railway or Netlify). Set VITE_API_URL to the backend Railway URL.
+**Next:** Deploy src/admin/ separately (Railway or Netlify). Set `VITE_API_URL` to the backend Railway URL. Run seeds on production DB before first admin login.
 
 **Migrations applied:** 031, 032, 033, 034 — all live in Supabase.
+
+---
+
+### Phase 18 UI Polish — 2026-05-18
+
+**Admin panel redesign (src/admin/) — all complete:**
+
+| Area | What was done |
+|---|---|
+| `globals.css` | Full brand token system: `--color-sidebar-bg: #2F2622`, cream main bg `#FAF6F2`, status colours (open/pending/resolved/review) across badges, rows, cards |
+| `LoginScreen.jsx` | Dark sidebar background wrap, white card, Inter typography, styled error box |
+| `App.jsx` | Phosphor icons sidebar (House/Siren/Handshake/Stethoscope/Flag/Warning/BookOpen/ChartBar), collapsible 240px ↔ 64px with smooth CSS transition, active state left amber border, live red badges on Emergency/Escalations/Reports/Risk, breadcrumb topbar with avatar initials chip |
+| `OverviewTab.jsx` | **New tab** — 4 animated stat cards with count-up numbers (rAF ease-out cubic), 50×50 icon blocks with status-tinted backgrounds, staggered entrance animation, hover lift + status-coloured shadow + icon nudge; activity feed + quick actions two-column layout |
+| `EmergencyTab.jsx` | Row colouring (`row--open` red tint, `row--ack` amber), elapsed time in red for open items |
+| `EscalationsTab.jsx` | `onCountChange` badge callback, waiting time highlighted urgent |
+| `ReferralsTab.jsx` | Converted table → card list using `.referral-card` component |
+| `ReportsTab.jsx` | Pending/Reviewed/All filter tab bar, `onCountChange` badge callback |
+| `RiskTab.jsx` | `onCountChange` badge callback |
+| `ContentTab.jsx` | Create/edit moved from modal → right slide panel (480px, full-width on mobile) |
+| `StatsTab.jsx` | Redesigned with rating bar indicators and cleaner stat grid |
+| Mobile responsive | Off-canvas drawer < 900px with hamburger `☰` in topbar + backdrop; 2-col stat grid < 700px; full-width slide panel < 480px |
+| Font sizes | Base bumped 14→15px, page titles 24px, tables 14px, all sub-elements scaled up |
 
 ---
 
