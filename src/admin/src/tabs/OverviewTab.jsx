@@ -1,7 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import client from '../api/client';
 import { Siren, Handshake, Flag, Warning, ArrowRight } from '@phosphor-icons/react';
 
+/* ── Animated counter ────────────────────────────────────────────────── */
+function AnimatedNumber({ value, duration = 900 }) {
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (value === 0) { setDisplay(0); return; }
+
+    const start = performance.now();
+    const from  = 0;
+
+    function step(now) {
+      const t = Math.min((now - start) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + (value - from) * eased));
+      if (t < 1) rafRef.current = requestAnimationFrame(step);
+    }
+
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+
+  return display;
+}
+
+/* ── Helpers ─────────────────────────────────────────────────────────── */
 function elapsed(ts) {
   const s = Math.floor((Date.now() - new Date(ts)) / 1000);
   if (s < 60)    return `${s}s ago`;
@@ -17,6 +45,7 @@ const ICON_MAP = {
   risk:       { cls: 'activity-icon--risk',      Icon: Warning },
 };
 
+/* ── Component ───────────────────────────────────────────────────────── */
 export default function OverviewTab({ onNavigate, onBadgesUpdate }) {
   const [counts,   setCounts]   = useState({ emergency: 0, escalations: 0, reports: 0, risk: 0 });
   const [activity, setActivity] = useState([]);
@@ -33,10 +62,10 @@ export default function OverviewTab({ onNavigate, onBadgesUpdate }) {
       ]);
       if (!active) return;
 
-      const queue      = em.value?.data?.queue          ?? [];
+      const queue       = em.value?.data?.queue         ?? [];
       const escalations = es.value?.data?.escalations   ?? [];
-      const reports    = rp.value?.data?.reports        ?? [];
-      const flagged    = ri.value?.data?.flagged_users  ?? [];
+      const reports     = rp.value?.data?.reports       ?? [];
+      const flagged     = ri.value?.data?.flagged_users ?? [];
 
       const newCounts = {
         emergency:   queue.length,
@@ -85,10 +114,10 @@ export default function OverviewTab({ onNavigate, onBadgesUpdate }) {
   ];
 
   const quickActions = [
-    { label: 'Emergency Queue',  sub: 'View active emergencies',   Icon: Siren,     nav: 'emergency',   bg: 'var(--color-danger-bg)',        ic: 'var(--color-status-open)' },
-    { label: 'Peer Escalations', sub: 'Unanswered peer requests',  Icon: Handshake, nav: 'escalations', bg: 'var(--color-warning-bg)',       ic: 'var(--color-status-pending)' },
-    { label: 'Group Reports',    sub: 'Review flagged content',    Icon: Flag,      nav: 'reports',     bg: 'rgba(123,155,181,0.12)',         ic: 'var(--color-status-review)' },
-    { label: 'Risk Flags',       sub: 'High / critical risk users',Icon: Warning,   nav: 'risk',        bg: 'var(--color-warning-bg)',       ic: 'var(--color-status-pending)' },
+    { label: 'Emergency Queue',  sub: 'View active emergencies',    Icon: Siren,     nav: 'emergency',   bg: 'rgba(179,92,92,0.09)',    ic: 'var(--color-status-open)' },
+    { label: 'Peer Escalations', sub: 'Unanswered peer requests',   Icon: Handshake, nav: 'escalations', bg: 'rgba(217,164,65,0.09)',   ic: 'var(--color-status-pending)' },
+    { label: 'Group Reports',    sub: 'Review flagged content',     Icon: Flag,      nav: 'reports',     bg: 'rgba(123,155,181,0.10)',  ic: 'var(--color-status-review)' },
+    { label: 'Risk Flags',       sub: 'High / critical risk users', Icon: Warning,   nav: 'risk',        bg: 'rgba(217,164,65,0.09)',   ic: 'var(--color-status-pending)' },
   ];
 
   return (
@@ -100,30 +129,36 @@ export default function OverviewTab({ onNavigate, onBadgesUpdate }) {
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* ── Stat cards ─────────────────────────────────────────── */}
       <div className="stat-grid">
-        {statCards.map(({ label, value, mod, Icon, nav }) => (
-          <div
-            key={label}
-            className={`stat-card stat-card--${mod}`}
-            style={{ cursor: 'pointer' }}
-            onClick={() => onNavigate(nav)}
-          >
-            <div className="stat-card__label">
-              <Icon size={13} weight="fill" />
-              {label}
+        {statCards.map(({ label, value, mod, Icon, nav }) => {
+          const hasAlert = value > 0 && mod === 'open';
+          const hasWarn  = value > 0 && mod !== 'open';
+          return (
+            <div
+              key={label}
+              className={`stat-card stat-card--${mod} stat-card--clickable`}
+              onClick={() => onNavigate(nav)}
+            >
+              <div className={`stat-card__icon-wrap stat-card__icon-wrap--${mod}`}>
+                <Icon size={24} weight="fill" />
+              </div>
+
+              <div className={`stat-card__value${hasAlert ? ' stat-card__value--alert' : hasWarn ? ' stat-card__value--warn' : ''}`}>
+                <AnimatedNumber value={value} />
+              </div>
+
+              <div className="stat-card__label">{label}</div>
+
+              <div className={`stat-card__trend${value === 0 ? ' stat-card__trend--ok' : hasAlert ? ' stat-card__trend--alert' : ' stat-card__trend--warn'}`}>
+                {value === 0 ? '✓ All clear' : `${value} item${value === 1 ? '' : 's'} need attention`}
+              </div>
             </div>
-            <div className={`stat-card__value${value > 0 ? (mod === 'open' ? ' stat-card__value--alert' : ' stat-card__value--warn') : ''}`}>
-              {value}
-            </div>
-            <div className="stat-card__trend">
-              {value === 0 ? 'All clear' : `${value} need${value === 1 ? 's' : ''} attention`}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Two-column: activity feed + quick actions */}
+      {/* ── Two-column: activity + quick actions ───────────────── */}
       <div className="two-col">
         <div className="card">
           <div className="card-header">
