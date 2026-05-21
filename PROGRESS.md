@@ -24,7 +24,30 @@
 - `DashboardScreen.jsx`: `timeAgo()` → `formatMoodTime()` — shows `"Today · 3:45 PM"` or `"Mon · 3:45 PM"` instead of relative time
 - `DashboardScreen.jsx`: Added subtle `+ check in again` button beneath last-mood line when `moodDone = true` — quiet affordance to navigate to `/mood` for a second entry
 
-**App icon + name change:** On hold — user indicated app name change is coming soon. Icon work deferred until name is final (will need name propagation across manifest, index.html, DashboardScreen topbar).
+**App icon + name change:** On hold — user indicated app name change is coming soon. Icon work deferred until name is final (will need name propagation across manifest, index.html, DashboardScreen topbar)
+
+---
+
+### Session 12 — 2026-05-21 (same day, continued)
+
+**Tier 1 — ArticleScreen bugs fixed:**
+- `setArticle(data.article)` — articles were rendering completely blank because the response wrapper `{ article: {...} }` was not being unwrapped. Only the hardcoded crisis footer was visible, making all articles appear empty.
+- `article.estimated_read_minutes` — read time was referencing `article.read_time` (wrong field name); never displayed.
+- Crisis banner made conditional — now only renders when `article.category === 'crisis_support'`. Previously appeared on every article regardless of topic (ADHD time tips, stress biology, etc.).
+- Markdown renderer added to ArticleScreen — `parseInline()` + `renderMarkdown()` functions handle `**bold**`, `*italic*`, `- bullet` lists, `---` dividers. Replaces raw `whiteSpace: pre-wrap` string dump.
+
+**Tier 2 — Content gaps closed:**
+- Migration 035 written: adds `trauma` and `relationships` to `article_category` enum; adds `content_type` (article/story), `author_name`, `author_bio`, `source_url` columns to `psychoeducation_articles`.
+- 10 new articles written and added to seed script:
+  - Trauma (5): nervous system physiology, fight/flight/freeze/fawn, complex trauma (C-PTSD), healing approaches (EMDR/TF-CBT/somatic), trauma memory neuroscience
+  - Relationships (5): communication skills, attachment styles, Gottman conflict model, limits in relationships, recognising unhealthy patterns — all with Kenyan cultural context woven in
+- ResourcesScreen: trauma and relationships added to category filter; Articles/Stories toggle at top; story cards show author name; empty state message specific to stories
+- ArticleScreen: story attribution block renders for `content_type === 'story'` (author bio + source link); category badge replaced with "Personal Story" amber pill for stories
+- Admin ContentTab: content_type selector (article/story toggle), author_name, author_bio, source_url fields added; appear conditionally when story is selected; type filter added to table
+- Backend resources.js: `content_type` query parameter supported; cache key updated to include content_type
+- Backend admin.js: GET /admin/resources includes new columns; POST/PATCH /admin/resources accepts and saves all story fields
+
+**Run required:** Migration 035 must be applied before stories can be created or trauma/relationships articles seeded..
 
 ## Scoped & Pending
 **Phase 19 — Therapist Marketplace** — fully scoped in CHECKLIST.md (items 19.1–19.11). Not started. Transforms the referral module into a browse-and-express-interest flow with real therapist profiles, admin-managed onboarding, and a new Therapists tab in the admin panel. Await implementation call.

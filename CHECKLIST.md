@@ -833,6 +833,27 @@ b/index.js — pg Pool with DATABASE_URL, exported query function
 
 ---
 
+## Session 11 — Article & Content Fixes (2026-05-21)
+
+### Tier 1 — ArticleScreen bugs ✅
+- [x] Fix `setArticle(data)` → `setArticle(data.article)` — articles were rendering blank (response not unwrapped)
+- [x] Fix `article.read_time` → `article.estimated_read_minutes` — read time never displayed
+- [x] Crisis banner now conditional — only renders on `crisis_support` category articles
+- [x] Markdown renderer added — `**bold**`, `*italic*`, `- bullets`, `---` divider now render correctly; `pre-wrap` removed
+
+### Tier 2 — Content gaps ✅
+- [x] Migration 035: `trauma` and `relationships` added to `article_category` enum
+- [x] Migration 035: `content_type` (article/story), `author_name`, `author_bio`, `source_url` columns added
+- [x] 5 trauma articles seeded (nervous system, trauma responses, complex trauma, healing approaches, trauma memory)
+- [x] 5 relationships articles seeded (communication, attachment styles, conflict/Gottman, boundaries, unhealthy patterns)
+- [x] ResourcesScreen: trauma and relationships added to category filter; Articles/Stories toggle added
+- [x] ArticleScreen: story attribution block (author bio + source link) added
+- [x] Admin ContentTab: content_type selector, author fields, source URL field added
+- [x] Backend GET /resources: `content_type` filter parameter supported; cache key updated
+- [x] Backend POST/PATCH /admin/resources: accepts and saves all new story fields
+
+---
+
 ## Phase 19 — Therapist Marketplace
 
 > Transform the referral module from a simple form into a browse-and-express-interest flow.

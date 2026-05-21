@@ -1224,6 +1224,306 @@ Connecting with others who have been through similar experiences can be powerful
 **A realistic view:**
 Recovery is rarely linear. There may be future difficult periods. Having been through a crisis before means you have information, experience, and (potentially) a better support system for next time. That's not nothing — it's real resilience.`,
   },
+
+  // ── TRAUMA ───────────────────────────────────────────────────────────────────
+  {
+    category: 'trauma',
+    title: 'Trauma: When the Nervous System Gets Stuck',
+    estimated_read_minutes: 4,
+    tags: ['trauma', 'nervous system', 'PTSD', 'healing'],
+    content: `Trauma is not just a memory of something terrible that happened. It is a physiological state — a way the nervous system gets organised around threat, even long after the threat has passed.
+
+Peter Levine, who developed Somatic Experiencing, describes trauma as "a fact of life but not a life sentence." The injury is not in the event itself, but in what happens inside the nervous system as a result.
+
+**What trauma does to the body:**
+When you experience something overwhelming, your brain's alarm system (the amygdala) fires a response. Stress hormones flood the body. Resources are mobilised for survival. This is the right response to a real threat.
+
+The problem is when the nervous system gets stuck in this activation state after the danger is gone — or when the survival response couldn't complete (you couldn't fight, couldn't run, couldn't make it stop).
+
+**The window of tolerance:**
+Dan Siegel's "window of tolerance" describes the zone in which we can function well — responsive but regulated. Trauma pushes us outside this window:
+
+- *Hyperarousal:* Overactivated — anxious, hypervigilant, reactive, unable to sleep, always braced for threat
+- *Hypoarousal:* Underactivated — numb, disconnected, flat, exhausted, shut down
+
+Both are trauma responses. Both are the nervous system trying to protect you.
+
+**It's not about "getting over it":**
+Telling someone who is traumatised to "move on" misunderstands what trauma is. The nervous system doesn't respond to logic. Healing involves working with the body — not just talking about what happened — to help the survival response complete and the nervous system find safety again.
+
+Understanding this is the foundation for compassion — toward others and toward yourself.`,
+  },
+  {
+    category: 'trauma',
+    title: 'Trauma Responses: Fight, Flight, Freeze and Fawn',
+    estimated_read_minutes: 4,
+    tags: ['trauma', 'nervous system', 'coping', 'self-awareness'],
+    content: `When we face danger, the brain activates survival responses. Most people know about fight and flight — but there are two more that are equally important, particularly for understanding how trauma shapes behaviour.
+
+**Fight:**
+Aggression, defensiveness, anger, pushing back. In trauma, this can look like: snapping at people, conflict that escalates quickly, feeling constantly under attack and responding before thinking.
+
+**Flight:**
+Escape, avoidance, running from the situation. In trauma: avoiding anything that reminds you of the difficult experience, overworking to stay away from feelings, leaving relationships at the first sign of conflict.
+
+**Freeze:**
+Immobility — the body shuts down when it cannot fight or flee. In trauma: dissociation (feeling disconnected from yourself or your surroundings), going blank in difficult situations, shutting down emotionally, feeling paralysed even when action is needed.
+
+**Fawn:**
+The least known response. Fawn means placating, appeasing, or going along with what the threat demands in order to survive. Common in people who experienced unpredictable or unsafe caregivers. In everyday life: always trying to make others happy, saying yes when you mean no, losing yourself in relationships, intense fear of conflict or disappointing people.
+
+**Why this matters:**
+These responses developed to protect you. They worked — you survived. The issue is when they become automatic reactions to situations that don't require them: anger at someone who is simply giving feedback; disappearing from relationships that are actually safe; fawning with everyone to avoid the discomfort of being yourself.
+
+Recognising your dominant trauma response is not about blame. It is the beginning of having a choice about how you respond — rather than being driven by automatic patterns.
+
+None of these are character flaws. They are survival strategies looking for an opportunity to update.`,
+  },
+  {
+    category: 'trauma',
+    title: 'Complex Trauma: When It Wasn\'t a Single Event',
+    estimated_read_minutes: 4,
+    tags: ['trauma', 'CPTSD', 'childhood', 'recovery'],
+    content: `PTSD is often described around a single traumatic event — an accident, an assault, a disaster. But many people's experiences don't fit this picture. Their trauma was ongoing: an unsafe childhood, years in an abusive relationship, chronic neglect, or growing up in conditions of persistent threat or instability.
+
+This is complex trauma — sometimes called C-PTSD.
+
+**How complex trauma differs from PTSD:**
+PTSD typically involves a discrete event, flashbacks, hypervigilance, and avoidance. C-PTSD includes all of that, plus:
+
+- Difficulty regulating emotions (intense reactions, difficulty calming down after upset)
+- Negative self-concept (deep shame, feeling fundamentally broken or unlovable)
+- Difficulty in relationships (trouble trusting, cycles of closeness and withdrawal, fear of abandonment)
+- Dissociation (feeling detached from yourself, memory gaps, feeling unreal)
+
+**Where complex trauma comes from:**
+- Childhood abuse or neglect — emotional, physical, or sexual
+- Growing up with a parent who was unpredictable, frightening, or consistently absent
+- Domestic violence — experiencing it or witnessing it repeatedly
+- Community violence or prolonged conditions of threat
+- Religious or institutional abuse
+
+**The particular wound:**
+When the source of both the trauma *and* the care is the same person — a parent, a partner — the nervous system faces an impossible contradiction. The person you need for safety is also the source of danger. This shapes attachment and self-perception in deep ways that take time and the right support to work through.
+
+**Recovery:**
+Complex trauma typically requires more than standard trauma processing. It involves building internal safety first, developing emotional regulation skills, and — gradually — working through the traumatic experiences themselves. This is slow, careful work. It takes time. It is possible.
+
+If you recognise yourself here, please reach out for support from someone trained in trauma and complex trauma.`,
+  },
+  {
+    category: 'trauma',
+    title: 'Healing from Trauma: What Actually Works',
+    estimated_read_minutes: 5,
+    tags: ['trauma', 'EMDR', 'therapy', 'recovery', 'treatment'],
+    content: `For decades, the standard response to trauma was: talk about it. Tell the story. Process the feelings through words. This helps many people — but it is not always enough. Research over the last 30 years has shown that trauma lives in the body, not just the mind, and that healing often needs to engage both.
+
+**Why standard talk therapy isn't always sufficient:**
+When trauma memories are activated, the speech centre of the brain often goes offline. Talking about what happened can sometimes re-activate the trauma without providing relief. The body is holding the experience too — as tension, numbness, chronic pain, or an inability to feel safe.
+
+**Approaches with strong evidence:**
+
+*Trauma-Focused CBT (TF-CBT):*
+Developed specifically for trauma. Includes psychoeducation, relaxation skills, trauma narrative work, and cognitive processing. Widely researched, particularly effective for childhood trauma.
+
+*EMDR (Eye Movement Desensitisation and Reprocessing):*
+Uses bilateral stimulation (typically eye movements) while holding traumatic memories in mind. Helps the brain process memories that got "stuck." Strong evidence base, often faster than traditional therapy.
+
+*Somatic approaches:*
+Body-centred approaches help the nervous system complete interrupted survival responses and build a felt sense of safety in the body. Less focused on narrative, more focused on physiological regulation and the felt experience of safety.
+
+*DBT (Dialectical Behaviour Therapy):*
+Particularly useful for complex trauma. Builds emotional regulation, distress tolerance, interpersonal effectiveness, and mindfulness — the foundational skills needed before deeper trauma processing.
+
+**What all effective trauma approaches share:**
+- A sense of safety with the therapist and in the environment
+- Stabilisation before processing (coping skills first, before opening the wound)
+- Gradual exposure rather than flooding
+- Building internal resources alongside processing
+
+**A note on access:**
+Trauma-focused therapy in Kenya is limited and often expensive. If it is not accessible to you right now, stabilisation skills — grounding techniques, breathing, self-compassion, safe relationships, community support — are meaningful starting points. You can build the foundation while you work toward accessing more support. Do what is available. Healing does not require a perfect situation.`,
+  },
+  {
+    category: 'trauma',
+    title: 'Why Trauma Memories Feel Different',
+    estimated_read_minutes: 3,
+    tags: ['trauma', 'memory', 'flashbacks', 'neuroscience'],
+    content: `People often expect trauma memories to work like other memories: clear, sequential, retrievable on demand. When they don't — when they come as fragments, sensations, or intrusive flashes — it can feel confusing, or even make people question whether something really happened.
+
+Trauma memories are different. There are neurological reasons for this.
+
+**How normal memory works:**
+Memories are processed and stored with context — "this happened in the past, it is now over." They have a beginning, middle and end. They are accompanied by some emotion but don't overwhelm you in the present.
+
+**What happens to trauma memory:**
+During overwhelming experiences, the brain's hippocampus (which encodes time and context) can be impaired by stress hormones, while the amygdala (which encodes emotion and sensation) is highly activated. The result: trauma memories are often stored as sensory fragments — a smell, a physical sensation, a sound, a flash of image — without narrative context or a felt sense that "this is in the past."
+
+This is why trauma can feel like it is *happening now* rather than *being remembered*.
+
+**Intrusive symptoms:**
+- *Flashbacks:* Sensory re-experiencing as if the event is present
+- *Nightmares:* Nocturnal processing of unintegrated experience
+- *Triggers:* Sensory cues that activate memory fragments without warning
+
+**Why memory gaps occur:**
+Dissociation during overwhelming experiences can disrupt memory encoding. This is a protection mechanism, not a sign that nothing happened. Fragmented memories, gaps, and memories that emerge later are common and neurologically understood.
+
+**What this means:**
+Trauma memory is not unreliable because a person is confused or mistaken. It is fragmented because of how the traumatised brain encodes overwhelming experience. Understanding this matters — for survivors making sense of their own experience, and for anyone supporting them.`,
+  },
+
+  // ── RELATIONSHIPS ─────────────────────────────────────────────────────────────
+  {
+    category: 'relationships',
+    title: 'Communication That Actually Connects',
+    estimated_read_minutes: 4,
+    tags: ['relationships', 'communication', 'conflict', 'listening'],
+    content: `Most relationship problems are communication problems. Not because people aren't trying to communicate — but because the way we communicate when stressed, hurt, or defensive is usually the opposite of what would actually help.
+
+**What most of us do when upset:**
+- State our position forcefully, hoping the other person will agree
+- Interpret the other person's behaviour in the worst possible light
+- Wait for our turn to speak rather than actually listening
+- Become defensive when we feel criticised
+
+None of this is malicious. It is what stressed nervous systems do.
+
+**What actually helps:**
+
+*Listen to understand, not to respond:*
+Most of us listen while formulating our reply. Real listening means following the other person's meaning, asking clarifying questions, and reflecting back what you heard before defending your own position. "What I'm hearing is… is that right?" is one of the most disarming things you can say.
+
+*Speak from your own experience:*
+"You never listen to me" lands as an attack. "I've been feeling unheard lately and it's been hard" opens a conversation. Staying in first person — describing your own feelings and needs rather than the other person's failings — reduces defensiveness on both sides.
+
+*Timing matters:*
+The worst time to have an important conversation is when either person is hungry, exhausted, or in the middle of something else. Some conversations genuinely should not happen until both people are in a state to have them.
+
+*Repair:*
+Not every conversation ends well. Being able to say "that got heated, I don't think I handled that well" — even the next day — is a relationship skill. Repair matters more than never having conflict.
+
+**Communication in Kenyan family contexts:**
+Many of us grew up in households where certain things were not spoken about directly — financial stress, relationship problems, mental health struggles. This silence has reasons: protection, respect, privacy. But it also means many of us never saw effective communication modelled. Developing these skills as an adult is entirely possible. It changes relationships profoundly.`,
+  },
+  {
+    category: 'relationships',
+    title: 'Why We Love the Way We Do: Attachment Styles',
+    estimated_read_minutes: 5,
+    tags: ['relationships', 'attachment', 'psychology', 'self-awareness'],
+    content: `The way we behave in close relationships — how much closeness we need, how we respond to conflict, whether we stay or withdraw, what triggers our fear — was largely shaped before we could form conscious memories.
+
+Attachment theory holds that we develop internal working models of relationships in early childhood, based on the responses of our primary caregivers. These models then operate automatically in adult relationships — especially intimate ones.
+
+**The four attachment styles:**
+
+*Secure:*
+Developed when a caregiver was consistently responsive and available. People with secure attachment feel comfortable with both closeness and independence. They can ask for needs to be met directly, handle conflict without catastrophising, and return to emotional balance after difficulty.
+
+*Anxious (Preoccupied):*
+Developed when a caregiver was inconsistently available — warm sometimes, unavailable or distracted other times. The child never knew when care would come. In adult relationships: fear of abandonment, strong need for reassurance, difficulty tolerating distance, reading neutral situations as potential rejection.
+
+*Avoidant (Dismissing):*
+Developed when a caregiver was consistently emotionally unavailable or rejected the child's emotional needs. The child learned to self-soothe by turning off attachment needs. In adult relationships: discomfort with closeness and dependency, pulling away when things get emotionally intense, difficulty identifying or expressing feelings.
+
+*Disorganised (Fearful):*
+Developed when the caregiver was also a source of threat — frightening, abusive, or deeply unpredictable. The child had no coherent strategy because the source of safety was also the source of danger. In adult relationships: intense push-pull dynamics, difficulty trusting, elements of both anxious and avoidant patterns.
+
+**An important note:**
+These are tendencies, not fixed identities. Most people have a mix. And crucially — attachment is not permanent. *Earned security* (developing more secure patterns through consistent therapy or a genuinely healthy relationship) is real and documented.
+
+Knowing your attachment pattern is not an excuse for behaviour. It is a map for understanding your automatic responses — and making more intentional choices.`,
+  },
+  {
+    category: 'relationships',
+    title: 'Conflict in Relationships: A Guide to Getting Through It',
+    estimated_read_minutes: 4,
+    tags: ['relationships', 'conflict', 'communication', 'Gottman'],
+    content: `Conflict in relationships is not a sign something is wrong. It is a sign that two people with different experiences, needs, and histories are trying to share a life together. The question is never whether conflict will happen — it's how you handle it when it does.
+
+Researcher John Gottman spent decades studying couples and found he could predict relationship breakdown with high accuracy. The marker was not conflict — it was how conflict was handled.
+
+**The Four Horsemen — patterns most predictive of breakdown:**
+
+*Criticism:* Attacking the person, not the behaviour. "You never think about anyone but yourself" versus "I felt hurt when you didn't come home on time."
+
+*Contempt:* The most toxic pattern. Mockery, eye-rolling, sarcasm, or talking down to the other person. Contempt communicates that you see your partner as beneath you. It erodes relationship foundations faster than anything else.
+
+*Defensiveness:* Responding to a complaint by counter-attacking or playing the victim. It escalates rather than resolves.
+
+*Stonewalling:* Shutting down, withdrawing, giving the silent treatment. Often happens when someone is emotionally flooded and has no capacity to continue.
+
+**Antidotes:**
+- Criticism → Gentle start-up: "When [situation], I feel [emotion], I need [request]"
+- Contempt → Build genuine appreciation; express gratitude regularly for real things
+- Defensiveness → Take responsibility for your part, even if it feels small
+- Stonewalling → Take a break (at least 20 minutes), genuinely calm down, return
+
+**The repair attempt:**
+Any action that tries to de-escalate before conflict becomes destructive — a small joke, a touch, an "I'm sorry I said that" — is a repair attempt. *Accepting* repair attempts is as important as making them.
+
+**What most people miss:**
+They wait to communicate until they're already in conflict. Relationships that do well invest in connection during the good times — regular conversation, expressed appreciation, genuine curiosity about each other's inner life.`,
+  },
+  {
+    category: 'relationships',
+    title: 'Boundaries in Relationships: What They Actually Are',
+    estimated_read_minutes: 4,
+    tags: ['relationships', 'boundaries', 'self-care', 'communication'],
+    content: `"Boundaries" has become a widely used word — and like many widely used words, it gets misused. Real limits in relationships are not walls, not punishments, and not selfishness. They are the honest expression of what you need to remain well and what you are and aren't willing to do.
+
+**What limits actually are:**
+A limit is a statement about yourself — what you will do, what you won't do, what you need, what is not acceptable to you. It is not a statement about what the other person must do.
+
+"If you speak to me that way, I will end the conversation" — this is a limit. You are describing your own action.
+"You are not allowed to speak to me that way" — this is a demand. You are trying to control their behaviour.
+
+The distinction matters because you can only reliably control your own actions.
+
+**Types of limits:**
+- *Physical:* Who can touch you, how, and when
+- *Emotional:* What you share and with whom; what kinds of interactions you can manage
+- *Time and energy:* What you agree to do; how much you give and to whom
+- *Values:* What you are and are not willing to participate in
+
+**Limits in Kenyan family and community contexts:**
+Many of us grew up in cultures where individual limits were considered less important than family or community obligations — where saying no to an elder, a parent, or extended family felt like disrespect or disloyalty. This is a real tension, not something to dismiss.
+
+The answer is not to abandon cultural values of community and care. It is to find ways to honour both: obligations to others *and* your need to remain well. Limits expressed with genuine respect and care — not as rejection, but as self-knowledge — can often be heard better than those expressed in anger or resentment.
+
+**When limits feel impossible:**
+If setting limits has always felt dangerous — because it led to punishment, withdrawal, or abandonment — then the nervous system will treat it as threatening even when it's safe. This is often connected to earlier experiences. It can be worked on, and support helps.`,
+  },
+  {
+    category: 'relationships',
+    title: 'Recognising Unhealthy Relationship Patterns',
+    estimated_read_minutes: 4,
+    tags: ['relationships', 'abuse', 'coercive control', 'safety'],
+    content: `Unhealthy relationships rarely start that way. The patterns that cause harm often develop gradually — and by the time they are clear, significant emotional investment has already been made. Recognising patterns early is not cynicism. It is self-protection.
+
+**Patterns that warrant attention:**
+
+*Coercive control:*
+Control that is systematic and pervasive. Monitoring your location, restricting access to money, isolating you from friends and family, controlling what you wear or who you see. This is abuse even when there is no physical violence.
+
+*Love bombing:*
+Intense early affection and attention that feels overwhelming — moving very fast, declarations of deep love very early, constant contact and pursuit. This often precedes a shift toward control and criticism. The early intensity creates attachment that makes later harm harder to leave.
+
+*Emotional manipulation:*
+Gaslighting (making you question your own perceptions of events), blame-shifting, playing the victim when challenged, moving the goalposts. Over time, this erodes trust in your own judgement.
+
+*Cycles of harm:*
+Tension builds → incident (verbal, emotional, or physical harm) → reconciliation ("honeymoon" phase, apologies, promises to change) → tension builds again. The reconciliation phase keeps people hopeful and makes leaving harder.
+
+**Why people stay:**
+Leaving an unhealthy relationship is not simple. Emotional bonds, financial dependence, children, family pressure, community expectations, fear of what will happen if you leave — these are real and significant. Asking "why didn't they just leave?" misunderstands the complexity of these situations entirely.
+
+**What helps:**
+Talking to someone you trust. Reaching out to a counsellor. Making a safety plan if there is risk of physical harm.
+
+**If you are in danger right now:**
+Please use the Emergency button in this app or call emergency services. Your safety is the priority.`,
+  },
 ];
 
 async function main() {
@@ -1279,7 +1579,7 @@ async function main() {
 
   console.log(`\nDone. ${created} created, ${skipped} skipped.`);
   console.log('\nArticles per category:');
-  for (const cat of ['anxiety','depression','ocd','adhd','grief','loneliness','stress','general_wellness','crisis_support']) {
+  for (const cat of ['anxiety','depression','ocd','adhd','grief','trauma','relationships','loneliness','stress','general_wellness','crisis_support']) {
     const { rows } = await query(
       `SELECT COUNT(*) AS count FROM psychoeducation_articles WHERE category = $1 AND status = 'published'`,
       [cat]

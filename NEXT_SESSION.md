@@ -3,10 +3,24 @@
 ## Immediate fixes — DONE ✅ (2026-05-21)
 
 ### 1. Dashboard — tappable mood area ✅
-`DashboardScreen.jsx`: Added subtle `+ check in again` button beneath last-mood line when `moodDone = true`. `pointerEvents: none` removed from that section.
-
 ### 2. Dashboard — timestamp format ✅
-`DashboardScreen.jsx`: Replaced `timeAgo()` with `formatMoodTime()` — shows `"Today · 3:45 PM"` or `"Mon · 3:45 PM"`.
+### 3. ArticleScreen bugs (blank content, read time, crisis banner, markdown) ✅
+### 4. Trauma + relationships articles (10 new), stories infrastructure ✅
+
+---
+
+## Action required — run migration 035
+
+```bash
+cd src/backend && npm run migrate
+```
+
+Then seed the new articles:
+```bash
+node src/backend/scripts/seed_articles.js <admin_email>
+```
+
+(Safe to re-run — skips existing titles.)
 
 ---
 

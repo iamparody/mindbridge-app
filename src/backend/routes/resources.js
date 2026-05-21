@@ -7,7 +7,7 @@ const router = express.Router();
 
 // ─── GET /resources ───────────────────────────────────────────────────────────
 router.get('/', auth, async (req, res) => {
-  const cacheKey = `resources:${req.query.category || 'all'}:${req.query.search || ''}`;
+  const cacheKey = `resources:${req.query.content_type || 'all'}:${req.query.category || 'all'}:${req.query.search || ''}`;
   const cached = await cache.get(cacheKey);
   if (cached) return res.status(200).json(cached);
 
@@ -15,6 +15,10 @@ router.get('/', auth, async (req, res) => {
   const params = [];
   let idx = 1;
 
+  if (req.query.content_type) {
+    conditions.push(`content_type = $${idx++}`);
+    params.push(req.query.content_type);
+  }
   if (req.query.category) {
     conditions.push(`category = $${idx++}`);
     params.push(req.query.category);
@@ -26,14 +30,14 @@ router.get('/', auth, async (req, res) => {
 
   const where = conditions.join(' AND ');
   const { rows } = await query(
-    `SELECT id, title, category, estimated_read_minutes, tags, published_at
+    `SELECT id, title, category, content_type, author_name, estimated_read_minutes, tags, published_at
      FROM psychoeducation_articles WHERE ${where}
      ORDER BY published_at DESC`,
     params
   );
 
   const result = { articles: rows };
-  await cache.set(cacheKey, result, 3600); // 1 hour
+  await cache.set(cacheKey, result, 3600);
   return res.status(200).json(result);
 });
 

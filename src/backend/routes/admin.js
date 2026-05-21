@@ -244,7 +244,8 @@ router.post('/users/:alias/message', async (req, res) => {
 // ─── GET /admin/resources ─────────────────────────────────────────────────────
 router.get('/resources', async (req, res) => {
   const { rows } = await query(
-    `SELECT id, title, category, estimated_read_minutes, tags, status, published_at, created_at, updated_at
+    `SELECT id, title, category, content_type, author_name, author_bio, source_url,
+            estimated_read_minutes, tags, status, published_at, created_at, updated_at
      FROM psychoeducation_articles
      ORDER BY updated_at DESC`
   );
@@ -253,23 +254,27 @@ router.get('/resources', async (req, res) => {
 
 // ─── POST /admin/resources ────────────────────────────────────────────────────
 router.post('/resources', async (req, res) => {
-  const { title, category, content, estimated_read_minutes, tags } = req.body;
+  const { title, category, content, estimated_read_minutes, tags,
+          content_type, author_name, author_bio, source_url } = req.body;
   if (!title || !category || !content || !estimated_read_minutes) {
     return res.status(400).json({ error: 'title, category, content, and estimated_read_minutes are required', code: 'MISSING_FIELDS' });
   }
+  const type = content_type === 'story' ? 'story' : 'article';
 
   const { rows } = await query(
     `INSERT INTO psychoeducation_articles
-       (title, category, content, estimated_read_minutes, tags, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [title, category, content, estimated_read_minutes, tags || null, req.user.id]
+       (title, category, content, estimated_read_minutes, tags, content_type, author_name, author_bio, source_url, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+    [title, category, content, estimated_read_minutes, tags || null,
+     type, author_name || null, author_bio || null, source_url || null, req.user.id]
   );
   return res.status(201).json({ article_id: rows[0].id });
 });
 
 // ─── PATCH /admin/resources/:id ───────────────────────────────────────────────
 router.patch('/resources/:id', async (req, res) => {
-  const { title, category, content, estimated_read_minutes, tags } = req.body;
+  const { title, category, content, estimated_read_minutes, tags,
+          content_type, author_name, author_bio, source_url } = req.body;
   const setClauses = ['updated_at = NOW()'];
   const params = [];
   let idx = 1;
@@ -279,6 +284,10 @@ router.patch('/resources/:id', async (req, res) => {
   if (content                !== undefined) { setClauses.push(`content = $${idx++}`);                params.push(content); }
   if (estimated_read_minutes !== undefined) { setClauses.push(`estimated_read_minutes = $${idx++}`); params.push(estimated_read_minutes); }
   if (tags                   !== undefined) { setClauses.push(`tags = $${idx++}`);                   params.push(tags); }
+  if (content_type           !== undefined) { setClauses.push(`content_type = $${idx++}`);           params.push(content_type === 'story' ? 'story' : 'article'); }
+  if (author_name            !== undefined) { setClauses.push(`author_name = $${idx++}`);            params.push(author_name || null); }
+  if (author_bio             !== undefined) { setClauses.push(`author_bio = $${idx++}`);             params.push(author_bio || null); }
+  if (source_url             !== undefined) { setClauses.push(`source_url = $${idx++}`);             params.push(source_url || null); }
 
   if (params.length === 0) {
     return res.status(400).json({ error: 'No fields to update', code: 'MISSING_FIELDS' });

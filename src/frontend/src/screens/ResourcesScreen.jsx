@@ -4,16 +4,18 @@ import { BookOpen } from '@phosphor-icons/react';
 import client from '../api/client';
 
 const CATEGORIES = [
-  { label: 'All',             value: '' },
-  { label: 'Anxiety',         value: 'anxiety' },
-  { label: 'Depression',      value: 'depression' },
-  { label: 'OCD',             value: 'ocd' },
-  { label: 'ADHD',            value: 'adhd' },
-  { label: 'Grief',           value: 'grief' },
-  { label: 'Loneliness',      value: 'loneliness' },
-  { label: 'Stress',          value: 'stress' },
-  { label: 'General Wellness',value: 'general_wellness' },
-  { label: 'Crisis Support',  value: 'crisis_support' },
+  { label: 'All',              value: '' },
+  { label: 'Anxiety',          value: 'anxiety' },
+  { label: 'Depression',       value: 'depression' },
+  { label: 'OCD',              value: 'ocd' },
+  { label: 'ADHD',             value: 'adhd' },
+  { label: 'Grief',            value: 'grief' },
+  { label: 'Trauma',           value: 'trauma' },
+  { label: 'Relationships',    value: 'relationships' },
+  { label: 'Loneliness',       value: 'loneliness' },
+  { label: 'Stress',           value: 'stress' },
+  { label: 'Wellness',         value: 'general_wellness' },
+  { label: 'Crisis Support',   value: 'crisis_support' },
 ];
 
 function ResourcesSkeleton() {
@@ -33,22 +35,23 @@ export default function ResourcesScreen() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
+  const [contentType, setContentType] = useState('article');
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const params = {};
+      const params = { content_type: contentType };
       if (search) params.search = search;
       if (category.value) params.category = category.value;
       const { data } = await client.get('/api/resources', { params });
       setArticles(data.articles ?? data ?? []);
     } catch {
-      setError('We couldn\'t connect. Check your internet and try again.');
+      setError("We couldn't connect. Check your internet and try again.");
     } finally {
       setLoading(false);
     }
-  }, [search, category]);
+  }, [search, category, contentType]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -60,15 +63,41 @@ export default function ResourcesScreen() {
       </div>
 
       <div style={{ padding: '0 var(--space-md) var(--space-sm)' }}>
+        {/* Articles / Stories toggle */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-sm)' }}>
+          {['article', 'story'].map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setContentType(type)}
+              style={{
+                padding: '7px 18px',
+                borderRadius: 'var(--radius-full)',
+                border: contentType === type ? 'none' : '1px solid var(--color-border)',
+                background: contentType === type ? 'var(--color-accent)' : 'transparent',
+                color: contentType === type ? '#1a1209' : 'var(--color-text-muted)',
+                fontWeight: contentType === type ? 600 : 400,
+                fontSize: 14,
+                cursor: 'pointer',
+                transition: 'all var(--duration-fast)',
+              }}
+              aria-pressed={contentType === type}
+            >
+              {type === 'article' ? 'Articles' : 'Stories'}
+            </button>
+          ))}
+        </div>
+
         <input
           type="search"
           className="input"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search articles…"
+          placeholder={contentType === 'story' ? 'Search stories…' : 'Search articles…'}
           style={{ marginBottom: 'var(--space-sm)' }}
-          aria-label="Search articles"
+          aria-label="Search"
         />
+
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
           {CATEGORIES.map((cat) => (
             <button
@@ -92,8 +121,14 @@ export default function ResourcesScreen() {
         ) : articles.length === 0 ? (
           <div className="empty-state">
             <BookOpen size={48} weight="duotone" color="var(--color-text-muted)" aria-hidden="true" />
-            <div className="empty-state__title">No articles found</div>
-            <div className="empty-state__body">Try a different search term or category.</div>
+            <div className="empty-state__title">
+              {contentType === 'story' ? 'No stories yet' : 'No articles found'}
+            </div>
+            <div className="empty-state__body">
+              {contentType === 'story'
+                ? 'Personal stories from the community are coming soon.'
+                : 'Try a different search term or category.'}
+            </div>
           </div>
         ) : (
           articles.map((a) => (
@@ -106,15 +141,31 @@ export default function ResourcesScreen() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ fontSize: 15, marginBottom: 4, lineHeight: 1.4 }}>{a.title}</h3>
-                  {a.category && <span className="pill" style={{ fontSize: 10, marginBottom: 6, display: 'inline-block' }}>{a.category}</span>}
+
+                  {a.content_type === 'story' && a.author_name ? (
+                    <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 4 }}>
+                      By {a.author_name}
+                    </p>
+                  ) : (
+                    a.category && (
+                      <span className="pill" style={{ fontSize: 10, marginBottom: 6, display: 'inline-block' }}>
+                        {a.category.replace(/_/g, ' ')}
+                      </span>
+                    )
+                  )}
+
                   {a.tags?.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
-                      {a.tags.slice(0, 3).map((t) => <span key={t} className="pill" style={{ fontSize: 10, padding: '1px 6px' }}>{t}</span>)}
+                      {a.tags.slice(0, 3).map((t) => (
+                        <span key={t} className="pill" style={{ fontSize: 10, padding: '1px 6px' }}>{t}</span>
+                      ))}
                     </div>
                   )}
                 </div>
                 {a.estimated_read_minutes && (
-                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)', flexShrink: 0, marginTop: 2 }}>{a.estimated_read_minutes} min</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-text-muted)', flexShrink: 0, marginTop: 2 }}>
+                    {a.estimated_read_minutes} min
+                  </div>
                 )}
               </div>
             </div>
