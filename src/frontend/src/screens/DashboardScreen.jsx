@@ -21,20 +21,17 @@ function timeGreeting() {
   return 'Good evening';
 }
 
-function timeAgo(dateStr) {
+function formatMoodTime(dateStr) {
   if (!dateStr) return '';
-  // PostgreSQL returns timestamps without 'Z' — browsers disagree on whether to treat
-  // bare strings as UTC or local time. Force UTC by appending 'Z' when absent.
   const utcStr = dateStr.includes('Z') || dateStr.includes('+')
     ? dateStr
     : dateStr.replace(' ', 'T') + 'Z';
-  const diff = Date.now() - new Date(utcStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  const date = new Date(utcStr);
+  const now = new Date();
+  const timeStr = date.toLocaleTimeString('en-KE', { hour: 'numeric', minute: '2-digit', hour12: true });
+  if (date.toDateString() === now.toDateString()) return `Today · ${timeStr}`;
+  const dayStr = date.toLocaleDateString('en-KE', { weekday: 'short' });
+  return `${dayStr} · ${timeStr}`;
 }
 
 const MOOD_LABELS = {
@@ -194,9 +191,19 @@ export default function DashboardScreen() {
         </h2>
 
         {lastMood ? (
-          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>
-            Last check-in: {MOOD_LABELS[lastMood] ?? lastMood} · {lastMoodTime ? timeAgo(lastMoodTime) : ''}
-          </p>
+          <>
+            <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>
+              Last check-in: {MOOD_LABELS[lastMood] ?? lastMood} · {lastMoodTime ? formatMoodTime(lastMoodTime) : ''}
+            </p>
+            {moodDone && (
+              <button
+                onClick={() => navigate('/mood')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--color-text-muted)', opacity: 0.65, marginTop: 4, padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}
+              >
+                + check in again
+              </button>
+            )}
+          </>
         ) : (
           <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-text-muted)' }}>No check-in yet today</p>
         )}

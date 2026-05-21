@@ -830,3 +830,187 @@ b/index.js — pg Pool with DATABASE_URL, exported query function
 - [x] Remove AdminDashboard import from user app
 - [x] Remove adminOnly prop from ProtectedRoute (no longer needed)
 - [x] src/backend/routes/admin.js and adminAuth middleware unchanged
+
+---
+
+## Phase 19 — Therapist Marketplace
+
+> Transform the referral module from a simple form into a browse-and-express-interest flow.
+> Therapists are verified partners with in-app profiles. Admin facilitates connection.
+> Member identity is never revealed to a therapist until the member consents at arrangement stage.
+> Do not implement until called on.
+
+### 19.1 Schema — Migrations
+- [ ] Migration 035: Create `therapist_profiles` table — id, user_id (FK → users), full_name, photo_url, credentials, years_experience, specializations (text[]), languages (text[]), session_formats (text[]), location, statement (max 300 chars), availability_status (enum: available/limited/unavailable), is_active (bool), created_at, updated_at
+- [ ] Migration 036: Create `therapist_interests` table — id, member_user_id (FK → users), therapist_id (FK → therapist_profiles), referral_id (FK → therapist_referrals), created_at
+- [ ] Add RLS deny-anon policies for both new tables (consistent with migration 030 pattern)
+
+### 19.2 Backend — Therapist role (make stub real)
+- [ ] Ensure `users.role = 'therapist'` is a valid enum value (check existing migration)
+- [ ] Admin creates therapist account: `POST /admin/therapists` — creates user with role=therapist + inserts therapist_profiles row
+- [ ] Admin updates therapist profile: `PATCH /admin/therapists/:id`
+- [ ] Admin updates availability only: `PATCH /admin/therapists/:id/availability`
+- [ ] Validate specializations against existing group category enum (anxiety, depression, ocd, adhd, grief, stress, trauma, relationships, general_support)
+- [ ] Validate session_formats against enum: in_app_chat, voice_call, in_person
+- [ ] Validate availability_status against enum: available, limited, unavailable
+
+### 19.3 Backend — Member-facing endpoints
+- [ ] `GET /api/therapists` — list active therapist profiles; support query filters: specialization, language, session_format, availability_status
+- [ ] `GET /api/therapists/:id` — single profile detail
+- [ ] `POST /api/referrals/:id/interests` — attach up to 3 therapist interests to an existing referral; enforce max 3 per referral; prevent duplicate interests
+
+### 19.4 Backend — Referral flow update
+- [ ] `POST /api/referrals` response: include expressed interest count when interests exist
+- [ ] `GET /api/admin/referrals` response: include array of expressed interest therapist profiles alongside member's referral form data
+
+### 19.5 Frontend — Browse screen (app)
+- [ ] New screen `TherapistListScreen.jsx` at route `/therapists`
+- [ ] Card per therapist: photo, full_name, credentials, specializations (pills), languages, session_formats, availability badge
+- [ ] Filter bar: specialization / language / session format / availability
+- [ ] "I'd feel comfortable with this person" button (not "match" or "recommend" language)
+- [ ] Enforce max 3 selections; show count "X of 3 selected"
+- [ ] Persist selections in component state; carry into referral form
+
+### 19.6 Frontend — Single profile screen (app)
+- [ ] New screen `TherapistProfileScreen.jsx` at route `/therapists/:id`
+- [ ] Full profile: photo, name, credentials, years experience, specializations, languages, session formats, location (if in-person), personal statement, availability badge
+- [ ] "I'd feel comfortable with this person" button — mirrors list screen selection state
+
+### 19.7 Frontend — Referral form update (app)
+- [ ] `ReferralScreen.jsx`: if member arrived with expressed interests, show banner "You've expressed interest in [N] therapist(s) — we'll try to connect you with one of them"
+- [ ] On referral submit: call `POST /api/referrals/:id/interests` with selected therapist IDs after referral is created
+
+### 19.8 Frontend — Dashboard entry point (app)
+- [ ] Dashboard Therapist tile navigates to `/therapists` (browse) instead of `/referral` (form) directly
+- [ ] If member has no expressed interests yet: show browse screen first
+- [ ] If member already has an open referral with interests: navigate to `/referral` directly
+
+### 19.9 Admin panel — Therapist management tab
+- [ ] New tab in `src/admin/` — "Therapists" (Tab 8)
+- [ ] List all therapist profiles: name, credentials, availability badge, is_active toggle
+- [ ] Create therapist form: all fields from 19.2, photo URL field
+- [ ] Edit therapist: update any field
+- [ ] Availability quick-toggle: available / limited / unavailable
+
+### 19.10 Admin panel — Referral inbox update
+- [ ] `ReferralsTab.jsx`: for each referral, show expressed interests section — therapist name + availability
+- [ ] Admin sees member struggles + preferred therapist profiles side by side
+- [ ] Admin message action remains unchanged — sends outcome to member
+
+### 19.11 Safety & privacy checks
+- [ ] Confirm therapist profile data is never exposed on public routes (no auth = no access)
+- [ ] Confirm member alias is not included in any therapist-facing data until arrangement stage
+- [ ] Confirm no ratings/reviews fields exist anywhere in schema or UI
+
+---
+
+## Phase 20 — Persona & Language Enhancements
+
+> Three targeted changes to the AI companion layer.
+> Change 3 (fine-tuned model) is future/external — scope it now, wire it when ready.
+> Do not implement until called on.
+
+### 20.1 Change 1 — Mutable Persona (partial)
+- [ ] Migration 037: Remove any immutability constraint on `tone`, `response_style`, `formality` columns in `ai_personas` table; add `updated_at` column if not present
+- [ ] Backend: `PATCH /api/ai/persona` endpoint — allow updating tone, response_style, formality; name field must be rejected (immutable); update `updated_at`
+- [ ] Frontend: Add "Edit Companion" entry in `ProfileScreen.jsx` settings list
+- [ ] New screen `EditPersonaScreen.jsx` at route `/persona/edit`
+  - [ ] Heading: "How has your companion evolved?" (not "Change settings")
+  - [ ] Show current persona name (read-only, with brief note: "Your companion's name is part of who they are")
+  - [ ] Editable fields: tone selector, response_style selector, formality selector (reuse options from `PersonaScreen.jsx`)
+  - [ ] Save → `PATCH /api/ai/persona`; success feedback; back to Profile
+- [ ] Add `/persona/edit` to `HIDE_NAV_ON` in `App.jsx`
+
+### 20.2 Change 2 — Language Switcher
+- [ ] Migration 038: Add `language` column to `ai_personas` — ENUM('english','swahili','sheng'), DEFAULT 'english'
+- [ ] Backend: include `language` in `PATCH /api/ai/persona` allowed fields
+- [ ] Backend: `routes/ai.js` — system prompt construction adds language instruction as Layer 2.5 (after persona layer, before safety layer):
+  - `english`: no addition (current behaviour)
+  - `swahili`: append "Respond in Swahili. Use warm, conversational Swahili — not formal textbook Swahili."
+  - `sheng`: append "Respond in Kenyan Sheng. Urban, warm, youth-friendly. Mix Swahili and English naturally."
+- [ ] Frontend: Add language selector to `EditPersonaScreen.jsx` — three options: English / Swahili / Sheng
+- [ ] Language can be changed at any time — no lock, no confirmation required
+- [ ] `PersonaScreen.jsx` (onboarding): add language selector step with same three options; default English
+
+### 20.3 Change 3 — Fine-tuned Kenyan Model (future, pending external collaboration)
+- [ ] `.env.example`: add `AI_PROVIDER=groq|custom`, `CUSTOM_AI_ENDPOINT=`, `CUSTOM_AI_KEY=`
+- [ ] `routes/ai.js`: read `AI_PROVIDER` env var; if `custom`, send request to `CUSTOM_AI_ENDPOINT` with `CUSTOM_AI_KEY` using the same message payload shape; if request fails or `AI_PROVIDER=groq`, fall back to Groq
+- [ ] No frontend changes — swap is purely at the API layer
+- [ ] Keep Groq as permanent fallback — never remove it
+
+---
+
+## Phase 21 — UI Performance & Design System
+
+> Client-side caching so screens don't re-fetch on every visit, optimistic updates so
+> actions feel instant, tooltips that explain before you commit, skeleton placeholders
+> everywhere a spinner or blank screen currently exists, a real component library
+> replacing ad-hoc inline JSX, and a dot-matrix mood calendar.
+> Do not implement until called on.
+
+### 21.1 Client-side caching with TanStack Query
+- [ ] Install `@tanstack/react-query` in `src/frontend/`
+- [ ] Wrap app in `QueryClientProvider` in `main.jsx` with `staleTime: 5 * 60 * 1000` (5 min default) and `gcTime: 30 * 60 * 1000` (30 min in-memory)
+- [ ] Replace `client.get` calls in the following screens with `useQuery` hooks — data survives navigation and only re-fetches when stale:
+  - [ ] `DashboardScreen` — balance, notifications, mood history, mood today
+  - [ ] `AnalyticsScreen` — mood analytics
+  - [ ] `GroupsScreen` — groups list
+  - [ ] `ResourcesScreen` — articles list
+  - [ ] `ProfileScreen` — profile data
+  - [ ] `JournalScreen` — journal entries list
+  - [ ] `SafetyPlanScreen` — safety plan
+- [ ] Replace `client.post/patch/delete` mutation calls with `useMutation` hooks where optimistic updates apply (see 21.2)
+- [ ] Invalidate relevant query keys on mutation success (e.g. mood POST → invalidate mood queries; journal DELETE → invalidate journal list)
+
+### 21.2 Optimistic rendering
+- [ ] Mood check-in (`MoodCheckinScreen`): on submit, immediately update dashboard mood state before server confirms; roll back on error
+- [ ] Journal delete: remove entry from list immediately; restore on error
+- [ ] Group message send (`GroupChatScreen`): append message with `pending: true` flag instantly; replace with confirmed message on success; remove on error
+- [ ] Notification read-all: mark all as read in UI immediately; roll back on error
+- [ ] Credit deduction (peer session start): decrement balance display immediately
+
+### 21.3 Skeleton placeholders — replace all blank/spinner states
+- [ ] Audit every screen that currently shows nothing while loading — replace each with a skeleton that mirrors the real layout shape
+- [ ] `ProtectedRoute`: replace hidden spinner (blank white flash) with a full-screen skeleton matching the dashboard layout
+- [ ] `AIChatScreen` session-start state: skeleton for persona name + session header
+- [ ] `GroupDetailScreen`: skeleton for group header banner + join button
+- [ ] `PeerWaitingScreen`: skeleton for waiting state header
+- [ ] `ConditionScreen`: already renders instantly (no async) — no skeleton needed
+- [ ] Standardise: all skeletons use existing `.skeleton` CSS class — no new CSS needed
+- [ ] Remove `.spinner { display: none !important }` rule once ProtectedRoute skeleton is in place; delete spinner references from ProtectedRoute JSX
+
+### 21.4 Tooltips
+- [ ] Install `@radix-ui/react-tooltip`
+- [ ] Wrap app root with `TooltipProvider` in `main.jsx`
+- [ ] Add tooltips to all icon-only actions (no visible label):
+  - [ ] Dashboard top bar: bell icon → "Notifications"
+  - [ ] Dashboard top bar: coin badge → "Your credit balance"
+  - [ ] Emergency FAB → "Get immediate help"
+  - [ ] BottomNav icons — tooltips on long-press (mobile) / hover (desktop)
+  - [ ] Admin sidebar collapsed icons — tooltip showing tab name
+  - [ ] Admin action buttons (acknowledge, resolve, message) — tooltip with action description
+- [ ] Tooltip delay: 400ms open, 100ms close — fast enough to be informative, slow enough not to intrude
+
+### 21.5 Component library — extract shared components
+- [ ] Install `@radix-ui/react-dialog`, `@radix-ui/react-select`, `@radix-ui/react-toast`
+- [ ] `src/frontend/src/components/Sheet.jsx` — bottom sheet (replaces ConsentScreen inline BottomSheet; reusable for any slide-up panel)
+- [ ] `src/frontend/src/components/Toast.jsx` — success/error toast using Radix Toast; replaces inline error `<p>` elements across screens
+- [ ] `src/frontend/src/components/PageHeader.jsx` — back button + title + optional right action; replaces copy-pasted header pattern across ~12 screens
+- [ ] `src/frontend/src/components/EmptyState.jsx` — icon + heading + subtext; replaces ad-hoc empty list messages
+- [ ] `src/frontend/src/components/Badge.jsx` — status badge with colour variants (maps to existing CSS status tokens)
+- [ ] Migrate screens to use new components (one screen at a time, verify before moving on):
+  - [ ] ConsentScreen → Sheet
+  - [ ] All screens with back-button headers → PageHeader
+  - [ ] JournalScreen, GroupsScreen, ResourcesScreen empty states → EmptyState
+  - [ ] Inline error paragraphs → Toast (where appropriate)
+
+### 21.6 Dot-matrix mood calendar
+- [ ] Install `@nivo/calendar` (scoped install — do not install full nivo bundle)
+- [ ] New component `src/frontend/src/components/MoodDotGrid.jsx`
+  - [ ] Accepts `entries` array: `{ date: 'YYYY-MM-DD', mood_level: string }[]`
+  - [ ] Renders a dot-grid calendar: one dot per day, colour mapped to mood level using existing mood palette from `MoodBlob` states
+  - [ ] Dot size: 10px, gap: 4px, 7 columns (Mon–Sun), scroll horizontally for month span
+  - [ ] Legend row below grid: very_low → great with colour swatches
+  - [ ] Empty days (no entry): light grey dot
+- [ ] Integrate into `AnalyticsScreen.jsx` — place above existing bar chart section
+- [ ] Add a compact 4-week preview variant (28 dots) to `DashboardScreen.jsx` below the action tiles — shows at a glance without navigating to Analytics

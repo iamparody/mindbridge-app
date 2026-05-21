@@ -5,6 +5,34 @@
 ## Current Phase
 **Phase 18 — Standalone Admin Panel — UI COMPLETE**
 
+---
+
+### Session 11 — 2026-05-21
+
+**GRAPH_REPORT.md updated (was stale — missing Phases 17–18):**
+- Migrations table extended to 034; all 34 migrations documented
+- Users schema updated: `condition_category`, `peer_quiz_done` columns added
+- Events table added (migration 034)
+- Notifications enum updated: 13 types (added `journal_prompt`)
+- Standalone admin panel (`src/admin/`) documented with all 8 tab files
+- `AdminDashboard.jsx` entry corrected — removed from user app in Phase 18
+- Phase status table updated: 18/18 complete; Phases 19–21 scoped/pending noted
+- File counts updated: 34 migrations, 25 tables, 8 admin tabs
+- Landing site noted
+
+**Dashboard fixes:**
+- `DashboardScreen.jsx`: `timeAgo()` → `formatMoodTime()` — shows `"Today · 3:45 PM"` or `"Mon · 3:45 PM"` instead of relative time
+- `DashboardScreen.jsx`: Added subtle `+ check in again` button beneath last-mood line when `moodDone = true` — quiet affordance to navigate to `/mood` for a second entry
+
+**App icon + name change:** On hold — user indicated app name change is coming soon. Icon work deferred until name is final (will need name propagation across manifest, index.html, DashboardScreen topbar).
+
+## Scoped & Pending
+**Phase 19 — Therapist Marketplace** — fully scoped in CHECKLIST.md (items 19.1–19.11). Not started. Transforms the referral module into a browse-and-express-interest flow with real therapist profiles, admin-managed onboarding, and a new Therapists tab in the admin panel. Await implementation call.
+
+**Phase 20 — Persona & Language Enhancements** — fully scoped in CHECKLIST.md (items 20.1–20.3). Not started. Three changes: mutable persona tone/style, Swahili/Sheng language switcher in AI layer, and a future fine-tuned Kenyan model switch via env var. Await implementation call.
+
+**Phase 21 — UI Performance & Design System** — fully scoped in CHECKLIST.md (items 21.1–21.6). Not started. TanStack Query caching, optimistic updates on key mutations, skeleton placeholders replacing all blank/spinner states, Radix tooltips on all icon-only actions, extracted shared component library (Sheet, Toast, PageHeader, EmptyState, Badge), and a Nivo dot-matrix mood calendar in Analytics + Dashboard. Await implementation call.
+
 ## Current Task
 Phase 18 UI polish complete. All 8 tabs built, collapsible sidebar, mobile responsive, production-level animated stat cards.
 
@@ -676,3 +704,4 @@ to their support system — a direct safety risk.
 | 2026-05-04 | 8 | Email: nodemailer → Resend SDK; SMTP vars removed; lazy client init; RESEND_API_KEY + EMAIL_FROM configured |
 | 2026-05-04 | 9 | Redis: cache + rate limiting switched to @upstash/redis REST client (HTTPS 443, works locally); BullMQ keeps ioredis TCP with family:4 + retryStrategy(3) to suppress Node v24 AggregateError flood on blocked networks; server starts clean, cache round-trip verified |
 | 2026-05-06 | 10 | Bug fixes: enqueueEmail made fire-and-forget (2s race timeout on queue.add); registration handler wrapped in try/catch with dev error logging; startup diagnostics for RESEND_API_KEY + EMAIL_FROM |
+| 2026-05-21 | 11 | GRAPH_REPORT.md updated (Phases 17–18, migrations 031–034, events table, admin panel docs); dashboard timestamp fix (formatMoodTime); dashboard tappable mood affordance |

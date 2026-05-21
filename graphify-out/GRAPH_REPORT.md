@@ -1,5 +1,5 @@
 # MindBridge Knowledge Graph Report
-Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Code
+Generated: 2026-05-04 | Last updated: 2026-05-21 (session 11) | Agent: Claude Code
 <!-- Update this file whenever credentials, migrations, or architecture change -->
 
 ---
@@ -20,7 +20,7 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 | `src/backend/db/index.js` | pg Pool (max 20 connections, 30s idle timeout); exports `query()` and `getClient()` for transactions |
 | `src/backend/migrations/run.js` | Reads/executes numbered SQL files 001–028; tracks applied migrations in `migrations_log`; uses DATABASE_DIRECT_URL for DDL |
 
-### Migrations (28 SQL files)
+### Migrations (34 SQL files, 001–034 all applied to Supabase)
 | File | Table/Change | Key Fields |
 |---|---|---|
 | `001_users.sql` | users | UUID PK, alias UNIQUE, email UNIQUE, password_hash, role enum, risk_level enum, streak_count, consent fields, notif prefs, fcm_token |
@@ -51,6 +51,12 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 | `026_row_level_security.sql` | RLS policies | Denies anon-role read/write on all 22 tables (idempotent) |
 | `027_indexes.sql` | Indexes | 20+ composite/partial indexes (user+created_at, status+created_at, risk_level, email verification, etc.) |
 | `028_ai_usage.sql` | ai_usage | user_id FK, date, token_count, message_count, UNIQUE(user_id, date); daily 50k token limit tracking |
+| `029_enable_rls.sql` | RLS | Enables RLS on token_blacklist + additional tables missed by 026 |
+| `030_rls_remaining_tables.sql` | RLS | Deny-anon policies for remaining tables; all 24 app tables now fully RLS-enabled |
+| `031_notification_journal_prompt.sql` | ALTER notifications enum | Adds 'journal_prompt' to notification_type enum |
+| `032_users_condition_category.sql` | ALTER users | Adds condition_category (group_category enum, nullable) — set at onboarding condition step; index on non-null values |
+| `033_peer_quiz_done.sql` | ALTER users | Adds peer_quiz_done BOOLEAN (default false) — tracks volunteer readiness quiz completion |
+| `034_events.sql` | events | id UUID PK, user_id FK nullable, event_name VARCHAR(64), properties JSONB, created_at; 3 indexes (name, user_id, created_at DESC) — basic funnel analytics |
 
 ### Route Files (16 files)
 | File | Endpoints |
@@ -165,7 +171,7 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 | `ProfileScreen.jsx` | `/profile` | Account (alias, masked email), AI persona, Credits (balance + transactions + buy), Privacy (consent version, Delete Data, Clear Journal), Notifications (4 toggles), Referrals, Feedback |
 | `ReferralScreen.jsx` | `/referral` | Therapist referral form (struggles, preferred_time, contact_method/detail); POST /referrals; confirmation screen |
 | `PublicEmergencyScreen.jsx` | `/emergency-public` | No auth; Befrienders Kenya tap-to-call; breathing animation |
-| `AdminDashboard.jsx` | `/admin` | 8 tabs: Emergency Queue, Peer Escalations, Therapist Referrals, Group Moderation, User Risk Flags, Content Library, System Stats, Feedback |
+| `AdminDashboard.jsx` | `/admin` | **Removed from user app (Phase 18)** — route + import deleted from App.jsx |
 
 ### Peer Support Screens (`src/frontend/src/screens/peer/`)
 | Screen | Route | Purpose |
@@ -174,6 +180,24 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 | `PeerWaitingScreen.jsx` | `/peer/waiting` | 90s countdown; polls GET /peer/request/:id/status every 3s; on active → session screen |
 | `PeerTextChatScreen.jsx` | `/peer/text/:id` | Text chat; credit countdown per 15min; End Session → FeedbackModal |
 | `PeerVoiceCallScreen.jsx` | `/peer/voice/:id` | WebRTC audio via ws/signaling; mute toggle; credit countdown per 5min; 2min grace on last credit |
+
+### Standalone Admin Panel (`src/admin/`) — Phase 18
+Separate Vite React app. Deployed independently (Railway or Netlify). Set `VITE_API_URL` to backend Railway URL.
+| File | Purpose |
+|---|---|
+| `App.jsx` | Collapsible sidebar (240px ↔ 64px), Phosphor icons, active amber border, live red badges on Emergency/Escalations/Reports/Risk, breadcrumb topbar, mobile off-canvas drawer < 900px |
+| `components/LoginScreen.jsx` | Dark sidebar bg wrap, white card, admin credential auth |
+| `components/MessageModal.jsx` | Send in-app message to user by alias → POST /admin/users/:alias/message |
+| `context/AuthContext.jsx` | Admin JWT storage, logout |
+| `tabs/OverviewTab.jsx` | 4 animated stat cards (count-up, staggered entrance), activity feed, quick actions |
+| `tabs/EmergencyTab.jsx` | Emergency queue with row colouring (open=red, ack=amber), elapsed time |
+| `tabs/EscalationsTab.jsx` | Peer escalations; onCountChange badge callback |
+| `tabs/ReferralsTab.jsx` | Therapist referrals as card list |
+| `tabs/ReportsTab.jsx` | Group reports with Pending/Reviewed/All filter tabs; onCountChange badge |
+| `tabs/RiskTab.jsx` | Risk-flagged users; onCountChange badge |
+| `tabs/ContentTab.jsx` | Psychoeducation articles CRUD; right slide panel (480px) replaces modal |
+| `tabs/StatsTab.jsx` | DAU + session stats with rating bar indicators |
+| `styles/globals.css` | Full brand token system: sidebar `#2F2622`, cream `#FAF6F2`, status colours |
 
 ### Legal Screens (`src/frontend/src/screens/`)
 | Screen | Route | Purpose |
@@ -188,7 +212,7 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 
 | Table | Key Fields (3) | Notes |
 |---|---|---|
-| **users** | id UUID PK, alias UNIQUE, email UNIQUE | + password_hash, role, risk_level, streak_count, email_verified, jwt_issued_before, fcm_token, 4 notif booleans |
+| **users** | id UUID PK, alias UNIQUE, email UNIQUE | + password_hash, role, risk_level, streak_count, email_verified, jwt_issued_before, fcm_token, 4 notif booleans, condition_category (group_category enum nullable), peer_quiz_done boolean |
 | **ai_personas** | user_id UNIQUE FK, persona_name, tone enum | + response_style, formality, uses_alias; one per user |
 | **moods** | user_id FK, mood_level enum, created_at | + tags TEXT[], note (200 max) |
 | **credits** | user_id UNIQUE FK, balance INTEGER | CHECK balance >= 0; signup bonus = 2 credits |
@@ -196,7 +220,7 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 | **peer_requests** | user_id FK, status enum, channel_preference | + accepted_by FK, session_id FK, escalation_job_id |
 | **ai_interactions** | session_id FK, input_text, flagged boolean | user_id nullable (anonymized on deletion but retained); context_snapshot JSONB |
 | **credit_transactions** | user_id FK, type enum, amount_credits | + amount_currency, payment_method, status, payment_reference |
-| **notifications** | user_id FK, type enum (12), status enum | + payload JSONB, channel, read_at |
+| **notifications** | user_id FK, type enum (13), status enum | + payload JSONB, channel, read_at; types include journal_prompt (added migration 031) |
 | **journals** | user_id FK, content TEXT, risk_flagged | + mood_id FK, tags[], created_at |
 | **safety_plans** | user_id UNIQUE FK, contacts JSONB, warning_signs | contacts encrypted app-side; emergency_resources pre-filled (Befrienders Kenya) |
 | **groups** | name, condition_category enum (8), is_active | + created_by FK, description |
@@ -210,6 +234,7 @@ Generated: 2026-05-04 | Last updated: 2026-05-04 (session 9) | Agent: Claude Cod
 | **feedback** | type enum, rating CHECK 1-5, session_id FK | NO user_id — fully anonymous by design |
 | **psychoeducation_articles** | title, category enum (9), status enum | + content, estimated_read_minutes, tags[], created_by FK, published_at |
 | **ai_usage** | user_id FK, date, token_count | UNIQUE(user_id, date); supports 50k daily limit |
+| **events** | user_id FK nullable, event_name VARCHAR(64), properties JSONB | Basic funnel analytics; user_id SET NULL on delete; 3 indexes (name, user_id, created_at DESC) |
 
 ---
 
@@ -419,10 +444,10 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 
 ## 8. CURRENT PHASE STATUS & REMAINING TASKS
 
-### Completed Phases (16/16)
+### Completed Phases (18/18)
 | Phase | Status | Description |
 |---|---|---|
-| Phase 1 | ✅ | Database migrations (28 SQL files, 22 tables) |
+| Phase 1 | ✅ | Database migrations (34 SQL files, 25 tables) |
 | Phase 2 | ✅ | Backend auth & onboarding APIs |
 | Phase 3 | ✅ | Core module APIs (moods, journals, AI chat) |
 | Phase 4 | ✅ | Credits & Paystack payments |
@@ -438,6 +463,15 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 | Phase 14 | ✅ | Voice journaling, calming sounds, welcome screen |
 | Phase 15 | ✅ | Email verification + password reset flow |
 | Phase 16 | ✅ | Performance, security, scale (Redis, RLS, indexes, BullMQ) |
+| Phase 17 | ✅ | Feature triage: peer incentives, onboarding condition step, peer quiz gate, group profile UI, Sentry/analytics (migrations 031–034), groups read-only for members |
+| Phase 18 | ✅ | Standalone admin panel at `src/admin/` — 8-tab redesign, collapsible sidebar, animated stat cards, mobile responsive; AdminDashboard removed from user app |
+
+### Scoped & Pending (not started — await implementation call)
+| Phase | Status | Description |
+|---|---|---|
+| Phase 19 | 🔲 | Therapist Marketplace — browse-and-interest flow, therapist profiles, admin onboarding |
+| Phase 20 | 🔲 | Persona & Language Enhancements — mutable persona, Swahili/Sheng switcher |
+| Phase 21 | 🔲 | UI Performance & Design System — TanStack Query, skeletons, Radix tooltips, shared components, Nivo mood calendar |
 
 ### Credentials & External Services Status
 | Service | Status | Notes |
@@ -477,17 +511,23 @@ GET    /stats                 — {dau, checkins_today, peer_sessions_today, ai_
 
 | Category | Count |
 |---|---|
-| Database migrations | 30 SQL files (001–030, all applied) |
-| Database tables | 24 (22 app + migrations_log + token_blacklist; all RLS-enabled) |
+| Database migrations | 34 SQL files (001–034, all applied to Supabase) |
+| Database tables | 25 (23 app + events + migrations_log + token_blacklist; all RLS-enabled) |
 | Backend route files | 16 |
 | Backend middleware | 3 |
 | Backend utilities | 9 |
 | Backend services | 2 |
 | Background workers | 2 |
 | Cron jobs | 3 |
-| Frontend screens | 36 |
+| Frontend screens (user app) | 36 |
+| Admin panel tabs | 8 (standalone `src/admin/` app) |
 | API endpoints (total) | ~65 |
 | Cache keys | 7 |
 | BullMQ queues | 2 |
-| Build phases complete | 16/16 |
+| Build phases complete | 18/18 |
 | Safety tests passed | 10/10 |
+
+### Additional Projects
+| Project | Path | Purpose |
+|---|---|---|
+| Landing site | `landing-site/` | Standalone Vite React competition entry; no CTA/signup; Vercel-ready |

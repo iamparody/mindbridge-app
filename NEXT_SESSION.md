@@ -1,28 +1,26 @@
 # Next Session — Pick Up Here
 
-## Immediate fixes (small, do first)
+## Immediate fixes — DONE ✅ (2026-05-21)
 
-### 1. Dashboard — tappable mood area
-**File:** `src/frontend/src/screens/DashboardScreen.jsx`
-**Problem:** After first daily entry, `moodDone = true` and the banner disappears. No tap target exists to reach `/mood` for a second entry. The MoodBlob has `pointerEvents: none`.
-**Fix:** Wrap the blob + last-mood text section in a `<button onClick={() => navigate('/mood')}>` or add a small "+" tap target beneath the last-mood line. Make it subtle — not a call to action, just a quiet affordance.
+### 1. Dashboard — tappable mood area ✅
+`DashboardScreen.jsx`: Added subtle `+ check in again` button beneath last-mood line when `moodDone = true`. `pointerEvents: none` removed from that section.
 
-### 2. Dashboard — timestamp format
-**File:** `src/frontend/src/screens/DashboardScreen.jsx`
-**Problem:** `timeAgo()` shows "3hrs ago" — correct but feels stale/relative after re-login.
-**Fix:** Replace `timeAgo()` with a `formatMoodTime()` helper that shows `"Today · 3:45 PM"` (if same calendar day) or `"Mon · 3:45 PM"` (if earlier). Remove `timeAgo` function entirely from this file.
+### 2. Dashboard — timestamp format ✅
+`DashboardScreen.jsx`: Replaced `timeAgo()` with `formatMoodTime()` — shows `"Today · 3:45 PM"` or `"Mon · 3:45 PM"`.
 
 ---
 
-## App icon
+## On hold — awaiting name decision
 
+### App icon
 **Decision:** Two arcs meeting at center (bridge span silhouette), warm amber `#E88B3F` → golden `#C8943A` gradient.
-**Work:**
+**Work (once name is final):**
 1. Create `src/frontend/public/icon.svg` — the SVG source
 2. Generate PNG exports: `icon-192.png`, `icon-512.png` in `public/`
-3. Update `src/frontend/public/manifest.json` (or create if absent) with correct `icons` array
+3. Update `src/frontend/public/manifest.json` with correct `icons` array + app name
 4. Update `vite.config.js` PWA plugin config to reference the icon files
 5. Add `<link rel="icon" href="/icon.svg">` to `index.html`
+6. Find/replace app name across: `DashboardScreen.jsx` top bar, `manifest.json`, `index.html` title, `README.md`
 
 ---
 
@@ -51,6 +49,8 @@ Order:
 
 ---
 
-## Migration 031 reminder
-`031_notification_journal_prompt.sql` is written but not yet run against Supabase.
-Run it alongside the other pending migrations at deployment time.
+## Pending phases (await implementation call)
+
+- **Phase 19** — Therapist Marketplace (CHECKLIST.md 19.1–19.11)
+- **Phase 20** — Persona & Language Enhancements (CHECKLIST.md 20.1–20.3)
+- **Phase 21** — UI Performance & Design System (CHECKLIST.md 21.1–21.6)
